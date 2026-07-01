@@ -102,5 +102,3 @@ function Stat({ value, label, gradient }: { value: string; label: string; gradie
 function Divider() {
   return <span className="h-8 w-px bg-border" />;
 }
-  );
-}
