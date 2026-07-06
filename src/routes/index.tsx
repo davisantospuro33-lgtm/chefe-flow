@@ -10,6 +10,8 @@ import { AIAlertBox } from "@/components/chefe/AIAlertBox";
 import { QueueList } from "@/components/chefe/QueueList";
 import { Manifesto } from "@/components/chefe/Manifesto";
 import { Feed } from "@/components/chefe/Feed";
+import { InstallBanner } from "@/components/chefe/InstallBanner";
+import { ShareButton } from "@/components/chefe/ShareButton";
 import { useChefeStore } from "@/lib/chefe-store";
 
 export const Route = createFileRoute("/")({
@@ -22,6 +24,7 @@ function Index() {
   );
   return (
     <main className="mx-auto min-h-screen w-full max-w-md px-4 pb-24 pt-6">
+      <InstallBanner />
       {/* Top bar */}
       <header className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -30,12 +33,15 @@ function Index() {
             <span className="text-gradient-ig">CHEFE</span>
           </h1>
         </div>
-        <Link
-          to="/painel"
-          className="inline-flex items-center gap-1.5 rounded-full glass px-3 py-1.5 text-[11px] font-semibold text-muted-foreground"
-        >
-          <Lock className="h-3 w-3" /> Painel
-        </Link>
+        <div className="flex items-center gap-2">
+          <ShareButton />
+          <Link
+            to="/painel"
+            className="inline-flex items-center gap-1.5 rounded-full glass px-3 py-1.5 text-[11px] font-semibold text-muted-foreground"
+          >
+            <Lock className="h-3 w-3" /> Painel
+          </Link>
+        </div>
       </header>
 
       {/* Profile header — Instagram style */}
