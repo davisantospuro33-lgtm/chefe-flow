@@ -26,12 +26,11 @@ function Painel() {
   const startCut = useChefeStore((s) => s.startCut);
   const completeAndNext = useChefeStore((s) => s.completeAndNext);
   const addTenMinutes = useChefeStore((s) => s.addTenMinutes);
-  const addClient = useChefeStore((s) => s.addClient);
   const resetDemo = useChefeStore((s) => s.resetDemo);
   const extra = useChefeStore((s) => s.extraMinutes);
-
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const presencial = useChefeStore((s) => s.presencialCount);
+  const incPresencial = useChefeStore((s) => s.incPresencial);
+  const decPresencial = useChefeStore((s) => s.decPresencial);
 
   const current = queue[0];
 
@@ -160,37 +159,46 @@ function Painel() {
         </motion.button>
       </section>
 
-      {/* New client */}
+      {/* Contador presencial — isolado da agenda virtual */}
       <section className="mt-4 glass rounded-3xl p-5">
-        <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          Novo Cliente Presencial
+        <div className="mb-1 flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            Clientes no Presencial (Rua)
+          </p>
+        </div>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Adicione ou remova conforme chegam no salão. Contagem separada da agenda virtual.
         </p>
-        <div className="space-y-2">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nome"
-            className="w-full rounded-2xl bg-black/30 px-4 py-3 text-sm font-medium outline-none ring-1 ring-border placeholder:text-muted-foreground focus:ring-neon/60"
-          />
-          <input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="Número (opcional)"
-            inputMode="tel"
-            className="w-full rounded-2xl bg-black/30 px-4 py-3 text-sm font-medium outline-none ring-1 ring-border placeholder:text-muted-foreground focus:ring-neon/60"
-          />
+        <div className="flex items-center justify-center gap-6">
           <motion.button
-            whileTap={{ scale: 0.97 }}
-            disabled={!name.trim()}
+            whileTap={{ scale: 0.9 }}
             onClick={() => {
-              addClient(name.trim(), phone.trim() || undefined);
-              setName("");
-              setPhone("");
-              toast(`${name} adicionado à fila`);
+              decPresencial();
+              toast("Presencial: -1");
             }}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-ig py-4 text-base font-black text-white disabled:opacity-40"
+            disabled={presencial === 0}
+            className="grid h-14 w-14 place-items-center rounded-2xl bg-white/[0.05] ring-1 ring-border text-white disabled:opacity-30"
           >
-            <UserPlus className="h-5 w-5" /> Adicionar à Fila
+            <Minus className="h-6 w-6" />
+          </motion.button>
+          <div className="min-w-[80px] text-center">
+            <div className="text-5xl font-black tabular-nums text-gradient-ig leading-none">
+              {presencial}
+            </div>
+            <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              na rua
+            </div>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => {
+              incPresencial();
+              toast("Presencial: +1");
+            }}
+            className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-ig text-white shadow-lg"
+          >
+            <Plus className="h-6 w-6" />
           </motion.button>
         </div>
       </section>
