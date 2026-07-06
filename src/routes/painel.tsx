@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { ArrowLeft, Play, Scissors, Plus, Clock, UserPlus, RotateCcw } from "lucide-react";
+import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users } from "lucide-react";
 import { useChefeStore, statusMeta, type ChefeStatus } from "@/lib/chefe-store";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
 import { toast } from "sonner";
