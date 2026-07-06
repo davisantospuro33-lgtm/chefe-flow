@@ -16,6 +16,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const totalQueue =
+    (typeof window !== "undefined" ? 0 : 0) +
+    useChefeStoreLen();
   return (
     <main className="mx-auto min-h-screen w-full max-w-md px-4 pb-24 pt-6">
       {/* Top bar */}
