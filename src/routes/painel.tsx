@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users } from "lucide-react";
 import { useChefeStore, statusMeta, type ChefeStatus } from "@/lib/chefe-store";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
+import { ShareButton } from "@/components/chefe/ShareButton";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/painel")({
@@ -60,6 +61,11 @@ function Painel() {
           <h1 className="truncate text-2xl font-black leading-tight">Comando CHEFE</h1>
         </div>
       </div>
+
+      {/* Share link block */}
+      <section className="mb-4">
+        <ShareButton variant="block" />
+      </section>
 
       {/* Status selector */}
       <section className="glass rounded-3xl p-4">
