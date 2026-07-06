@@ -10,12 +10,16 @@ import { AIAlertBox } from "@/components/chefe/AIAlertBox";
 import { QueueList } from "@/components/chefe/QueueList";
 import { Manifesto } from "@/components/chefe/Manifesto";
 import { Feed } from "@/components/chefe/Feed";
+import { useChefeStore } from "@/lib/chefe-store";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
+  const totalQueue = useChefeStore(
+    (s) => s.queue.length + s.presencialCount,
+  );
   return (
     <main className="mx-auto min-h-screen w-full max-w-md px-4 pb-24 pt-6">
       {/* Top bar */}
@@ -48,7 +52,7 @@ function Index() {
           <Divider />
           <Stat value="4.9" label="Nota" gradient />
           <Divider />
-          <Stat value="3" label="Na fila" />
+          <Stat value={String(totalQueue)} label="Na fila" />
         </div>
       </section>
 
