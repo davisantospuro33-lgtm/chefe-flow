@@ -18,6 +18,7 @@ interface ChefeState {
   queue: QueueClient[];
   distanceKm: number;
   extraMinutes: number;
+  presencialCount: number;
   setStatus: (s: ChefeStatus) => void;
   addClient: (name: string, phone?: string) => void;
   removeClient: (id: string) => void;
@@ -26,6 +27,8 @@ interface ChefeState {
   setStage: (s: Stage) => void;
   addTenMinutes: () => void;
   setDistance: (km: number) => void;
+  incPresencial: () => void;
+  decPresencial: () => void;
   resetDemo: () => void;
 }
 
@@ -44,6 +47,7 @@ export const useChefeStore = create<ChefeState>()(
       queue: seed,
       distanceKm: 2.4,
       extraMinutes: 0,
+      presencialCount: 0,
       setStatus: (status) => set({ status }),
       addClient: (name, phone) =>
         set((s) => ({
@@ -70,6 +74,9 @@ export const useChefeStore = create<ChefeState>()(
       setStage: (stage) => set({ stage }),
       addTenMinutes: () => set((s) => ({ extraMinutes: s.extraMinutes + 10 })),
       setDistance: (km) => set({ distanceKm: km }),
+      incPresencial: () => set((s) => ({ presencialCount: s.presencialCount + 1 })),
+      decPresencial: () =>
+        set((s) => ({ presencialCount: Math.max(0, s.presencialCount - 1) })),
       resetDemo: () =>
         set({
           status: "available",
@@ -77,6 +84,7 @@ export const useChefeStore = create<ChefeState>()(
           queue: seed,
           extraMinutes: 0,
           currentClientId: null,
+          presencialCount: 0,
         }),
     }),
     { name: "chefe-store-v1" },
