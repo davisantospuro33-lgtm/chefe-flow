@@ -99,7 +99,14 @@ function mapPendente(r: PendenteRow): PendingRequest {
   };
 }
 
-async function updateState(patch: Record<string, unknown>) {
+type StatePatch = {
+  status?: string;
+  presencial_count?: number;
+  extra_minutes?: number;
+  stage?: number;
+  current_client_id?: string | null;
+};
+async function updateState(patch: StatePatch) {
   await supabase.from("chefe_state").update(patch).eq("id", 1);
 }
 
