@@ -87,10 +87,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "CHEFE — Barbearia Inteligente em Tempo Real" },
       { name: "description", content: "Agende, acompanhe e receba alertas do CHEFE em tempo real. Menos espera, mais organização." },
       { name: "author", content: "CHEFE" },
-      { property: "og:title", content: "CHEFE — Barbearia Inteligente" },
-      { property: "og:description", content: "Acompanhe sua vez em tempo real. O CHEFE avisa a hora exata de sair de casa." },
+      { property: "og:title", content: "CHEFE — Barbearia Inteligente em Tempo Real" },
+      { property: "og:description", content: "Agende, acompanhe e receba alertas do CHEFE em tempo real. Menos espera, mais organização." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "CHEFE — Barbearia Inteligente em Tempo Real" },
+      { name: "twitter:description", content: "Agende, acompanhe e receba alertas do CHEFE em tempo real. Menos espera, mais organização." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/72b24805-dbfd-4114-9e01-0f7b05e254a6/id-preview-f87b931a--30acd831-4f2c-4d32-b3e1-ed8b9e3ddd63.lovable.app-1783430188875.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/72b24805-dbfd-4114-9e01-0f7b05e254a6/id-preview-f87b931a--30acd831-4f2c-4d32-b3e1-ed8b9e3ddd63.lovable.app-1783430188875.png" },
     ],
     links: [
       {
