@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users } from "lucide-react";
+import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle } from "lucide-react";
 import { useChefeStore, statusMeta, type ChefeStatus } from "@/lib/chefe-store";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
 import { ShareButton } from "@/components/chefe/ShareButton";
@@ -32,6 +32,9 @@ function Painel() {
   const presencial = useChefeStore((s) => s.presencialCount);
   const incPresencial = useChefeStore((s) => s.incPresencial);
   const decPresencial = useChefeStore((s) => s.decPresencial);
+  const pendentes = useChefeStore((s) => s.pendentes);
+  const aceitarPendente = useChefeStore((s) => s.aceitarPendente);
+  const recusarPendente = useChefeStore((s) => s.recusarPendente);
 
   const current = queue[0];
 
@@ -65,6 +68,89 @@ function Painel() {
       {/* Share link block */}
       <section className="mb-4">
         <ShareButton variant="block" />
+      </section>
+
+      {/* Solicitações pendentes da IA */}
+      <section className="mb-4 glass rounded-3xl p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Inbox className="h-4 w-4" style={{ color: "#38bdf8" }} />
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Solicitações da IA
+            </p>
+          </div>
+          <span className="rounded-full bg-sky-500/10 px-2.5 py-0.5 text-[11px] font-black tabular-nums text-sky-300 ring-1 ring-sky-400/30">
+            {pendentes.length}
+          </span>
+        </div>
+
+        {pendentes.length === 0 ? (
+          <p className="rounded-2xl bg-white/[0.03] px-4 py-6 text-center text-xs text-muted-foreground">
+            Nenhuma solicitação pendente.
+          </p>
+        ) : (
+          <ul className="space-y-2.5">
+            {pendentes.map((p) => (
+              <li
+                key={p.id}
+                className="rounded-2xl bg-white/[0.03] p-3 ring-1 ring-white/5"
+              >
+                <div className="mb-2 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black">👤 {p.name}</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      📱 {p.phone} · 👥 {p.qtd} corte{p.qtd > 1 ? "s" : ""}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      📍 {p.referencia}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                    {p.perfil}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      aceitarPendente(p.id);
+                      toast.success(`${p.name} adicionado à fila`);
+                    }}
+                    className="flex items-center justify-center gap-1 rounded-xl bg-emerald-500/15 px-2 py-2 text-[11px] font-bold text-emerald-300 ring-1 ring-emerald-400/30"
+                  >
+                    <Check className="h-3.5 w-3.5" /> Aceitar
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      const msg = encodeURIComponent(
+                        `Fala ${p.name.split(" ")[0]}! Aqui é o CHEFE. Precisamos remarcar seu corte, tudo bem?`,
+                      );
+                      window.open(
+                        `https://api.whatsapp.com/send?phone=${p.phone.replace(/\D/g, "")}&text=${msg}`,
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                    }}
+                    className="flex items-center justify-center gap-1 rounded-xl bg-amber-500/15 px-2 py-2 text-[11px] font-bold text-amber-300 ring-1 ring-amber-400/30"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" /> Remarcar
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      recusarPendente(p.id);
+                      toast(`${p.name} recusado`);
+                    }}
+                    className="flex items-center justify-center gap-1 rounded-xl bg-rose-500/15 px-2 py-2 text-[11px] font-bold text-rose-300 ring-1 ring-rose-400/30"
+                  >
+                    <X className="h-3.5 w-3.5" /> Recusar
+                  </motion.button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* Status selector */}
