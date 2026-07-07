@@ -12,6 +12,7 @@ import { Manifesto } from "@/components/chefe/Manifesto";
 import { Feed } from "@/components/chefe/Feed";
 import { InstallBanner } from "@/components/chefe/InstallBanner";
 import { ShareButton } from "@/components/chefe/ShareButton";
+import { ChefeAI } from "@/components/chefe/ChefeAI";
 import { useChefeStore } from "@/lib/chefe-store";
 
 export const Route = createFileRoute("/")({
@@ -70,6 +71,11 @@ function Index() {
       {/* Service card */}
       <div className="mt-4">
         <ServiceCard />
+      </div>
+
+      {/* CHEFE AI — Atendente conversacional */}
+      <div className="mt-4">
+        <ChefeAI />
       </div>
 
       {/* AI + progress + queue */}

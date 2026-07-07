@@ -9,6 +9,19 @@ export interface QueueClient {
   name: string;
   phone?: string;
   addedAt: number;
+  qtd?: number;
+  referencia?: string;
+  perfil?: string;
+}
+
+export interface PendingRequest {
+  id: string;
+  name: string;
+  phone: string;
+  referencia: string;
+  perfil: string;
+  qtd: number;
+  createdAt: number;
 }
 
 interface ChefeState {
@@ -19,9 +32,13 @@ interface ChefeState {
   distanceKm: number;
   extraMinutes: number;
   presencialCount: number;
+  pendentes: PendingRequest[];
   setStatus: (s: ChefeStatus) => void;
   addClient: (name: string, phone?: string) => void;
   removeClient: (id: string) => void;
+  addSolicitacao: (r: Omit<PendingRequest, "id" | "createdAt">) => void;
+  aceitarPendente: (id: string) => void;
+  recusarPendente: (id: string) => void;
   startCut: () => void;
   completeAndNext: () => void;
   setStage: (s: Stage) => void;
@@ -48,6 +65,7 @@ export const useChefeStore = create<ChefeState>()(
       distanceKm: 2.4,
       extraMinutes: 0,
       presencialCount: 0,
+      pendentes: [],
       setStatus: (status) => set({ status }),
       addClient: (name, phone) =>
         set((s) => ({
@@ -55,6 +73,35 @@ export const useChefeStore = create<ChefeState>()(
         })),
       removeClient: (id) =>
         set((s) => ({ queue: s.queue.filter((c) => c.id !== id) })),
+      addSolicitacao: (r) =>
+        set((s) => ({
+          pendentes: [
+            ...s.pendentes,
+            { ...r, id: crypto.randomUUID(), createdAt: Date.now() },
+          ],
+        })),
+      aceitarPendente: (id) =>
+        set((s) => {
+          const p = s.pendentes.find((x) => x.id === id);
+          if (!p) return {};
+          return {
+            pendentes: s.pendentes.filter((x) => x.id !== id),
+            queue: [
+              ...s.queue,
+              {
+                id: crypto.randomUUID(),
+                name: p.name,
+                phone: p.phone,
+                qtd: p.qtd,
+                referencia: p.referencia,
+                perfil: p.perfil,
+                addedAt: Date.now(),
+              },
+            ],
+          };
+        }),
+      recusarPendente: (id) =>
+        set((s) => ({ pendentes: s.pendentes.filter((x) => x.id !== id) })),
       startCut: () =>
         set((s) => ({
           stage: 2,
@@ -85,6 +132,7 @@ export const useChefeStore = create<ChefeState>()(
           extraMinutes: 0,
           currentClientId: null,
           presencialCount: 0,
+          pendentes: [],
         }),
     }),
     { name: "chefe-store-v1" },
