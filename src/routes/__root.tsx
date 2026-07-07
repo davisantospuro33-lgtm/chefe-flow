@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "sonner";
+import { useChefeStore } from "@/lib/chefe-store";
 
 function NotFoundComponent() {
   return (
@@ -129,6 +130,13 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    const store = useChefeStore.getState();
+    store.hydrate();
+    const unsub = store.subscribe();
+    return unsub;
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
