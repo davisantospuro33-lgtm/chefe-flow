@@ -14,7 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chefe_pendentes: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          perfil: string
+          phone: string
+          qtd: number
+          referencia: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          perfil: string
+          phone: string
+          qtd?: number
+          referencia: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          perfil?: string
+          phone?: string
+          qtd?: number
+          referencia?: string
+        }
+        Relationships: []
+      }
+      chefe_queue: {
+        Row: {
+          added_at: string
+          id: string
+          name: string
+          perfil: string | null
+          phone: string | null
+          position: number
+          qtd: number | null
+          referencia: string | null
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          name: string
+          perfil?: string | null
+          phone?: string | null
+          position?: number
+          qtd?: number | null
+          referencia?: string | null
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          name?: string
+          perfil?: string | null
+          phone?: string | null
+          position?: number
+          qtd?: number | null
+          referencia?: string | null
+        }
+        Relationships: []
+      }
+      chefe_state: {
+        Row: {
+          current_client_id: string | null
+          extra_minutes: number
+          id: number
+          presencial_count: number
+          stage: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          current_client_id?: string | null
+          extra_minutes?: number
+          id?: number
+          presencial_count?: number
+          stage?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          current_client_id?: string | null
+          extra_minutes?: number
+          id?: number
+          presencial_count?: number
+          stage?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
