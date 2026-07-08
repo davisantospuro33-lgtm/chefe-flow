@@ -6,10 +6,13 @@ import cut5 from "@/assets/cut-5.jpg";
 import cut6 from "@/assets/cut-6.jpg";
 import { motion } from "framer-motion";
 import { Grid3x3, Heart } from "lucide-react";
+import { useChefeStore } from "@/lib/chefe-store";
 
-const shots = [cut1, cut2, cut3, cut4, cut5, cut6];
+const fallback = [cut1, cut2, cut3, cut4, cut5, cut6];
 
 export function Feed() {
+  const portfolio = useChefeStore((s) => s.portfolio);
+  const shots = portfolio.length > 0 ? portfolio.map((p) => p.url) : fallback;
   return (
     <div>
       <div className="mb-2 flex items-center justify-center gap-2 border-t border-border pt-3 text-muted-foreground">
@@ -19,7 +22,7 @@ export function Feed() {
       <div className="grid grid-cols-3 gap-[2px]">
         {shots.map((src, i) => (
           <motion.div
-            key={i}
+            key={src + i}
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.04 * i }}
