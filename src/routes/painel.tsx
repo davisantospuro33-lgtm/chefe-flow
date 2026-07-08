@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle } from "lucide-react";
-import { useChefeStore, statusMeta, type ChefeStatus } from "@/lib/chefe-store";
+import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, Star, ImagePlus, Trash2, Upload } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { useChefeStore, statusMeta, type ChefeStatus, type Review } from "@/lib/chefe-store";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
 import { ShareButton } from "@/components/chefe/ShareButton";
+import { PinLock } from "@/components/chefe/PinLock";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/painel")({
@@ -14,12 +16,22 @@ export const Route = createFileRoute("/painel")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: Painel,
+  component: PainelGate,
 });
 
+function PainelGate() {
+  return (
+    <PinLock>
+      <Painel />
+    </PinLock>
+  );
+}
+
 const statuses: ChefeStatus[] = ["available", "busy", "break", "closed"];
+type Tab = "operacao" | "perfil" | "portfolio";
 
 function Painel() {
+  const [tab, setTab] = useState<Tab>("operacao");
   const status = useChefeStore((s) => s.status);
   const setStatus = useChefeStore((s) => s.setStatus);
   const queue = useChefeStore((s) => s.queue);
@@ -35,6 +47,7 @@ function Painel() {
   const pendentes = useChefeStore((s) => s.pendentes);
   const aceitarPendente = useChefeStore((s) => s.aceitarPendente);
   const recusarPendente = useChefeStore((s) => s.recusarPendente);
+  const profile = useChefeStore((s) => s.profile);
 
   const current = queue[0];
 
@@ -56,7 +69,7 @@ function Painel() {
       </header>
 
       <div className="mb-6 flex items-center gap-3">
-        <GradientAvatar size={64} animated={false} />
+        <GradientAvatar size={64} animated={false} src={profile.avatarUrl} />
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
             Painel privado
@@ -65,6 +78,38 @@ function Painel() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <nav className="mb-4 grid grid-cols-3 gap-1 rounded-2xl glass p-1">
+        {(
+          [
+            { id: "operacao", label: "Operação", icon: Play },
+            { id: "perfil", label: "Editar App", icon: User },
+            { id: "portfolio", label: "Portfólio", icon: ImagePlus },
+          ] as const
+        ).map((t) => {
+          const active = tab === t.id;
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-[11px] font-bold transition ${
+                active
+                  ? "bg-gradient-ig text-white shadow-lg"
+                  : "text-muted-foreground"
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {t.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {tab === "perfil" && <EditorPerfil />}
+      {tab === "portfolio" && <EditorPortfolio />}
+      {tab !== "operacao" ? null : (
+        <>
       {/* Share link block */}
       <section className="mb-4">
         <ShareButton variant="block" />
@@ -322,12 +367,333 @@ function Painel() {
           ))}
         </ul>
       </section>
+        </>
+      )}
 
       <footer className="mt-10 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
         <Plus className="mx-auto mb-2 h-4 w-4 opacity-40" />
         Painel restrito · CHEFE
       </footer>
     </main>
+  );
+}
+
+function EditorPerfil() {
+  const profile = useChefeStore((s) => s.profile);
+  const updateProfile = useChefeStore((s) => s.updateProfile);
+  const reviews = useChefeStore((s) => s.reviews);
+  const saveReview = useChefeStore((s) => s.saveReview);
+  const deleteReview = useChefeStore((s) => s.deleteReview);
+  const uploadPortfolio = useChefeStore((s) => s.uploadPortfolio);
+
+  const [form, setForm] = useState(profile);
+  useEffect(() => setForm(profile), [profile]);
+  const avatarInput = useRef<HTMLInputElement>(null);
+
+  const onSaveProfile = async () => {
+    await updateProfile(form);
+    toast.success("Perfil atualizado");
+  };
+
+  const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const path = `avatar/${crypto.randomUUID()}.${file.name.split(".").pop() || "jpg"}`;
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.storage
+        .from("chefe-media")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (error) throw error;
+      const { data: signed } = await supabase.storage
+        .from("chefe-media")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+      await updateProfile({ avatarUrl: signed?.signedUrl ?? null });
+      toast.success("Foto atualizada");
+    } catch (err) {
+      toast.error("Erro ao enviar foto");
+      console.error(err);
+    }
+    e.target.value = "";
+  };
+  void uploadPortfolio;
+
+  return (
+    <div className="space-y-4">
+      <section className="glass rounded-3xl p-5">
+        <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          Perfil público
+        </p>
+        <div className="mb-4 flex items-center gap-4">
+          <GradientAvatar size={72} animated={false} src={profile.avatarUrl} />
+          <div>
+            <input
+              ref={avatarInput}
+              type="file"
+              accept="image/*"
+              onChange={onAvatarChange}
+              className="hidden"
+            />
+            <button
+              onClick={() => avatarInput.current?.click()}
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-ig px-3 py-1.5 text-[11px] font-bold text-white"
+            >
+              <Upload className="h-3 w-3" /> Trocar foto
+            </button>
+          </div>
+        </div>
+        <Field label="Nome de usuário">
+          <input
+            value={form.username}
+            onChange={(e) => setForm({ ...form, username: e.target.value })}
+            className={inputCls}
+          />
+        </Field>
+        <Field label="Bio">
+          <textarea
+            value={form.bio}
+            onChange={(e) => setForm({ ...form, bio: e.target.value })}
+            rows={2}
+            className={inputCls}
+          />
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Cortes realizados">
+            <input
+              value={form.cutsCount}
+              onChange={(e) => setForm({ ...form, cutsCount: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Nota média">
+            <input
+              value={form.rating}
+              onChange={(e) => setForm({ ...form, rating: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onSaveProfile}
+          className="mt-2 w-full rounded-2xl bg-gradient-ig px-4 py-3 text-sm font-black text-white"
+        >
+          Salvar perfil
+        </motion.button>
+      </section>
+
+      <section className="glass rounded-3xl p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Star className="h-4 w-4 text-amber-400" />
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Depoimentos ({reviews.length}/3)
+            </p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {reviews.map((r) => (
+            <ReviewEditor
+              key={r.id}
+              review={r}
+              onSave={saveReview}
+              onDelete={() => deleteReview(r.id)}
+            />
+          ))}
+          {reviews.length < 3 && (
+            <ReviewEditor
+              onSave={async (r) => {
+                await saveReview({ ...r, position: reviews.length + 1 });
+                toast.success("Depoimento adicionado");
+              }}
+            />
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ReviewEditor({
+  review,
+  onSave,
+  onDelete,
+}: {
+  review?: Review;
+  onSave: (r: Omit<Review, "id"> & { id?: string }) => Promise<void>;
+  onDelete?: () => void;
+}) {
+  const [name, setName] = useState(review?.name ?? "");
+  const [rating, setRating] = useState(review?.rating ?? 5);
+  const [comment, setComment] = useState(review?.comment ?? "");
+  const isNew = !review;
+
+  return (
+    <div className="rounded-2xl bg-white/[0.03] p-3 ring-1 ring-white/5">
+      <div className="mb-2 grid grid-cols-[1fr_auto] gap-2">
+        <input
+          placeholder="Nome do cliente"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className={inputCls}
+        />
+        <select
+          value={rating}
+          onChange={(e) => setRating(Number(e.target.value))}
+          className={`${inputCls} w-20`}
+        >
+          {[1, 2, 3, 4, 5].map((n) => (
+            <option key={n} value={n}>
+              {n}★
+            </option>
+          ))}
+        </select>
+      </div>
+      <textarea
+        placeholder="Comentário"
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        rows={2}
+        className={inputCls}
+      />
+      <div className="mt-2 flex gap-2">
+        <button
+          onClick={async () => {
+            if (!name.trim() || !comment.trim()) {
+              toast.error("Preencha nome e comentário");
+              return;
+            }
+            await onSave({
+              id: review?.id,
+              name: name.trim(),
+              rating,
+              comment: comment.trim(),
+              position: review?.position ?? 0,
+            });
+            if (isNew) {
+              setName("");
+              setComment("");
+              setRating(5);
+            } else {
+              toast.success("Depoimento salvo");
+            }
+          }}
+          className="flex-1 rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-bold text-emerald-300 ring-1 ring-emerald-400/30"
+        >
+          {isNew ? "Adicionar" : "Salvar"}
+        </button>
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            className="rounded-xl bg-rose-500/15 px-3 py-2 text-xs font-bold text-rose-300 ring-1 ring-rose-400/30"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EditorPortfolio() {
+  const portfolio = useChefeStore((s) => s.portfolio);
+  const uploadPortfolio = useChefeStore((s) => s.uploadPortfolio);
+  const deletePortfolio = useChefeStore((s) => s.deletePortfolio);
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  const onFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    setBusy(true);
+    try {
+      for (const f of files) await uploadPortfolio(f);
+      toast.success(`${files.length} foto(s) enviada(s)`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao enviar fotos");
+    } finally {
+      setBusy(false);
+      e.target.value = "";
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <section className="glass rounded-3xl p-5">
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          Adicionar fotos do portfólio
+        </p>
+        <input
+          ref={input}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={onFiles}
+          className="hidden"
+        />
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          disabled={busy}
+          onClick={() => input.current?.click()}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-ig px-4 py-4 text-sm font-black text-white disabled:opacity-50"
+        >
+          <Upload className="h-5 w-5" />
+          {busy ? "Enviando..." : "Enviar da galeria"}
+        </motion.button>
+        <p className="mt-2 text-center text-[11px] text-muted-foreground">
+          Selecione uma ou várias fotos direto do seu celular
+        </p>
+      </section>
+
+      <section className="glass rounded-3xl p-5">
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          Galeria ({portfolio.length})
+        </p>
+        {portfolio.length === 0 ? (
+          <p className="rounded-2xl bg-white/[0.03] px-4 py-6 text-center text-xs text-muted-foreground">
+            Nenhuma foto enviada. Enviando: as fotos aparecem no perfil público.
+          </p>
+        ) : (
+          <div className="grid grid-cols-3 gap-1.5">
+            {portfolio.map((p) => (
+              <div key={p.id} className="group relative aspect-square overflow-hidden rounded-lg">
+                <img
+                  src={p.url}
+                  alt="Portfolio"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <button
+                  onClick={async () => {
+                    if (!confirm("Excluir esta foto?")) return;
+                    await deletePortfolio(p.id, p.storagePath);
+                    toast("Foto excluída");
+                  }}
+                  className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-rose-500/90 py-1 text-[10px] font-bold text-white opacity-0 transition-opacity group-active:opacity-100"
+                >
+                  <Trash2 className="h-3 w-3" /> Excluir
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+const inputCls =
+  "w-full rounded-xl bg-white/[0.04] px-3 py-2.5 text-sm text-foreground outline-none ring-1 ring-border transition placeholder:text-muted-foreground/60 focus:ring-neon/60";
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="mb-3 block">
+      <span className="mb-1 block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
+      {children}
+    </label>
   );
 }
 

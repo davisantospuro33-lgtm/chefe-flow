@@ -44,6 +44,60 @@ export type Database = {
         }
         Relationships: []
       }
+      chefe_portfolio: {
+        Row: {
+          created_at: string
+          id: string
+          position: number
+          storage_path: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          position?: number
+          storage_path: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          position?: number
+          storage_path?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      chefe_profile: {
+        Row: {
+          avatar_url: string | null
+          bio: string
+          cuts_count: string
+          id: number
+          rating: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string
+          cuts_count?: string
+          id?: number
+          rating?: string
+          updated_at?: string
+          username?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string
+          cuts_count?: string
+          id?: number
+          rating?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       chefe_queue: {
         Row: {
           added_at: string
@@ -74,6 +128,33 @@ export type Database = {
           position?: number
           qtd?: number | null
           referencia?: string | null
+        }
+        Relationships: []
+      }
+      chefe_reviews: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          name: string
+          position: number
+          rating: number
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          name: string
+          position?: number
+          rating?: number
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          name?: string
+          position?: number
+          rating?: number
         }
         Relationships: []
       }

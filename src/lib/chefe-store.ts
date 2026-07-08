@@ -25,6 +25,30 @@ export interface PendingRequest {
   createdAt: number;
 }
 
+export interface ChefeProfile {
+  username: string;
+  bio: string;
+  avatarUrl: string | null;
+  cutsCount: string;
+  rating: string;
+}
+
+export interface Review {
+  id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  position: number;
+}
+
+export interface PortfolioItem {
+  id: string;
+  storagePath: string;
+  url: string;
+  position: number;
+  createdAt: number;
+}
+
 interface ChefeState {
   status: ChefeStatus;
   currentClientId: string | null;
@@ -34,6 +58,9 @@ interface ChefeState {
   extraMinutes: number;
   presencialCount: number;
   pendentes: PendingRequest[];
+  profile: ChefeProfile;
+  reviews: Review[];
+  portfolio: PortfolioItem[];
   hydrated: boolean;
   setStatus: (s: ChefeStatus) => Promise<void>;
   addClient: (name: string, phone?: string) => Promise<void>;
@@ -49,6 +76,11 @@ interface ChefeState {
   incPresencial: () => Promise<void>;
   decPresencial: () => Promise<void>;
   resetDemo: () => Promise<void>;
+  updateProfile: (patch: Partial<ChefeProfile>) => Promise<void>;
+  saveReview: (r: Omit<Review, "id"> & { id?: string }) => Promise<void>;
+  deleteReview: (id: string) => Promise<void>;
+  uploadPortfolio: (file: File) => Promise<void>;
+  deletePortfolio: (id: string, storagePath: string) => Promise<void>;
   hydrate: () => Promise<void>;
   subscribe: () => () => void;
 }
@@ -119,13 +151,25 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   extraMinutes: 0,
   presencialCount: 0,
   pendentes: [],
+  profile: {
+    username: "@chefe.oficial",
+    bio: "Barbeiro · Cortes autorais",
+    avatarUrl: null,
+    cutsCount: "1.2k",
+    rating: "4.9",
+  },
+  reviews: [],
+  portfolio: [],
   hydrated: false,
 
   hydrate: async () => {
-    const [{ data: queue }, { data: pendentes }, { data: state }] = await Promise.all([
+    const [{ data: queue }, { data: pendentes }, { data: state }, { data: profile }, { data: reviews }, { data: portfolio }] = await Promise.all([
       supabase.from("chefe_queue").select("*").order("position").order("added_at"),
       supabase.from("chefe_pendentes").select("*").order("created_at"),
       supabase.from("chefe_state").select("*").eq("id", 1).maybeSingle(),
+      supabase.from("chefe_profile").select("*").eq("id", 1).maybeSingle(),
+      supabase.from("chefe_reviews").select("*").order("position").order("created_at"),
+      supabase.from("chefe_portfolio").select("*").order("position").order("created_at"),
     ]);
     set({
       queue: (queue ?? []).map((r) => mapQueue(r as QueueRow)),
@@ -135,6 +179,27 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       extraMinutes: state?.extra_minutes ?? 0,
       stage: (state?.stage as Stage) ?? 1,
       currentClientId: state?.current_client_id ?? null,
+      profile: {
+        username: profile?.username ?? "@chefe.oficial",
+        bio: profile?.bio ?? "Barbeiro · Cortes autorais",
+        avatarUrl: profile?.avatar_url ?? null,
+        cutsCount: profile?.cuts_count ?? "1.2k",
+        rating: profile?.rating ?? "4.9",
+      },
+      reviews: (reviews ?? []).map((r) => ({
+        id: r.id,
+        name: r.name,
+        rating: Number(r.rating),
+        comment: r.comment,
+        position: r.position,
+      })),
+      portfolio: (portfolio ?? []).map((r) => ({
+        id: r.id,
+        storagePath: r.storage_path,
+        url: r.url,
+        position: r.position,
+        createdAt: new Date(r.created_at).getTime(),
+      })),
       hydrated: true,
     });
   },
@@ -146,10 +211,72 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       .on("postgres_changes", { event: "*", schema: "public", table: "chefe_queue" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "chefe_pendentes" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "chefe_state" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_profile" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_reviews" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_portfolio" }, refresh)
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
+  },
+
+  updateProfile: async (patch) => {
+    const dbPatch: {
+      username?: string;
+      bio?: string;
+      avatar_url?: string | null;
+      cuts_count?: string;
+      rating?: string;
+      updated_at?: string;
+    } = { updated_at: new Date().toISOString() };
+    if (patch.username !== undefined) dbPatch.username = patch.username;
+    if (patch.bio !== undefined) dbPatch.bio = patch.bio;
+    if (patch.avatarUrl !== undefined) dbPatch.avatar_url = patch.avatarUrl;
+    if (patch.cutsCount !== undefined) dbPatch.cuts_count = patch.cutsCount;
+    if (patch.rating !== undefined) dbPatch.rating = patch.rating;
+    await supabase.from("chefe_profile").update(dbPatch).eq("id", 1);
+    await get().hydrate();
+  },
+
+  saveReview: async (r) => {
+    if (r.id) {
+      await supabase
+        .from("chefe_reviews")
+        .update({ name: r.name, rating: r.rating, comment: r.comment, position: r.position })
+        .eq("id", r.id);
+    } else {
+      await supabase
+        .from("chefe_reviews")
+        .insert({ name: r.name, rating: r.rating, comment: r.comment, position: r.position });
+    }
+    await get().hydrate();
+  },
+
+  deleteReview: async (id) => {
+    await supabase.from("chefe_reviews").delete().eq("id", id);
+    await get().hydrate();
+  },
+
+  uploadPortfolio: async (file) => {
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `portfolio/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("chefe-media")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+    if (upErr) throw upErr;
+    const { data: signed } = await supabase.storage
+      .from("chefe-media")
+      .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+    const url = signed?.signedUrl ?? "";
+    const nextPos = (get().portfolio[get().portfolio.length - 1]?.position ?? 0) + 1;
+    await supabase.from("chefe_portfolio").insert({ storage_path: path, url, position: nextPos });
+    await get().hydrate();
+  },
+
+  deletePortfolio: async (id, storagePath) => {
+    await supabase.storage.from("chefe-media").remove([storagePath]);
+    await supabase.from("chefe_portfolio").delete().eq("id", id);
+    await get().hydrate();
   },
 
   setStatus: async (status) => {

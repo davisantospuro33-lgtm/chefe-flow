@@ -3,11 +3,12 @@ import profileImg from "@/assets/chefe-profile.jpg";
 
 interface Props {
   size?: number;
-  src?: string;
+  src?: string | null;
   animated?: boolean;
 }
 
-export function GradientAvatar({ size = 120, src = profileImg, animated = true }: Props) {
+export function GradientAvatar({ size = 120, src, animated = true }: Props) {
+  const resolved = src || profileImg;
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <motion.div
@@ -24,7 +25,7 @@ export function GradientAvatar({ size = 120, src = profileImg, animated = true }
       />
       <div className="absolute inset-[3px] rounded-full bg-background" />
       <img
-        src={src}
+        src={resolved}
         alt="Foto do CHEFE"
         width={size}
         height={size}

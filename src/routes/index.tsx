@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
-import { LayoutGrid, Lock } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
 import { StatusBadge } from "@/components/chefe/StatusBadge";
 import { Highlights } from "@/components/chefe/Highlights";
@@ -13,6 +12,7 @@ import { Feed } from "@/components/chefe/Feed";
 import { InstallBanner } from "@/components/chefe/InstallBanner";
 import { ShareButton } from "@/components/chefe/ShareButton";
 import { ChefeAI } from "@/components/chefe/ChefeAI";
+import { Reviews } from "@/components/chefe/Reviews";
 import { useChefeStore } from "@/lib/chefe-store";
 
 export const Route = createFileRoute("/")({
@@ -23,6 +23,7 @@ function Index() {
   const totalQueue = useChefeStore(
     (s) => s.queue.length + s.presencialCount,
   );
+  const profile = useChefeStore((s) => s.profile);
   return (
     <main className="mx-auto min-h-screen w-full max-w-md px-4 pb-24 pt-6">
       <InstallBanner />
@@ -36,28 +37,22 @@ function Index() {
         </div>
         <div className="flex items-center gap-2">
           <ShareButton />
-          <Link
-            to="/painel"
-            className="inline-flex items-center gap-1.5 rounded-full glass px-3 py-1.5 text-[11px] font-semibold text-muted-foreground"
-          >
-            <Lock className="h-3 w-3" /> Painel
-          </Link>
         </div>
       </header>
 
       {/* Profile header — Instagram style */}
       <section className="flex flex-col items-center gap-3 text-center">
-        <GradientAvatar size={128} />
+        <GradientAvatar size={128} src={profile.avatarUrl} />
         <div>
-          <h2 className="text-2xl font-black tracking-tight">@chefe.oficial</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">Barbeiro · Cortes autorais</p>
+          <h2 className="text-2xl font-black tracking-tight">{profile.username}</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">{profile.bio}</p>
         </div>
         <StatusBadge />
 
         <div className="mt-2 flex w-full max-w-xs items-center justify-around rounded-2xl glass px-4 py-3">
-          <Stat value="1.2k" label="Cortes" />
+          <Stat value={profile.cutsCount} label="Cortes" />
           <Divider />
-          <Stat value="4.9" label="Nota" gradient />
+          <Stat value={profile.rating} label="Nota" gradient />
           <Divider />
           <Stat value={String(totalQueue)} label="Na fila" />
         </div>
@@ -93,6 +88,11 @@ function Index() {
       {/* Feed */}
       <div className="mt-6">
         <Feed />
+      </div>
+
+      {/* Reviews */}
+      <div className="mt-6">
+        <Reviews />
       </div>
 
       <footer className="mt-10 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
