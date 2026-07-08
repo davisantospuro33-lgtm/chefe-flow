@@ -221,13 +221,19 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   },
 
   updateProfile: async (patch) => {
-    const dbPatch: Record<string, unknown> = {};
+    const dbPatch: {
+      username?: string;
+      bio?: string;
+      avatar_url?: string | null;
+      cuts_count?: string;
+      rating?: string;
+      updated_at?: string;
+    } = { updated_at: new Date().toISOString() };
     if (patch.username !== undefined) dbPatch.username = patch.username;
     if (patch.bio !== undefined) dbPatch.bio = patch.bio;
     if (patch.avatarUrl !== undefined) dbPatch.avatar_url = patch.avatarUrl;
     if (patch.cutsCount !== undefined) dbPatch.cuts_count = patch.cutsCount;
     if (patch.rating !== undefined) dbPatch.rating = patch.rating;
-    dbPatch.updated_at = new Date().toISOString();
     await supabase.from("chefe_profile").update(dbPatch).eq("id", 1);
     await get().hydrate();
   },
