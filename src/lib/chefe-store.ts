@@ -31,6 +31,12 @@ export interface ChefeProfile {
   avatarUrl: string | null;
   cutsCount: string;
   rating: string;
+  phoneOfficial: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  servicePrice: string;
+  serviceDurationMin: number;
+  aiGreeting: string;
 }
 
 export interface Review {
@@ -45,6 +51,7 @@ export interface PortfolioItem {
   id: string;
   storagePath: string;
   url: string;
+  mediaType: "image" | "video";
   position: number;
   createdAt: number;
 }
@@ -157,6 +164,12 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
     avatarUrl: null,
     cutsCount: "1.2k",
     rating: "4.9",
+    phoneOfficial: null,
+    latitude: null,
+    longitude: null,
+    servicePrice: "R$ 25,00",
+    serviceDurationMin: 30,
+    aiGreeting: "Salve! Sou a Assistente Virtual do CHEFE. 💈 Vamos agendar seu corte rápido.",
   },
   reviews: [],
   portfolio: [],
@@ -185,6 +198,14 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
         avatarUrl: profile?.avatar_url ?? null,
         cutsCount: profile?.cuts_count ?? "1.2k",
         rating: profile?.rating ?? "4.9",
+        phoneOfficial: profile?.phone_official ?? null,
+        latitude: profile?.latitude ?? null,
+        longitude: profile?.longitude ?? null,
+        servicePrice: profile?.service_price ?? "R$ 25,00",
+        serviceDurationMin: profile?.service_duration_min ?? 30,
+        aiGreeting:
+          profile?.ai_greeting ??
+          "Salve! Sou a Assistente Virtual do CHEFE. 💈 Vamos agendar seu corte rápido.",
       },
       reviews: (reviews ?? []).map((r) => ({
         id: r.id,
@@ -197,6 +218,7 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
         id: r.id,
         storagePath: r.storage_path,
         url: r.url,
+        mediaType: (r.media_type === "video" ? "video" : "image") as "image" | "video",
         position: r.position,
         createdAt: new Date(r.created_at).getTime(),
       })),
@@ -227,6 +249,12 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       avatar_url?: string | null;
       cuts_count?: string;
       rating?: string;
+      phone_official?: string | null;
+      latitude?: number | null;
+      longitude?: number | null;
+      service_price?: string;
+      service_duration_min?: number;
+      ai_greeting?: string;
       updated_at?: string;
     } = { updated_at: new Date().toISOString() };
     if (patch.username !== undefined) dbPatch.username = patch.username;
@@ -234,6 +262,12 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
     if (patch.avatarUrl !== undefined) dbPatch.avatar_url = patch.avatarUrl;
     if (patch.cutsCount !== undefined) dbPatch.cuts_count = patch.cutsCount;
     if (patch.rating !== undefined) dbPatch.rating = patch.rating;
+    if (patch.phoneOfficial !== undefined) dbPatch.phone_official = patch.phoneOfficial;
+    if (patch.latitude !== undefined) dbPatch.latitude = patch.latitude;
+    if (patch.longitude !== undefined) dbPatch.longitude = patch.longitude;
+    if (patch.servicePrice !== undefined) dbPatch.service_price = patch.servicePrice;
+    if (patch.serviceDurationMin !== undefined) dbPatch.service_duration_min = patch.serviceDurationMin;
+    if (patch.aiGreeting !== undefined) dbPatch.ai_greeting = patch.aiGreeting;
     await supabase.from("chefe_profile").update(dbPatch).eq("id", 1);
     await get().hydrate();
   },
@@ -258,7 +292,8 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   },
 
   uploadPortfolio: async (file) => {
-    const ext = file.name.split(".").pop() || "jpg";
+    const isVideo = file.type.startsWith("video/") || /\.(mp4|mov|webm|m4v)$/i.test(file.name);
+    const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
     const path = `portfolio/${crypto.randomUUID()}.${ext}`;
     const { error: upErr } = await supabase.storage
       .from("chefe-media")
@@ -269,7 +304,12 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
     const url = signed?.signedUrl ?? "";
     const nextPos = (get().portfolio[get().portfolio.length - 1]?.position ?? 0) + 1;
-    await supabase.from("chefe_portfolio").insert({ storage_path: path, url, position: nextPos });
+    await supabase.from("chefe_portfolio").insert({
+      storage_path: path,
+      url,
+      position: nextPos,
+      media_type: isVideo ? "video" : "image",
+    });
     await get().hydrate();
   },
 
@@ -282,6 +322,19 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   setStatus: async (status) => {
     set({ status });
     await updateState({ status });
+    // Fire push broadcast
+    try {
+      const { broadcastPush } = await import("./push.functions");
+      const map: Record<ChefeStatus, { title: string; body: string }> = {
+        available: { title: "💈 CHEFE está DISPONÍVEL", body: "Bora agendar seu corte agora!" },
+        busy: { title: "✂️ CHEFE está atendendo", body: "Fila em andamento." },
+        break: { title: "☕ CHEFE em pausa", body: "Volta logo. Fica ligado!" },
+        closed: { title: "🏠 CHEFE fechou", body: "Nos vemos na próxima." },
+      };
+      await broadcastPush({ data: { ...map[status], url: "/" } });
+    } catch (err) {
+      console.warn("push failed", err);
+    }
   },
 
   addClient: async (name, phone) => {
