@@ -77,11 +77,12 @@ export function ChefeAI() {
         setDados((d) => ({ ...d, nome: v }));
         push({
           sender: "ia",
-          text: `Prazer, ${v.split(" ")[0]}! Qual seu WhatsApp com DDD para contato?`,
+          text: `Prazer, ${v.split(" ")[0]}! Se quiser, deixe um telefone/WhatsApp para contato — ou digite "pular" se não tiver.`,
         });
         setStep(1);
       } else if (step === 1) {
-        setDados((d) => ({ ...d, telefone: v }));
+        const phone = v.toLowerCase() === "pular" ? "" : v;
+        setDados((d) => ({ ...d, telefone: phone }));
         push({
           sender: "ia",
           text:
