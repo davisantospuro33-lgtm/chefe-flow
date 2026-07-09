@@ -39,7 +39,10 @@ export const configAssistantChat = createServerFn({ method: "POST" })
             if (v !== null && v !== undefined) patch[k] = v;
           }
           if (Object.keys(patch).length === 1) return { ok: true, msg: "nenhum campo alterado" };
-          const { error } = await supabaseAdmin.from("chefe_profile").update(patch).eq("id", 1);
+          const { error } = await supabaseAdmin
+            .from("chefe_profile")
+            .update(patch as never)
+            .eq("id", 1);
           if (error) return { ok: false, error: error.message };
           changes.push(`Perfil atualizado: ${Object.keys(patch).filter((k) => k !== "updated_at").join(", ")}`);
           return { ok: true };
