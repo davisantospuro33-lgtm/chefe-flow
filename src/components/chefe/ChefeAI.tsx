@@ -3,10 +3,7 @@ import { motion } from "framer-motion";
 import { Sparkles, Send } from "lucide-react";
 import { useChefeStore } from "@/lib/chefe-store";
 import { toast } from "sonner";
-
-// Número para receber a notificação de nova solicitação via WhatsApp.
-// Substitua pelo número real do CHEFE (formato internacional, só dígitos).
-const TELEFONE_CHEFE = "5511999999999";
+import { subscribeToPush } from "@/lib/push-client";
 
 type Msg = {
   sender: "ia" | "user";
@@ -24,6 +21,7 @@ type Dados = {
 
 export function ChefeAI() {
   const addSolicitacao = useChefeStore((s) => s.addSolicitacao);
+  const greeting = useChefeStore((s) => s.profile.aiGreeting);
   const [step, setStep] = useState(0);
   const [input, setInput] = useState("");
   const [dados, setDados] = useState<Dados>({
@@ -34,12 +32,15 @@ export function ChefeAI() {
     qtd: 1,
   });
   const [messages, setMessages] = useState<Msg[]>([
-    {
-      sender: "ia",
-      text:
-        "Salve! Sou a Assistente Virtual do CHEFE. 💈 Vamos agendar seu corte rápido. Qual é o seu nome completo?",
-    },
+    { sender: "ia", text: `${greeting} Qual é o seu nome completo?` },
   ]);
+  useEffect(() => {
+    setMessages((m) =>
+      m.length === 1 && m[0].sender === "ia"
+        ? [{ sender: "ia", text: `${greeting} Qual é o seu nome completo?` }]
+        : m,
+    );
+  }, [greeting]);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -53,17 +54,16 @@ export function ChefeAI() {
   function finalize(final: Dados) {
     addSolicitacao({
       name: final.nome,
-      phone: final.telefone,
+      phone: final.telefone || "",
       referencia: final.referencia,
       perfil: final.perfil,
       qtd: final.qtd,
     });
-    const msgWhats = encodeURIComponent(
-      `💈 [CHEFE AI]: Nova solicitação de ${final.nome} (${final.qtd} corte${final.qtd > 1 ? "s" : ""}). Confirme no painel.`,
-    );
-    const url = `https://api.whatsapp.com/send?phone=${TELEFONE_CHEFE}&text=${msgWhats}`;
-    window.open(url, "_blank", "noopener,noreferrer");
     toast.success("Solicitação enviada ao CHEFE!");
+    // Pede permissão de push assim que o cliente entra na fila
+    subscribeToPush(final.nome).then((ok) => {
+      if (ok) toast("🔔 Você será avisado quando o status mudar");
+    });
   }
 
   function handleText(textValue: string) {
@@ -77,11 +77,12 @@ export function ChefeAI() {
         setDados((d) => ({ ...d, nome: v }));
         push({
           sender: "ia",
-          text: `Prazer, ${v.split(" ")[0]}! Qual seu WhatsApp com DDD para contato?`,
+          text: `Prazer, ${v.split(" ")[0]}! Se quiser, deixe um telefone/WhatsApp para contato — ou digite "pular" se não tiver.`,
         });
         setStep(1);
       } else if (step === 1) {
-        setDados((d) => ({ ...d, telefone: v }));
+        const phone = v.toLowerCase() === "pular" ? "" : v;
+        setDados((d) => ({ ...d, telefone: phone }));
         push({
           sender: "ia",
           text:

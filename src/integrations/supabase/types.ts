@@ -48,6 +48,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          media_type: string
           position: number
           storage_path: string
           url: string
@@ -55,6 +56,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          media_type?: string
           position?: number
           storage_path: string
           url: string
@@ -62,6 +64,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          media_type?: string
           position?: number
           storage_path?: string
           url?: string
@@ -70,31 +73,76 @@ export type Database = {
       }
       chefe_profile: {
         Row: {
+          ai_greeting: string
           avatar_url: string | null
           bio: string
           cuts_count: string
           id: number
+          latitude: number | null
+          longitude: number | null
+          phone_official: string | null
           rating: string
+          service_duration_min: number
+          service_price: string
           updated_at: string
           username: string
         }
         Insert: {
+          ai_greeting?: string
           avatar_url?: string | null
           bio?: string
           cuts_count?: string
           id?: number
+          latitude?: number | null
+          longitude?: number | null
+          phone_official?: string | null
           rating?: string
+          service_duration_min?: number
+          service_price?: string
           updated_at?: string
           username?: string
         }
         Update: {
+          ai_greeting?: string
           avatar_url?: string | null
           bio?: string
           cuts_count?: string
           id?: number
+          latitude?: number | null
+          longitude?: number | null
+          phone_official?: string | null
           rating?: string
+          service_duration_min?: number
+          service_price?: string
           updated_at?: string
           username?: string
+        }
+        Relationships: []
+      }
+      chefe_push_subscriptions: {
+        Row: {
+          auth: string
+          client_name: string | null
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+        }
+        Insert: {
+          auth: string
+          client_name?: string | null
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+        }
+        Update: {
+          auth?: string
+          client_name?: string | null
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
         }
         Relationships: []
       }

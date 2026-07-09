@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, Star, ImagePlus, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, Star, ImagePlus, Trash2, Upload, Cpu, Film } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useChefeStore, statusMeta, type ChefeStatus, type Review } from "@/lib/chefe-store";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
 import { ShareButton } from "@/components/chefe/ShareButton";
 import { PinLock } from "@/components/chefe/PinLock";
+import { ConfigAI } from "@/components/chefe/ConfigAI";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/painel")({
@@ -28,7 +29,7 @@ function PainelGate() {
 }
 
 const statuses: ChefeStatus[] = ["available", "busy", "break", "closed"];
-type Tab = "operacao" | "perfil" | "portfolio";
+type Tab = "operacao" | "perfil" | "portfolio" | "ia";
 
 function Painel() {
   const [tab, setTab] = useState<Tab>("operacao");
@@ -79,12 +80,13 @@ function Painel() {
       </div>
 
       {/* Tabs */}
-      <nav className="mb-4 grid grid-cols-3 gap-1 rounded-2xl glass p-1">
+      <nav className="mb-4 grid grid-cols-4 gap-1 rounded-2xl glass p-1">
         {(
           [
             { id: "operacao", label: "Operação", icon: Play },
-            { id: "perfil", label: "Editar App", icon: User },
+            { id: "perfil", label: "App", icon: User },
             { id: "portfolio", label: "Portfólio", icon: ImagePlus },
+            { id: "ia", label: "IA", icon: Cpu },
           ] as const
         ).map((t) => {
           const active = tab === t.id;
@@ -93,13 +95,13 @@ function Painel() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-[11px] font-bold transition ${
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl px-1 py-2.5 text-[10px] font-bold transition ${
                 active
                   ? "bg-gradient-ig text-white shadow-lg"
                   : "text-muted-foreground"
               }`}
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-4 w-4" />
               {t.label}
             </button>
           );
@@ -108,6 +110,7 @@ function Painel() {
 
       {tab === "perfil" && <EditorPerfil />}
       {tab === "portfolio" && <EditorPortfolio />}
+      {tab === "ia" && <ConfigAI />}
       {tab !== "operacao" ? null : (
         <>
       {/* Share link block */}
@@ -473,6 +476,92 @@ function EditorPerfil() {
             />
           </Field>
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Preço do serviço">
+            <input
+              value={form.servicePrice}
+              onChange={(e) => setForm({ ...form, servicePrice: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Duração (min)">
+            <input
+              type="number"
+              value={form.serviceDurationMin}
+              onChange={(e) => setForm({ ...form, serviceDurationMin: Number(e.target.value) || 30 })}
+              className={inputCls}
+            />
+          </Field>
+        </div>
+        <Field label="Telefone / WhatsApp oficial">
+          <input
+            placeholder="+55 11 99999-9999"
+            value={form.phoneOfficial ?? ""}
+            onChange={(e) => setForm({ ...form, phoneOfficial: e.target.value || null })}
+            className={inputCls}
+          />
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Latitude do salão">
+            <input
+              type="number"
+              step="any"
+              placeholder="-23.5505"
+              value={form.latitude ?? ""}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  latitude: e.target.value === "" ? null : Number(e.target.value),
+                })
+              }
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Longitude do salão">
+            <input
+              type="number"
+              step="any"
+              placeholder="-46.6333"
+              value={form.longitude ?? ""}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  longitude: e.target.value === "" ? null : Number(e.target.value),
+                })
+              }
+              className={inputCls}
+            />
+          </Field>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (!navigator.geolocation) return toast.error("Geolocalização indisponível");
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                setForm((f) => ({
+                  ...f,
+                  latitude: pos.coords.latitude,
+                  longitude: pos.coords.longitude,
+                }));
+                toast.success("Coordenadas capturadas");
+              },
+              () => toast.error("Não foi possível obter localização"),
+              { enableHighAccuracy: true },
+            );
+          }}
+          className="mb-3 w-full rounded-xl bg-white/[0.04] px-3 py-2 text-xs font-bold text-sky-300 ring-1 ring-sky-400/30"
+        >
+          📍 Usar minha localização atual
+        </button>
+        <Field label="Saudação da IA de triagem">
+          <textarea
+            value={form.aiGreeting}
+            onChange={(e) => setForm({ ...form, aiGreeting: e.target.value })}
+            rows={2}
+            className={inputCls}
+          />
+        </Field>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={onSaveProfile}
@@ -622,12 +711,12 @@ function EditorPortfolio() {
     <div className="space-y-4">
       <section className="glass rounded-3xl p-5">
         <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          Adicionar fotos do portfólio
+          Adicionar fotos e vídeos
         </p>
         <input
           ref={input}
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           multiple
           onChange={onFiles}
           className="hidden"
@@ -642,7 +731,7 @@ function EditorPortfolio() {
           {busy ? "Enviando..." : "Enviar da galeria"}
         </motion.button>
         <p className="mt-2 text-center text-[11px] text-muted-foreground">
-          Selecione uma ou várias fotos direto do seu celular
+          Fotos (jpg, png) ou vídeos (mp4, mov) — direto do celular
         </p>
       </section>
 
@@ -658,17 +747,33 @@ function EditorPortfolio() {
           <div className="grid grid-cols-3 gap-1.5">
             {portfolio.map((p) => (
               <div key={p.id} className="group relative aspect-square overflow-hidden rounded-lg">
-                <img
-                  src={p.url}
-                  alt="Portfolio"
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
+                {p.mediaType === "video" ? (
+                  <video
+                    src={p.url}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={p.url}
+                    alt="Portfolio"
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                )}
+                {p.mediaType === "video" && (
+                  <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-white">
+                    <Film className="inline h-3 w-3" />
+                  </span>
+                )}
                 <button
                   onClick={async () => {
-                    if (!confirm("Excluir esta foto?")) return;
+                    if (!confirm("Excluir esta mídia?")) return;
                     await deletePortfolio(p.id, p.storagePath);
-                    toast("Foto excluída");
+                    toast("Mídia excluída");
                   }}
                   className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-rose-500/90 py-1 text-[10px] font-bold text-white opacity-0 transition-opacity group-active:opacity-100"
                 >

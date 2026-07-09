@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "sonner";
 import { useChefeStore } from "@/lib/chefe-store";
+import { ensureServiceWorker } from "@/lib/push-client";
 
 function NotFoundComponent() {
   return (
@@ -139,6 +140,7 @@ function RootComponent() {
     const store = useChefeStore.getState();
     store.hydrate();
     const unsub = store.subscribe();
+    ensureServiceWorker().catch(() => {});
     return unsub;
   }, []);
 
