@@ -476,6 +476,92 @@ function EditorPerfil() {
             />
           </Field>
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Preço do serviço">
+            <input
+              value={form.servicePrice}
+              onChange={(e) => setForm({ ...form, servicePrice: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Duração (min)">
+            <input
+              type="number"
+              value={form.serviceDurationMin}
+              onChange={(e) => setForm({ ...form, serviceDurationMin: Number(e.target.value) || 30 })}
+              className={inputCls}
+            />
+          </Field>
+        </div>
+        <Field label="Telefone / WhatsApp oficial">
+          <input
+            placeholder="+55 11 99999-9999"
+            value={form.phoneOfficial ?? ""}
+            onChange={(e) => setForm({ ...form, phoneOfficial: e.target.value || null })}
+            className={inputCls}
+          />
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Latitude do salão">
+            <input
+              type="number"
+              step="any"
+              placeholder="-23.5505"
+              value={form.latitude ?? ""}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  latitude: e.target.value === "" ? null : Number(e.target.value),
+                })
+              }
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Longitude do salão">
+            <input
+              type="number"
+              step="any"
+              placeholder="-46.6333"
+              value={form.longitude ?? ""}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  longitude: e.target.value === "" ? null : Number(e.target.value),
+                })
+              }
+              className={inputCls}
+            />
+          </Field>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (!navigator.geolocation) return toast.error("Geolocalização indisponível");
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                setForm((f) => ({
+                  ...f,
+                  latitude: pos.coords.latitude,
+                  longitude: pos.coords.longitude,
+                }));
+                toast.success("Coordenadas capturadas");
+              },
+              () => toast.error("Não foi possível obter localização"),
+              { enableHighAccuracy: true },
+            );
+          }}
+          className="mb-3 w-full rounded-xl bg-white/[0.04] px-3 py-2 text-xs font-bold text-sky-300 ring-1 ring-sky-400/30"
+        >
+          📍 Usar minha localização atual
+        </button>
+        <Field label="Saudação da IA de triagem">
+          <textarea
+            value={form.aiGreeting}
+            onChange={(e) => setForm({ ...form, aiGreeting: e.target.value })}
+            rows={2}
+            className={inputCls}
+          />
+        </Field>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={onSaveProfile}
