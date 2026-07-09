@@ -711,12 +711,12 @@ function EditorPortfolio() {
     <div className="space-y-4">
       <section className="glass rounded-3xl p-5">
         <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          Adicionar fotos do portfólio
+          Adicionar fotos e vídeos
         </p>
         <input
           ref={input}
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           multiple
           onChange={onFiles}
           className="hidden"
@@ -731,7 +731,7 @@ function EditorPortfolio() {
           {busy ? "Enviando..." : "Enviar da galeria"}
         </motion.button>
         <p className="mt-2 text-center text-[11px] text-muted-foreground">
-          Selecione uma ou várias fotos direto do seu celular
+          Fotos (jpg, png) ou vídeos (mp4, mov) — direto do celular
         </p>
       </section>
 
@@ -747,17 +747,33 @@ function EditorPortfolio() {
           <div className="grid grid-cols-3 gap-1.5">
             {portfolio.map((p) => (
               <div key={p.id} className="group relative aspect-square overflow-hidden rounded-lg">
-                <img
-                  src={p.url}
-                  alt="Portfolio"
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
+                {p.mediaType === "video" ? (
+                  <video
+                    src={p.url}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={p.url}
+                    alt="Portfolio"
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                )}
+                {p.mediaType === "video" && (
+                  <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-white">
+                    <Film className="inline h-3 w-3" />
+                  </span>
+                )}
                 <button
                   onClick={async () => {
-                    if (!confirm("Excluir esta foto?")) return;
+                    if (!confirm("Excluir esta mídia?")) return;
                     await deletePortfolio(p.id, p.storagePath);
-                    toast("Foto excluída");
+                    toast("Mídia excluída");
                   }}
                   className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-rose-500/90 py-1 text-[10px] font-bold text-white opacity-0 transition-opacity group-active:opacity-100"
                 >
