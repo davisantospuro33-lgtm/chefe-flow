@@ -12,4 +12,14 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Replit's preview proxy needs the dev server on 0.0.0.0:5000 (the Lovable sandbox
+  // default of "::" (8080) isn't supported in this container — IPv6 listen fails).
+  vite: {
+    server: {
+      host: "0.0.0.0",
+      port: 5000,
+      strictPort: true,
+      allowedHosts: true,
+    },
+  },
 });

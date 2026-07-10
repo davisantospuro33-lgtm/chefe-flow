@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Send, 
   Cpu, 
@@ -18,8 +18,8 @@ import {
   Database,
   Smartphone
 } from "lucide-react";
-import { useChefeStore } from "../lib/chefe-store";
-import { configAssistantChat, ChatMessage } from "../lib/config-ai.functions";
+import { useChefeStore } from "@/lib/chefe-store";
+import { configAssistantChat, type ChatMessage } from "@/lib/config-ai.functions";
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 

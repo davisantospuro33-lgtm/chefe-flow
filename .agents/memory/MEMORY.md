@@ -1,0 +1,1 @@
+- [Lovable vite-tanstack-config on Replit](lovable-vite-dev-host-port.md) — dev server hardcodes host "::" port 8080, breaks in Replit container; override via vite.server in defineConfig.

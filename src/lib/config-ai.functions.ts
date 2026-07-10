@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 
 type ChatMsg = { role: "user" | "assistant" | "system"; content: string };
+export type ChatMessage = ChatMsg;
 
 export const configAssistantChat = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => input as { messages: ChatMsg[] })

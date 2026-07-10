@@ -71,6 +71,22 @@ interface ChefeState {
   hydrated: boolean;
   dailyInstruction: string;
   dailyInstructionPolite: string;
+
+  // --- Painel ConfigAI: telefone/endereço fixo do estabelecimento + rastreamento do cliente ---
+  telefone: string;
+  endereco: string;
+  latitude: number;
+  longitude: number;
+  cliente_latitude: number | null;
+  cliente_longitude: number | null;
+  isTracking: boolean;
+  simulating: boolean;
+  setTelefone: (telefone: string) => Promise<boolean>;
+  setLocalizacao: (endereco: string, lat: number, lon: number) => Promise<boolean>;
+  updateClienteCoords: (lat: number | null, lon: number | null) => void;
+  setTrackingState: (tracking: boolean) => void;
+  setSimulating: (simulating: boolean) => void;
+
   setDailyInstruction: (raw: string, polite: string) => Promise<void>;
   setStatus: (s: ChefeStatus) => Promise<void>;
   addClient: (name: string, phone?: string) => Promise<void>;
@@ -180,6 +196,43 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   dailyInstruction: "",
   dailyInstructionPolite: "",
 
+  telefone: "",
+  endereco: "",
+  latitude: -23.5505,
+  longitude: -46.6333,
+  cliente_latitude: null,
+  cliente_longitude: null,
+  isTracking: false,
+  simulating: false,
+
+  setTelefone: async (telefone) => {
+    set({ telefone });
+    const { error } = await supabase
+      .from("chefe_profile")
+      .update({ phone_official: telefone, updated_at: new Date().toISOString() })
+      .eq("id", 1);
+    if (error) return false;
+    await get().hydrate();
+    return true;
+  },
+
+  setLocalizacao: async (endereco, lat, lon) => {
+    set({ endereco, latitude: lat, longitude: lon });
+    const { error } = await supabase
+      .from("chefe_profile")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update({ endereco, latitude: lat, longitude: lon, updated_at: new Date().toISOString() } as any)
+      .eq("id", 1);
+    if (error) return false;
+    await get().hydrate();
+    return true;
+  },
+
+  // Coordenadas do cliente são apenas estado reativo local (GPS real ou simulador) — não persistidas no banco.
+  updateClienteCoords: (lat, lon) => set({ cliente_latitude: lat, cliente_longitude: lon }),
+  setTrackingState: (tracking) => set({ isTracking: tracking }),
+  setSimulating: (simulating) => set({ simulating }),
+
   setDailyInstruction: async (raw, polite) => {
     set({ dailyInstruction: raw, dailyInstructionPolite: polite });
     await supabase
@@ -208,6 +261,10 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       currentClientId: state?.current_client_id ?? null,
       dailyInstruction: ((state as unknown as { daily_instruction?: string })?.daily_instruction) ?? "",
       dailyInstructionPolite: ((state as unknown as { daily_instruction_polite?: string })?.daily_instruction_polite) ?? "",
+      telefone: profile?.phone_official ?? "",
+      endereco: (profile as unknown as { endereco?: string })?.endereco ?? "",
+      latitude: profile?.latitude ?? get().latitude,
+      longitude: profile?.longitude ?? get().longitude,
       profile: {
         username: profile?.username ?? "@chefe.oficial",
         bio: profile?.bio ?? "Barbeiro · Cortes autorais",
