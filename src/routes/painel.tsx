@@ -552,24 +552,20 @@ function EditorPerfil() {
             />
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Preço do serviço">
-            <input
-              value={form.servicePrice}
-              onChange={(e) => setForm({ ...form, servicePrice: e.target.value })}
-              className={inputCls}
-            />
-          </Field>
-          <Field label="Duração (min)">
-            <input
-              type="number"
-              value={form.serviceDurationMin}
-              onChange={(e) => setForm({ ...form, serviceDurationMin: Number(e.target.value) || 30 })}
-              className={inputCls}
-            />
-          </Field>
-        </div>
-        <Field label="Telefone / WhatsApp oficial">
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onSaveProfile}
+          className="mt-2 w-full rounded-2xl bg-gradient-ig px-4 py-3 text-sm font-black text-white"
+        >
+          Salvar perfil
+        </motion.button>
+      </section>
+
+      <section className="glass rounded-3xl p-5">
+        <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-sky-300">
+          📞 Contato & Localização
+        </p>
+        <Field label="Número de Telefone Oficial">
           <input
             placeholder="+55 11 99999-9999"
             value={form.phoneOfficial ?? ""}
@@ -578,7 +574,7 @@ function EditorPerfil() {
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Latitude do salão">
+          <Field label="Latitude atual">
             <input
               type="number"
               step="any"
@@ -593,7 +589,7 @@ function EditorPerfil() {
               className={inputCls}
             />
           </Field>
-          <Field label="Longitude do salão">
+          <Field label="Longitude atual">
             <input
               type="number"
               step="any"
@@ -614,36 +610,83 @@ function EditorPerfil() {
           onClick={() => {
             if (!navigator.geolocation) return toast.error("Geolocalização indisponível");
             navigator.geolocation.getCurrentPosition(
-              (pos) => {
-                setForm((f) => ({
-                  ...f,
-                  latitude: pos.coords.latitude,
-                  longitude: pos.coords.longitude,
-                }));
-                toast.success("Coordenadas capturadas");
+              async (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                setForm((f) => ({ ...f, latitude: lat, longitude: lng }));
+                await updateProfile({ latitude: lat, longitude: lng });
+                toast.success("📍 Localização capturada e salva");
               },
               () => toast.error("Não foi possível obter localização"),
               { enableHighAccuracy: true },
             );
           }}
-          className="mb-3 w-full rounded-xl bg-white/[0.04] px-3 py-2 text-xs font-bold text-sky-300 ring-1 ring-sky-400/30"
+          className="mt-1 w-full rounded-xl bg-sky-500/15 px-3 py-3 text-xs font-black uppercase tracking-widest text-sky-300 ring-1 ring-sky-400/40 hover:bg-sky-500/25"
         >
           📍 Usar minha localização atual
         </button>
-        <Field label="Saudação da IA de triagem">
-          <textarea
-            value={form.aiGreeting}
-            onChange={(e) => setForm({ ...form, aiGreeting: e.target.value })}
-            rows={2}
-            className={inputCls}
-          />
-        </Field>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onSaveProfile}
+          className="mt-3 w-full rounded-2xl bg-gradient-ig px-4 py-3 text-sm font-black text-white"
+        >
+          Salvar contato & localização
+        </motion.button>
+      </section>
+
+      <section className="glass rounded-3xl p-5">
+        <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-emerald-300">
+          💈 Serviço
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Preço Base do Serviço">
+            <input
+              value={form.servicePrice}
+              onChange={(e) => setForm({ ...form, servicePrice: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Duração Média (min)">
+            <input
+              type="number"
+              value={form.serviceDurationMin}
+              onChange={(e) =>
+                setForm({ ...form, serviceDurationMin: Number(e.target.value) || 30 })
+              }
+              className={inputCls}
+            />
+          </Field>
+        </div>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={onSaveProfile}
           className="mt-2 w-full rounded-2xl bg-gradient-ig px-4 py-3 text-sm font-black text-white"
         >
-          Salvar perfil
+          Salvar serviço
+        </motion.button>
+      </section>
+
+      <section className="glass rounded-3xl p-5">
+        <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-fuchsia-300">
+          🤖 IA Atendente — Saudação Inicial
+        </p>
+        <Field label="Saudação Inicial da IA">
+          <textarea
+            value={form.aiGreeting}
+            onChange={(e) => setForm({ ...form, aiGreeting: e.target.value })}
+            rows={3}
+            className={inputCls}
+          />
+        </Field>
+        <p className="mb-2 text-[10px] text-muted-foreground">
+          Esta é a primeira frase que a IA Atendente fala com o cliente no chat público.
+        </p>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onSaveProfile}
+          className="mt-2 w-full rounded-2xl bg-gradient-ig px-4 py-3 text-sm font-black text-white"
+        >
+          Salvar saudação
         </motion.button>
       </section>
 
