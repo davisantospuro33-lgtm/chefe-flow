@@ -13,7 +13,7 @@ export function ConfigAI() {
     {
       role: "assistant",
       content:
-        "🛠️ Central de Engenharia da IA ativa. Diga o que quer mudar no app (ex: 'muda o preço pra R$ 30', 'atualiza minha bio', 'salva minha localização em -23.55, -46.63', 'adiciona depoimento do João 5 estrelas: cortou top'). Eu aplico direto no site.",
+        "🥋 CHEFE AI · MESTRE FAIXA PRETA online. Poder total sobre o banco de dados via SQL. Me diga o que quer construir ou alterar (ex: 'cria uma tabela pra clientes de manicure com nome, telefone e data', 'muda o preço pra R$ 30', 'lista todas as tabelas', 'expande o app pra receber lava-rápido'). Eu executo direto no Postgres.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -66,10 +66,10 @@ export function ConfigAI() {
           </div>
           <div>
             <p className="text-[11px] font-black uppercase tracking-widest text-fuchsia-300">
-              Central de Engenharia · IA
+              CHEFE AI · Mestre Faixa Preta
             </p>
             <p className="text-[10px] text-muted-foreground">
-              Comande em português. Eu aplico no banco em tempo real.
+              SQL, schema, expansão de verticais. Comando total do banco.
             </p>
           </div>
         </div>

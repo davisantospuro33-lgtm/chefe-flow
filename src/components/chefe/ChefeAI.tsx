@@ -22,6 +22,7 @@ type Dados = {
 export function ChefeAI() {
   const addSolicitacao = useChefeStore((s) => s.addSolicitacao);
   const greeting = useChefeStore((s) => s.profile.aiGreeting);
+  const dailyPolite = useChefeStore((s) => s.dailyInstructionPolite);
   const [step, setStep] = useState(0);
   const [input, setInput] = useState("");
   const [dados, setDados] = useState<Dados>({
@@ -31,16 +32,17 @@ export function ChefeAI() {
     perfil: "",
     qtd: 1,
   });
-  const [messages, setMessages] = useState<Msg[]>([
-    { sender: "ia", text: `${greeting} Qual é o seu nome completo?` },
-  ]);
+  const initial = (): Msg[] => {
+    const base: Msg[] = [];
+    if (dailyPolite) base.push({ sender: "ia", text: dailyPolite });
+    base.push({ sender: "ia", text: `${greeting} Qual é o seu nome completo?` });
+    return base;
+  };
+  const [messages, setMessages] = useState<Msg[]>(initial);
   useEffect(() => {
-    setMessages((m) =>
-      m.length === 1 && m[0].sender === "ia"
-        ? [{ sender: "ia", text: `${greeting} Qual é o seu nome completo?` }]
-        : m,
-    );
-  }, [greeting]);
+    setMessages((m) => (step === 0 ? initial() : m));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [greeting, dailyPolite]);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
