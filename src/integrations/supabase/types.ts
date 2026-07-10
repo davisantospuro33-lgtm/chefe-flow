@@ -209,6 +209,8 @@ export type Database = {
       chefe_state: {
         Row: {
           current_client_id: string | null
+          daily_instruction: string | null
+          daily_instruction_polite: string | null
           extra_minutes: number
           id: number
           presencial_count: number
@@ -218,6 +220,8 @@ export type Database = {
         }
         Insert: {
           current_client_id?: string | null
+          daily_instruction?: string | null
+          daily_instruction_polite?: string | null
           extra_minutes?: number
           id?: number
           presencial_count?: number
@@ -227,6 +231,8 @@ export type Database = {
         }
         Update: {
           current_client_id?: string | null
+          daily_instruction?: string | null
+          daily_instruction_polite?: string | null
           extra_minutes?: number
           id?: number
           presencial_count?: number
@@ -241,7 +247,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      chefe_admin_exec_sql: { Args: { query: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

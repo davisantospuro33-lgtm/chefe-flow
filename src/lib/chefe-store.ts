@@ -69,6 +69,9 @@ interface ChefeState {
   reviews: Review[];
   portfolio: PortfolioItem[];
   hydrated: boolean;
+  dailyInstruction: string;
+  dailyInstructionPolite: string;
+  setDailyInstruction: (raw: string, polite: string) => Promise<void>;
   setStatus: (s: ChefeStatus) => Promise<void>;
   addClient: (name: string, phone?: string) => Promise<void>;
   removeClient: (id: string) => Promise<void>;
@@ -174,6 +177,17 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   reviews: [],
   portfolio: [],
   hydrated: false,
+  dailyInstruction: "",
+  dailyInstructionPolite: "",
+
+  setDailyInstruction: async (raw, polite) => {
+    set({ dailyInstruction: raw, dailyInstructionPolite: polite });
+    await supabase
+      .from("chefe_state")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update({ daily_instruction: raw, daily_instruction_polite: polite } as any)
+      .eq("id", 1);
+  },
 
   hydrate: async () => {
     const [{ data: queue }, { data: pendentes }, { data: state }, { data: profile }, { data: reviews }, { data: portfolio }] = await Promise.all([
@@ -192,6 +206,8 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       extraMinutes: state?.extra_minutes ?? 0,
       stage: (state?.stage as Stage) ?? 1,
       currentClientId: state?.current_client_id ?? null,
+      dailyInstruction: ((state as unknown as { daily_instruction?: string })?.daily_instruction) ?? "",
+      dailyInstructionPolite: ((state as unknown as { daily_instruction_polite?: string })?.daily_instruction_polite) ?? "",
       profile: {
         username: profile?.username ?? "@chefe.oficial",
         bio: profile?.bio ?? "Barbeiro · Cortes autorais",
