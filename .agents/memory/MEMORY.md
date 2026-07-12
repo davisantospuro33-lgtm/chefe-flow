@@ -1,2 +1,3 @@
 - [Lovable vite-tanstack-config on Replit](lovable-vite-dev-host-port.md) — dev server hardcodes host "::" port 8080, breaks in Replit container; override via vite.server in defineConfig.
 - [TanStack Start server helpers](tanstack-start-server-helpers.md) — this project's @tanstack/react-start version has no getWebRequest export; use getCookie/setCookie/getRequestIP from @tanstack/react-start/server instead.
+- [Replit .replit ports mapping bare-domain 502](replit-ports-bare-domain-502.md) — bare https://<dev-domain>/ always routes via externalPort 80; if it points at a stale local port, you get 502 even though the app is healthy on its real port.
