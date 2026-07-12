@@ -1,1 +1,2 @@
 - [Lovable vite-tanstack-config on Replit](lovable-vite-dev-host-port.md) — dev server hardcodes host "::" port 8080, breaks in Replit container; override via vite.server in defineConfig.
+- [TanStack Start server helpers](tanstack-start-server-helpers.md) — this project's @tanstack/react-start version has no getWebRequest export; use getCookie/setCookie/getRequestIP from @tanstack/react-start/server instead.

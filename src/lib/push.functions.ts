@@ -6,6 +6,9 @@ export const broadcastPush = createServerFn({ method: "POST" })
       input as { title: string; body: string; url?: string; requireInteraction?: boolean },
   )
   .handler(async ({ data }) => {
+    const { requireChefeSession } = await import("./chefe-auth.server");
+    requireChefeSession();
+
     const pub = process.env.VAPID_PUBLIC_KEY;
     const priv = process.env.VAPID_PRIVATE_KEY;
     const subject = process.env.VAPID_SUBJECT || "mailto:contato@chefe.app";

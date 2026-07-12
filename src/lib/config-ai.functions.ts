@@ -9,6 +9,9 @@ export type ChatMessage = ChatMsg;
 export const configAssistantChat = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => input as { messages: ChatMsg[] })
   .handler(async ({ data }) => {
+    const { requireChefeSession } = await import("./chefe-auth.server");
+    requireChefeSession();
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("LOVABLE_API_KEY missing");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

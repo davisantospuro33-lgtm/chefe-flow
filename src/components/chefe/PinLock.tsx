@@ -1,9 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Lock, Delete } from "lucide-react";
-
-const PIN = "1993";
-const STORAGE_KEY = "chefe.painel.unlocked";
+import { chefeLogin, chefeCheckSession } from "@/lib/chefe-auth.functions";
 
 interface Props {
   children: ReactNode;
@@ -14,33 +12,39 @@ export function PinLock({ children }: Props) {
   const [ready, setReady] = useState(false);
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
-    try {
-      if (localStorage.getItem(STORAGE_KEY) === "1") setUnlocked(true);
-    } catch {
-      // ignore
-    }
-    setReady(true);
+    chefeCheckSession()
+      .then((res) => setUnlocked(res.authenticated))
+      .catch(() => setUnlocked(false))
+      .finally(() => setReady(true));
   }, []);
 
   useEffect(() => {
-    if (pin.length !== 4) return;
-    if (pin === PIN) {
-      try {
-        localStorage.setItem(STORAGE_KEY, "1");
-      } catch {
-        // ignore
-      }
-      setUnlocked(true);
-    } else {
-      setError(true);
-      setTimeout(() => {
-        setPin("");
-        setError(false);
-      }, 600);
-    }
-  }, [pin]);
+    if (pin.length !== 4 || checking) return;
+    setChecking(true);
+    chefeLogin({ data: { pin } })
+      .then((res) => {
+        if (res.ok) {
+          setUnlocked(true);
+        } else {
+          setError(true);
+          setTimeout(() => {
+            setPin("");
+            setError(false);
+          }, 600);
+        }
+      })
+      .catch(() => {
+        setError(true);
+        setTimeout(() => {
+          setPin("");
+          setError(false);
+        }, 600);
+      })
+      .finally(() => setChecking(false));
+  }, [pin, checking]);
 
   if (!ready) return null;
   if (unlocked) return <>{children}</>;

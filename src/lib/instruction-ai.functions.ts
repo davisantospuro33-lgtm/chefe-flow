@@ -5,6 +5,9 @@ import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 export const translateDailyInstruction = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => input as { raw: string })
   .handler(async ({ data }) => {
+    const { requireChefeSession } = await import("./chefe-auth.server");
+    requireChefeSession();
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("LOVABLE_API_KEY missing");
     const raw = (data.raw || "").trim();
