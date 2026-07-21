@@ -82,14 +82,14 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
 
 export function ConfigAI() {
   const store = useChefeStore();
-  const [activeTab, setActiveTab] = useState<"ai" | "mapa" | "cadastro">("mapa");
+  const [activeTab, setActiveTab] = useState<"ai" | "mapa" | "cadastro">("ai");
   
   // Chat state
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
       role: "assistant",
       content:
-        "🥋 CHEFE AI · MESTRE FAIXA PRETA online. Poder total sobre o banco de dados via SQL. Me diga o que quer construir ou alterar (ex: 'muda o preço pra R$ 30', 'cria uma tabela pra clientes de manicure', 'expande o banco para lava-rápido'). Eu executo direto no Postgres.",
+        "👊 CHEFE, este é seu canal de comando direto. Qualquer ordem que você digitar aqui vira instrução ao vivo para sua atendente virtual (que fala com seus clientes no chat público). Também posso alterar o banco em tempo real via SQL. Manda a ordem que eu executo.",
     },
   ]);
   const [chatInput, setChatInput] = useState("");
