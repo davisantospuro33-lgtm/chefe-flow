@@ -1,0 +1,2 @@
+ALTER TABLE public.chefe_profile ADD COLUMN IF NOT EXISTS endereco text NOT NULL DEFAULT '';
+UPDATE public.chefe_profile SET endereco='Rua Renato Russo, 100 - Bloco 7, AP 16 - CDHU / Jardim Santo André, Santo André - SP, CEP 09132-775', latitude=-23.68735, longitude=-46.50292, updated_at=now() WHERE id=1;
