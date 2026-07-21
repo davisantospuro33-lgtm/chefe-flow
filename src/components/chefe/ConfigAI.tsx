@@ -420,6 +420,14 @@ export function ConfigAI() {
     setChatInput("");
     setBusy(true);
     
+    // Grava a ordem AO VIVO na coluna instrucoes_do_chefe (chefe_state)
+    // para a Atendente Pública ler no próximo turno.
+    try {
+      await store.setInstrucoesDoChefe(v);
+    } catch (e) {
+      console.warn("Falha ao gravar instrucoes_do_chefe", e);
+    }
+
     try {
       const res = await configAssistantChat({
         data: { messages: next.map((m) => ({ role: m.role, content: m.content })) },
