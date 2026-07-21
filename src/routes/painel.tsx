@@ -50,12 +50,7 @@ function Painel() {
   const aceitarPendente = useChefeStore((s) => s.aceitarPendente);
   const recusarPendente = useChefeStore((s) => s.recusarPendente);
   const profile = useChefeStore((s) => s.profile);
-  const dailyInstruction = useChefeStore((s) => s.dailyInstruction);
-  const dailyInstructionPolite = useChefeStore((s) => s.dailyInstructionPolite);
-  const setDailyInstruction = useChefeStore((s) => s.setDailyInstruction);
-  const [instrRaw, setInstrRaw] = useState(dailyInstruction);
-  const [instrBusy, setInstrBusy] = useState(false);
-  useEffect(() => setInstrRaw(dailyInstruction), [dailyInstruction]);
+  const instrucoesDoChefe = useChefeStore((s) => s.instrucoesDoChefe);
 
   const current = queue[0];
 
@@ -125,74 +120,32 @@ function Painel() {
         <ShareButton variant="block" />
       </section>
 
-      {/* Instrução para a Fila do Dia — IA Atendente */}
-      <section className="mb-4 glass rounded-3xl p-5">
-        <div className="mb-2 flex items-center gap-2">
-          <Cpu className="h-4 w-4 text-sky-400" />
-          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-            Instrução para a Fila do Dia · IA Atendente
-          </p>
-        </div>
-        <p className="mb-3 text-[11px] text-muted-foreground">
-          Digite um recado rápido em linguagem natural. A IA Atendente reescreve
-          com postura profissional e mostra no início do chat do cliente.
-        </p>
-        <textarea
-          value={instrRaw}
-          onChange={(e) => setInstrRaw(e.target.value)}
-          rows={3}
-          placeholder='Ex: "Fila cheia, só quem já está agendado hoje" ou "Pausa pro almoço, volto em 40min"'
-          className={inputCls}
-        />
-        <div className="mt-2 flex gap-2">
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            disabled={instrBusy}
-            onClick={async () => {
-              setInstrBusy(true);
-              try {
-                const raw = instrRaw.trim();
-                if (!raw) {
-                  await setDailyInstruction("", "");
-                  toast("Instrução limpa");
-                } else {
-                  const { polite } = await translateDailyInstruction({ data: { raw } });
-                  await setDailyInstruction(raw, polite);
-                  toast.success("IA Atendente atualizada");
-                }
-              } catch (err) {
-                console.error(err);
-                toast.error("Erro ao processar instrução");
-              } finally {
-                setInstrBusy(false);
-              }
-            }}
-            className="flex-1 rounded-xl bg-gradient-ig px-3 py-2.5 text-xs font-black text-white disabled:opacity-50"
-          >
-            {instrBusy ? "Processando..." : "Ativar recado no chat público"}
-          </motion.button>
-          {dailyInstruction && (
-            <button
-              onClick={async () => {
-                setInstrRaw("");
-                await setDailyInstruction("", "");
-                toast("Recado desativado");
-              }}
-              className="rounded-xl bg-white/[0.04] px-3 py-2.5 text-xs font-bold text-muted-foreground ring-1 ring-border"
-            >
-              Limpar
-            </button>
-          )}
-        </div>
-        {dailyInstructionPolite && (
-          <div className="mt-3 rounded-2xl bg-sky-500/10 p-3 text-[12px] leading-snug text-sky-50 ring-1 ring-sky-400/25">
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-sky-300">
-              Ativo no chat do cliente:
-            </p>
-            {dailyInstructionPolite}
+      {/* Banner direcionando para o Chat Privado (aba IA) */}
+      <button
+        onClick={() => setTab("ia")}
+        className="mb-4 flex w-full items-center gap-3 rounded-3xl p-[1.5px] text-left"
+        style={{ background: "var(--gradient-ig)" }}
+      >
+        <div className="flex w-full items-center gap-3 rounded-[calc(1.5rem-1.5px)] glass-strong p-4">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-ig">
+            <Cpu className="h-5 w-5 text-white" />
           </div>
-        )}
-      </section>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-black uppercase tracking-widest text-sky-300">
+              Canal privado de comando · CHEFE
+            </p>
+            <p className="mt-0.5 text-sm font-bold leading-tight">
+              Digite ordens no <span className="text-gradient-ig">Chat Privado</span> → aba IA
+            </p>
+            {instrucoesDoChefe && (
+              <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                Última ordem ao vivo: “{instrucoesDoChefe}”
+              </p>
+            )}
+          </div>
+          <span className="text-lg">→</span>
+        </div>
+      </button>
 
       {/* Solicitações pendentes da IA */}
       <section className="mb-4 glass rounded-3xl p-5">
