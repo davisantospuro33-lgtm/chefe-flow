@@ -1,0 +1,1 @@
+ALTER TABLE public.chefe_state ADD COLUMN IF NOT EXISTS instrucoes_do_chefe text NOT NULL DEFAULT '';

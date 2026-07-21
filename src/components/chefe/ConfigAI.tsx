@@ -21,6 +21,33 @@ import {
 import { useChefeStore } from "@/lib/chefe-store";
 import { configAssistantChat, type ChatMessage } from "@/lib/config-ai.functions";
 
+// Leaflet é carregado via CDN (script tag) para evitar dependência npm.
+// CSS já vem do __root.tsx via <link rel="stylesheet"> do unpkg.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LeafletNS = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare global { interface Window { L?: any } }
+
+function loadLeaflet(): Promise<LeafletNS> {
+  if (typeof window === "undefined") return Promise.reject(new Error("no window"));
+  if (window.L) return Promise.resolve(window.L);
+  return new Promise((resolve, reject) => {
+    const existing = document.getElementById("leaflet-cdn-script") as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.L));
+      existing.addEventListener("error", reject);
+      return;
+    }
+    const s = document.createElement("script");
+    s.id = "leaflet-cdn-script";
+    s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    s.async = true;
+    s.onload = () => resolve(window.L);
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
 // Toast helper local extremamente polido e bonito para evitar crashes caso 'sonner' não esteja importável
@@ -55,14 +82,14 @@ const showToast = (message: string, type: "success" | "error" | "info" = "succes
 
 export function ConfigAI() {
   const store = useChefeStore();
-  const [activeTab, setActiveTab] = useState<"ai" | "mapa" | "cadastro">("mapa");
+  const [activeTab, setActiveTab] = useState<"ai" | "mapa" | "cadastro">("ai");
   
   // Chat state
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
       role: "assistant",
       content:
-        "🥋 CHEFE AI · MESTRE FAIXA PRETA online. Poder total sobre o banco de dados via SQL. Me diga o que quer construir ou alterar (ex: 'muda o preço pra R$ 30', 'cria uma tabela pra clientes de manicure', 'expande o banco para lava-rápido'). Eu executo direto no Postgres.",
+        "👊 CHEFE, este é seu canal de comando direto. Qualquer ordem que você digitar aqui vira instrução ao vivo para sua atendente virtual (que fala com seus clientes no chat público). Também posso alterar o banco em tempo real via SQL. Manda a ordem que eu executo.",
     },
   ]);
   const [chatInput, setChatInput] = useState("");
@@ -138,8 +165,8 @@ export function ConfigAI() {
 
     let isMounted = true;
     
-    // Carrega dinamicamente o Leaflet para garantir conformidade
-    import("leaflet").then((L) => {
+    // Carrega dinamicamente o Leaflet via CDN
+    loadLeaflet().then((L) => {
       if (!isMounted) return;
       if (mapRef.current) return; // Evita inicialização dupla
 
@@ -254,7 +281,7 @@ export function ConfigAI() {
   // Efeito reativo que atualiza a posição do marcador do cliente na tela conforme dados da store mudam
   useEffect(() => {
     if (store.cliente_latitude !== null && store.cliente_longitude !== null) {
-      import("leaflet").then((L) => {
+      loadLeaflet().then((L) => {
         updateOrCreateClientMarker(L, store.cliente_latitude!, store.cliente_longitude!);
       });
     } else {
@@ -393,6 +420,14 @@ export function ConfigAI() {
     setChatInput("");
     setBusy(true);
     
+    // Grava a ordem AO VIVO na coluna instrucoes_do_chefe (chefe_state)
+    // para a Atendente Pública ler no próximo turno.
+    try {
+      await store.setInstrucoesDoChefe(v);
+    } catch (e) {
+      console.warn("Falha ao gravar instrucoes_do_chefe", e);
+    }
+
     try {
       const res = await configAssistantChat({
         data: { messages: next.map((m) => ({ role: m.role, content: m.content })) },
