@@ -6,6 +6,7 @@ import { Highlights } from "@/components/chefe/Highlights";
 import { ServiceCard } from "@/components/chefe/ServiceCard";
 import { ProgressTracker } from "@/components/chefe/ProgressTracker";
 import { AIAlertBox } from "@/components/chefe/AIAlertBox";
+import { SalonMap } from "@/components/chefe/SalonMap";
 import { QueueList } from "@/components/chefe/QueueList";
 import { Manifesto } from "@/components/chefe/Manifesto";
 import { Feed } from "@/components/chefe/Feed";
@@ -76,6 +77,7 @@ function Index() {
       {/* AI + progress + queue */}
       <section className="mt-6 space-y-4">
         <AIAlertBox />
+        <SalonMap />
         <ProgressTracker />
         <QueueList />
       </section>
