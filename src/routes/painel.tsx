@@ -530,7 +530,7 @@ function EditorPerfil() {
             <input
               type="number"
               step="any"
-              placeholder="-23.5505"
+              placeholder="-23.68735"
               value={form.latitude ?? ""}
               onChange={(e) =>
                 setForm({
@@ -545,7 +545,7 @@ function EditorPerfil() {
             <input
               type="number"
               step="any"
-              placeholder="-46.6333"
+              placeholder="-46.50292"
               value={form.longitude ?? ""}
               onChange={(e) =>
                 setForm({
