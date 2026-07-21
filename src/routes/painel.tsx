@@ -7,6 +7,7 @@ import { GradientAvatar } from "@/components/chefe/GradientAvatar";
 import { ShareButton } from "@/components/chefe/ShareButton";
 import { PinLock } from "@/components/chefe/PinLock";
 import { ConfigAI } from "@/components/chefe/ConfigAI";
+import { AdminMap } from "@/components/chefe/AdminMap";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/painel")({
@@ -118,6 +119,9 @@ function Painel() {
       <section className="mb-4">
         <ShareButton variant="block" />
       </section>
+
+      {/* Radar em tempo real dos clientes */}
+      <AdminMap />
 
       {/* Banner direcionando para o Chat Privado (aba IA) */}
       <button
