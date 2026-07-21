@@ -1,55 +1,10 @@
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Navigation2, MapPin } from "lucide-react";
+import { Sparkles, Navigation2 } from "lucide-react";
 import { useChefeStore } from "@/lib/chefe-store";
 
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const toRad = (v: number) => (v * Math.PI) / 180;
-  const R = 6371;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(a));
-}
-
 export function AIAlertBox() {
-  const fallbackKm = useChefeStore((s) => s.distanceKm);
-  const setDistance = useChefeStore((s) => s.setDistance);
+  const distanceKm = useChefeStore((s) => s.distanceKm);
   const extra = useChefeStore((s) => s.extraMinutes);
-  const profile = useChefeStore((s) => s.profile);
-  const [geoStatus, setGeoStatus] = useState<"idle" | "asking" | "ok" | "denied" | "no-salon">("idle");
-  const [liveKm, setLiveKm] = useState<number | null>(null);
-
-  const hasSalon = profile.latitude != null && profile.longitude != null;
-
-  useEffect(() => {
-    if (!hasSalon) {
-      setGeoStatus("no-salon");
-      return;
-    }
-    if (typeof window === "undefined" || !navigator.geolocation) return;
-    setGeoStatus("asking");
-    const id = navigator.geolocation.watchPosition(
-      (pos) => {
-        const km = haversineKm(
-          pos.coords.latitude,
-          pos.coords.longitude,
-          profile.latitude!,
-          profile.longitude!,
-        );
-        setLiveKm(km);
-        setDistance(km);
-        setGeoStatus("ok");
-      },
-      () => setGeoStatus("denied"),
-      { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 },
-    );
-    return () => navigator.geolocation.clearWatch(id);
-  }, [hasSalon, profile.latitude, profile.longitude, setDistance]);
-
-  const distanceKm = liveKm ?? fallbackKm;
   const etaMin = Math.max(3, Math.round(distanceKm * 3) + extra);
 
   return (
@@ -110,15 +65,6 @@ export function AIAlertBox() {
             ~ {etaMin} min
           </span>
         </div>
-        {geoStatus !== "ok" && (
-          <div className="mt-2 flex items-center gap-1.5 text-[10px] text-muted-foreground">
-            <MapPin className="h-3 w-3" />
-            {geoStatus === "denied" && "Permissão de localização negada — estimativa aproximada."}
-            {geoStatus === "asking" && "Solicitando sua localização..."}
-            {geoStatus === "no-salon" && "Coordenadas do salão não configuradas."}
-            {geoStatus === "idle" && "Ative a localização para precisão real."}
-          </div>
-        )}
       </div>
     </motion.div>
   );
