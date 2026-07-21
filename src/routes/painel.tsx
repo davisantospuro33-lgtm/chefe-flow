@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, Star, ImagePlus, Trash2, Upload, Cpu, Film } from "lucide-react";
+import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, Star, ImagePlus, Trash2, Upload, Cpu, Film, Radar } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useChefeStore, statusMeta, type ChefeStatus, type Review } from "@/lib/chefe-store";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
@@ -30,7 +30,7 @@ function PainelGate() {
 }
 
 const statuses: ChefeStatus[] = ["available", "busy", "break", "closed"];
-type Tab = "operacao" | "perfil" | "portfolio" | "ia";
+type Tab = "operacao" | "radar" | "perfil" | "portfolio" | "ia";
 
 function Painel() {
   const [tab, setTab] = useState<Tab>("operacao");
@@ -82,10 +82,11 @@ function Painel() {
       </div>
 
       {/* Tabs */}
-      <nav className="mb-4 grid grid-cols-4 gap-1 rounded-2xl glass p-1">
+      <nav className="mb-4 grid grid-cols-5 gap-1 rounded-2xl glass p-1">
         {(
           [
             { id: "operacao", label: "Operação", icon: Play },
+            { id: "radar", label: "Radar GPS", icon: Radar },
             { id: "perfil", label: "App", icon: User },
             { id: "portfolio", label: "Portfólio", icon: ImagePlus },
             { id: "ia", label: "IA", icon: Cpu },
@@ -113,15 +114,25 @@ function Painel() {
       {tab === "perfil" && <EditorPerfil />}
       {tab === "portfolio" && <EditorPortfolio />}
       {tab === "ia" && <ConfigAI />}
+      {tab === "radar" && (
+        <section className="space-y-3">
+          <div className="rounded-2xl glass-strong p-4">
+            <p className="text-[11px] font-black uppercase tracking-widest text-sky-300">
+              Radar de Clientes · Tempo Real
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Mapa dark centralizado no salão. Clientes com GPS ativo aparecem se movendo ao vivo, com distância e ETA.
+            </p>
+          </div>
+          <AdminMap />
+        </section>
+      )}
       {tab !== "operacao" ? null : (
         <>
       {/* Share link block */}
       <section className="mb-4">
         <ShareButton variant="block" />
       </section>
-
-      {/* Radar em tempo real dos clientes */}
-      <AdminMap />
 
       {/* Banner direcionando para o Chat Privado (aba IA) */}
       <button
