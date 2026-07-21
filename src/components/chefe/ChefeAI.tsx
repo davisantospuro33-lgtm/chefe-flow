@@ -21,11 +21,32 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
 }
 
 export function ChefeAI() {
-  const greeting = useChefeStore((s) => s.profile.aiGreeting);
   const salonLat = useChefeStore((s) => s.profile.latitude ?? s.latitude);
   const salonLng = useChefeStore((s) => s.profile.longitude ?? s.longitude);
   const pendentesLen = useChefeStore((s) => s.pendentes.length);
+  const status = useChefeStore((s) => s.status);
+  const queueLen = useChefeStore((s) => s.queue.length);
+  const presencialCount = useChefeStore((s) => s.presencialCount);
+  const hydrated = useChefeStore((s) => s.hydrated);
   const lastPendentesRef = useRef(pendentesLen);
+
+  const greeting = (() => {
+    const statusMap: Record<string, string> = {
+      available: "🟢 DISPONÍVEL",
+      busy: "🔴 ATENDENDO",
+      break: "☕ EM PAUSA",
+      closed: "🏠 FECHADO",
+    };
+    const statusTxt = statusMap[status] ?? "🟢 DISPONÍVEL";
+    const total = queueLen + presencialCount;
+    const filaInfo =
+      total === 0
+        ? "a fila está zerada"
+        : total === 1
+          ? "só 1 cliente na frente"
+          : `${total} clientes na fila`;
+    return `Salve! Sou a Assessora Premium do Comando CHEFE. ✂️ Ele está ${statusTxt} agora — ${filaInfo}, você seria atendido praticamente na hora! Vamos garantir o seu corte?`;
+  })();
 
   const [messages, setMessages] = useState<UIMsg[]>(() => [
     { role: "assistant", content: greeting },
@@ -39,7 +60,7 @@ export function ChefeAI() {
     setMessages((m) =>
       m.length <= 1 ? [{ role: "assistant", content: greeting }] : m,
     );
-  }, [greeting]);
+  }, [greeting, hydrated]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
