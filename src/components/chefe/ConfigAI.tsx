@@ -165,8 +165,8 @@ export function ConfigAI() {
 
     let isMounted = true;
     
-    // Carrega dinamicamente o Leaflet para garantir conformidade
-    import("leaflet").then((L) => {
+    // Carrega dinamicamente o Leaflet via CDN
+    loadLeaflet().then((L) => {
       if (!isMounted) return;
       if (mapRef.current) return; // Evita inicialização dupla
 
@@ -281,7 +281,7 @@ export function ConfigAI() {
   // Efeito reativo que atualiza a posição do marcador do cliente na tela conforme dados da store mudam
   useEffect(() => {
     if (store.cliente_latitude !== null && store.cliente_longitude !== null) {
-      import("leaflet").then((L) => {
+      loadLeaflet().then((L) => {
         updateOrCreateClientMarker(L, store.cliente_latitude!, store.cliente_longitude!);
       });
     } else {
