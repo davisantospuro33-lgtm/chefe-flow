@@ -8,7 +8,6 @@ import { ShareButton } from "@/components/chefe/ShareButton";
 import { PinLock } from "@/components/chefe/PinLock";
 import { ConfigAI } from "@/components/chefe/ConfigAI";
 import { toast } from "sonner";
-import { translateDailyInstruction } from "@/lib/instruction-ai.functions";
 
 export const Route = createFileRoute("/painel")({
   head: () => ({
