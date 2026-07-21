@@ -618,9 +618,9 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
     const reordered = orderedIds
       .map((id, idx) => {
         const c = map.get(id);
-        return c ? { ...c, position: idx + 1 } : null;
+        return c ? ({ ...c, position: idx + 1 } as QueueClient) : null;
       })
-      .filter((c): c is QueueClient => !!c);
+      .filter((c): c is QueueClient => c !== null);
     set({ queue: reordered });
     await Promise.all(
       orderedIds.map((id, idx) =>
