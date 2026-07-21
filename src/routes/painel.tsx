@@ -8,6 +8,8 @@ import { ShareButton } from "@/components/chefe/ShareButton";
 import { PinLock } from "@/components/chefe/PinLock";
 import { ConfigAI } from "@/components/chefe/ConfigAI";
 import { AdminMap } from "@/components/chefe/AdminMap";
+import { SortableQueue } from "@/components/chefe/SortableQueue";
+import { AgendaAdmin } from "@/components/chefe/AgendaAdmin";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/painel")({
@@ -389,30 +391,15 @@ function Painel() {
       {/* Queue mini */}
       <section className="mt-4 glass rounded-3xl p-5">
         <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          Fila atual
+          Fila atual · arraste para reordenar
         </p>
-        <ul className="space-y-2">
-          {queue.length === 0 && (
-            <li className="rounded-2xl bg-white/[0.03] px-4 py-6 text-center text-sm text-muted-foreground">
-              Fila vazia
-            </li>
-          )}
-          {queue.map((c, i) => (
-            <li
-              key={c.id}
-              className="flex items-center justify-between rounded-2xl bg-white/[0.03] px-3 py-2.5"
-            >
-              <div className="flex items-center gap-3">
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-[11px] font-black">
-                  {i + 1}
-                </span>
-                <span className="text-sm font-semibold">{c.name}</span>
-              </div>
-              {c.phone && <span className="text-[11px] text-muted-foreground">{c.phone}</span>}
-            </li>
-          ))}
-        </ul>
+        <SortableQueue />
       </section>
+
+      {/* Agenda (horários marcados) */}
+      <div className="mt-4">
+        <AgendaAdmin />
+      </div>
         </>
       )}
 
