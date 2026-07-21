@@ -566,6 +566,69 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
     });
     await get().hydrate();
   },
+
+  bookAgenda: async ({ name, phone, scheduledAt, referencia, perfil, qtd }) => {
+    const nextPos = (get().agenda[get().agenda.length - 1]?.position ?? 0) + 1;
+    const { data, error } = await supabase
+      .from("chefe_agenda")
+      .insert({
+        name,
+        phone,
+        scheduled_at: scheduledAt.toISOString(),
+        referencia: referencia ?? null,
+        perfil: perfil ?? null,
+        qtd: qtd ?? 1,
+        position: nextPos,
+      })
+      .select()
+      .maybeSingle();
+    if (error || !data) return null;
+    await get().hydrate();
+    return {
+      id: data.id,
+      name: data.name,
+      phone: data.phone,
+      qtd: data.qtd ?? 1,
+      referencia: data.referencia,
+      perfil: data.perfil,
+      scheduledAt: new Date(data.scheduled_at).getTime(),
+      status: data.status,
+      position: data.position,
+      notifiedLeave: data.notified_leave,
+      createdAt: new Date(data.created_at).getTime(),
+    };
+  },
+
+  cancelAgenda: async (id) => {
+    await supabase.from("chefe_agenda").delete().eq("id", id);
+    await get().hydrate();
+  },
+
+  markAgendaNotified: async (id) => {
+    await supabase
+      .from("chefe_agenda")
+      .update({ notified_leave: true, updated_at: new Date().toISOString() })
+      .eq("id", id);
+  },
+
+  reorderQueue: async (orderedIds) => {
+    // Optimistic local
+    const current = get().queue;
+    const map = new Map(current.map((c) => [c.id, c]));
+    const reordered = orderedIds
+      .map((id, idx) => {
+        const c = map.get(id);
+        return c ? { ...c, position: idx + 1 } : null;
+      })
+      .filter((c): c is QueueClient => !!c);
+    set({ queue: reordered });
+    await Promise.all(
+      orderedIds.map((id, idx) =>
+        supabase.from("chefe_queue").update({ position: idx + 1 }).eq("id", id),
+      ),
+    );
+    await get().hydrate();
+  },
 }));
 
 export const statusMeta: Record<ChefeStatus, { label: string; emoji: string; dot: string }> = {
