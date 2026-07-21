@@ -77,6 +77,7 @@ export type Database = {
           avatar_url: string | null
           bio: string
           cuts_count: string
+          endereco: string
           id: number
           latitude: number | null
           longitude: number | null
@@ -92,6 +93,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string
           cuts_count?: string
+          endereco?: string
           id?: number
           latitude?: number | null
           longitude?: number | null
@@ -107,6 +109,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string
           cuts_count?: string
+          endereco?: string
           id?: number
           latitude?: number | null
           longitude?: number | null
