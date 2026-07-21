@@ -21,6 +21,33 @@ import {
 import { useChefeStore } from "@/lib/chefe-store";
 import { configAssistantChat, type ChatMessage } from "@/lib/config-ai.functions";
 
+// Leaflet é carregado via CDN (script tag) para evitar dependência npm.
+// CSS já vem do __root.tsx via <link rel="stylesheet"> do unpkg.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LeafletNS = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare global { interface Window { L?: any } }
+
+function loadLeaflet(): Promise<LeafletNS> {
+  if (typeof window === "undefined") return Promise.reject(new Error("no window"));
+  if (window.L) return Promise.resolve(window.L);
+  return new Promise((resolve, reject) => {
+    const existing = document.getElementById("leaflet-cdn-script") as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.L));
+      existing.addEventListener("error", reject);
+      return;
+    }
+    const s = document.createElement("script");
+    s.id = "leaflet-cdn-script";
+    s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    s.async = true;
+    s.onload = () => resolve(window.L);
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
 // Toast helper local extremamente polido e bonito para evitar crashes caso 'sonner' não esteja importável
