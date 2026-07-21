@@ -1,11 +1,15 @@
 import { motion } from "framer-motion";
-import { Sparkles, Navigation2 } from "lucide-react";
+import { Sparkles, Navigation2, Clock } from "lucide-react";
 import { useChefeStore } from "@/lib/chefe-store";
 
 export function AIAlertBox() {
   const distanceKm = useChefeStore((s) => s.distanceKm);
   const extra = useChefeStore((s) => s.extraMinutes);
-  const etaMin = Math.max(3, Math.round(distanceKm * 3) + extra);
+  // Tempo puro de trajeto (approx 3 min/km em cenário urbano) + atrasos globais da fila
+  const travelMin = Math.max(3, Math.round(distanceKm * 3) + extra);
+  // Regra fixa: cliente precisa chegar 10 min ANTES da vez.
+  const BUFFER_MIN = 10;
+  const leaveInMin = travelMin + BUFFER_MIN;
 
   return (
     <motion.div
@@ -41,29 +45,47 @@ export function AIAlertBox() {
         </div>
 
         <p className="text-base leading-snug" style={{ color: "#e0f2fe" }}>
-          <span className="font-bold">Sua vez é a próxima!</span> Com base na sua distância atual{" "}
+          <span className="font-bold">Sua vez é a próxima!</span> Com base na sua localização{" "}
           <span className="font-bold" style={{ color: "#38bdf8" }}>
             ({distanceKm.toFixed(1)} km)
-          </span>
-          , saia de casa{" "}
-          <span className="font-bold" style={{ color: "#38bdf8" }}>agora</span> para chegar com
-          antecedência e não se atrasar.
+          </span>{" "}
+          e para você chegar com{" "}
+          <span className="font-bold" style={{ color: "#38bdf8" }}>10 min de antecedência</span>,
+          saia em{" "}
+          <span className="font-bold" style={{ color: "#38bdf8" }}>{leaveInMin} min</span>.
         </p>
 
-        <div
-          className="mt-4 flex items-center justify-between rounded-2xl p-3"
-          style={{ background: "rgba(14,165,233,0.1)" }}
-        >
-          <div className="flex items-center gap-2">
-            <Navigation2 className="h-4 w-4" style={{ color: "#38bdf8" }} />
-            <span className="text-xs text-muted-foreground">Tempo estimado até o salão</span>
-          </div>
-          <span
-            className="text-lg font-black tabular-nums"
-            style={{ color: "#38bdf8", textShadow: "0 0 12px rgba(56,189,248,0.5)" }}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <div
+            className="flex items-center justify-between rounded-2xl p-3"
+            style={{ background: "rgba(14,165,233,0.1)" }}
           >
-            ~ {etaMin} min
-          </span>
+            <div className="flex items-center gap-2">
+              <Navigation2 className="h-4 w-4" style={{ color: "#38bdf8" }} />
+              <span className="text-[10px] text-muted-foreground">Trajeto GPS</span>
+            </div>
+            <span
+              className="text-base font-black tabular-nums"
+              style={{ color: "#38bdf8" }}
+            >
+              {travelMin}min
+            </span>
+          </div>
+          <div
+            className="flex items-center justify-between rounded-2xl p-3"
+            style={{ background: "rgba(14,165,233,0.18)" }}
+          >
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4" style={{ color: "#38bdf8" }} />
+              <span className="text-[10px] text-muted-foreground">Saia em (+10min)</span>
+            </div>
+            <span
+              className="text-lg font-black tabular-nums"
+              style={{ color: "#38bdf8", textShadow: "0 0 12px rgba(56,189,248,0.5)" }}
+            >
+              {leaveInMin}min
+            </span>
+          </div>
         </div>
       </div>
     </motion.div>
