@@ -1,134 +1,112 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Send } from "lucide-react";
+import { Sparkles, Send, Loader2 } from "lucide-react";
 import { useChefeStore } from "@/lib/chefe-store";
 import { toast } from "sonner";
 import { subscribeToPush } from "@/lib/push-client";
+import { atendentePublicaChat, type AtendenteMessage } from "@/lib/atendente-publica.functions";
 
-type Msg = {
-  sender: "ia" | "user";
-  text: string;
-  kind?: "perfil" | "qtd";
-};
+type UIMsg = { role: "user" | "assistant"; content: string };
 
-type Dados = {
-  nome: string;
-  telefone: string;
-  referencia: string;
-  perfil: string;
-  qtd: number;
-};
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
 
 export function ChefeAI() {
-  const addSolicitacao = useChefeStore((s) => s.addSolicitacao);
   const greeting = useChefeStore((s) => s.profile.aiGreeting);
-  const dailyPolite = useChefeStore((s) => s.dailyInstructionPolite);
-  const [step, setStep] = useState(0);
+  const salonLat = useChefeStore((s) => s.profile.latitude ?? s.latitude);
+  const salonLng = useChefeStore((s) => s.profile.longitude ?? s.longitude);
+  const pendentesLen = useChefeStore((s) => s.pendentes.length);
+  const lastPendentesRef = useRef(pendentesLen);
+
+  const [messages, setMessages] = useState<UIMsg[]>(() => [
+    { role: "assistant", content: greeting },
+  ]);
   const [input, setInput] = useState("");
-  const [dados, setDados] = useState<Dados>({
-    nome: "",
-    telefone: "",
-    referencia: "",
-    perfil: "",
-    qtd: 1,
-  });
-  const initial = (): Msg[] => {
-    const base: Msg[] = [];
-    if (dailyPolite) base.push({ sender: "ia", text: dailyPolite });
-    base.push({ sender: "ia", text: `${greeting} Qual é o seu nome completo?` });
-    return base;
-  };
-  const [messages, setMessages] = useState<Msg[]>(initial);
-  useEffect(() => {
-    setMessages((m) => (step === 0 ? initial() : m));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [greeting, dailyPolite]);
+  const [busy, setBusy] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setMessages((m) =>
+      m.length <= 1 ? [{ role: "assistant", content: greeting }] : m,
+    );
+  }, [greeting]);
+
+  useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [messages]);
+  }, [messages, busy]);
 
-  function push(msg: Msg) {
-    setMessages((m) => [...m, msg]);
-  }
+  // GPS opcional do cliente
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    const id = navigator.geolocation.watchPosition(
+      (p) => setCoords({ lat: p.coords.latitude, lon: p.coords.longitude }),
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 8000 },
+    );
+    return () => navigator.geolocation.clearWatch(id);
+  }, []);
 
-  function finalize(final: Dados) {
-    addSolicitacao({
-      name: final.nome,
-      phone: final.telefone || "",
-      referencia: final.referencia,
-      perfil: final.perfil,
-      qtd: final.qtd,
-    });
-    toast.success("Solicitação enviada ao CHEFE!");
-    // Pede permissão de push assim que o cliente entra na fila
-    subscribeToPush(final.nome).then((ok) => {
-      if (ok) toast("🔔 Você será avisado quando o status mudar");
-    });
-  }
+  // Detecta check-in confirmado (novo pendente) e dispara push
+  useEffect(() => {
+    if (pendentesLen > lastPendentesRef.current) {
+      toast.success("✅ Solicitação enviada ao CHEFE!");
+      const lastUser = [...messages].reverse().find((m) => m.role === "user");
+      const name = lastUser?.content?.split(/\s+/)[0] ?? "Cliente";
+      subscribeToPush(name).catch(() => {});
+    }
+    lastPendentesRef.current = pendentesLen;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendentesLen]);
 
-  function handleText(textValue: string) {
-    const v = textValue.trim();
-    if (!v) return;
-    push({ sender: "user", text: v });
+  async function send() {
+    const v = input.trim();
+    if (!v || busy) return;
+    const next: UIMsg[] = [...messages, { role: "user", content: v }];
+    setMessages(next);
     setInput("");
+    setBusy(true);
 
-    setTimeout(() => {
-      if (step === 0) {
-        setDados((d) => ({ ...d, nome: v }));
-        push({
-          sender: "ia",
-          text: `Prazer, ${v.split(" ")[0]}! Se quiser, deixe um telefone/WhatsApp para contato — ou digite "pular" se não tiver.`,
-        });
-        setStep(1);
-      } else if (step === 1) {
-        const phone = v.toLowerCase() === "pular" ? "" : v;
-        setDados((d) => ({ ...d, telefone: phone }));
-        push({
-          sender: "ia",
-          text:
-            'Me diz uma referência sua (ex: "vizinho do bloco B", "amigo do Pedro") pra eu salvar:',
-        });
-        setStep(2);
-      } else if (step === 2) {
-        setDados((d) => ({ ...d, referencia: v }));
-        push({
-          sender: "ia",
-          text: "Você já é cliente, é novo por aqui ou veio por indicação?",
-          kind: "perfil",
-        });
-        setStep(3);
-      }
-    }, 350);
-  }
+    let distanceKm: number | null = null;
+    let durationMin: number | null = null;
+    if (coords && salonLat && salonLng) {
+      distanceKm = haversineKm(coords.lat, coords.lon, salonLat, salonLng);
+      durationMin = (distanceKm / 30) * 60;
+    }
 
-  function handlePerfil(valor: string) {
-    push({ sender: "user", text: valor });
-    setDados((d) => ({ ...d, perfil: valor }));
-    setTimeout(() => {
-      push({
-        sender: "ia",
-        text: "Quantos cortes no total? Só você ou traz mais alguém junto?",
-        kind: "qtd",
+    try {
+      const payload: AtendenteMessage[] = next.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+      const res = await atendentePublicaChat({
+        data: { messages: payload, distanceKm, durationMin },
       });
-      setStep(4);
-    }, 300);
-  }
-
-  function handleQtd(label: string, qtd: number) {
-    push({ sender: "user", text: label });
-    const final: Dados = { ...dados, qtd };
-    setDados(final);
-    setTimeout(() => {
-      push({
-        sender: "ia",
-        text:
-          "⚡ Perfeito! Enviei tudo pro painel do CHEFE. Ele vai analisar e você recebe a confirmação!",
-      });
-      finalize(final);
-      setStep(5);
-    }, 300);
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", content: res.text || "…" },
+      ]);
+    } catch (err) {
+      console.error(err);
+      setMessages((m) => [
+        ...m,
+        {
+          role: "assistant",
+          content: "⚠️ Tive um probleminha aqui. Pode repetir?",
+        },
+      ]);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -150,87 +128,61 @@ export function ChefeAI() {
           >
             <Sparkles className="h-4 w-4 text-white" />
           </div>
-          <div>
+          <div className="flex-1">
             <p
               className="text-[11px] font-black uppercase tracking-widest"
               style={{ color: "#38bdf8" }}
             >
-              CHEFE AI · Atendente
+              CHEFE AI · Atendente Premium
             </p>
             <p className="text-[10px] text-muted-foreground">
-              Triagem inteligente e automática
+              {coords ? "📍 GPS ativo · assessora inteligente" : "Assessora inteligente"}
             </p>
           </div>
         </div>
 
-        <div className="flex max-h-[320px] flex-col gap-2 overflow-y-auto pr-1">
+        <div className="flex max-h-[340px] flex-col gap-2 overflow-y-auto pr-1">
           {messages.map((m, i) => (
             <div
               key={i}
-              className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-snug ${
-                m.sender === "ia"
+              className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[13px] leading-snug ${
+                m.role === "assistant"
                   ? "self-start bg-sky-500/10 text-sky-50 ring-1 ring-sky-400/25"
                   : "self-end bg-gradient-ig text-white"
               }`}
             >
-              {m.text}
-              {m.kind === "perfil" && step === 3 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {["Já sou cliente", "Cliente novo", "Fui indicado"].map((op) => (
-                    <button
-                      key={op}
-                      onClick={() => handlePerfil(op)}
-                      className="rounded-lg bg-white/5 px-2.5 py-1.5 text-[12px] font-semibold text-white ring-1 ring-white/10 hover:bg-white/10"
-                    >
-                      {op}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {m.kind === "qtd" && step === 4 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {[
-                    { label: "Apenas eu", qtd: 1 },
-                    { label: "Eu e +1", qtd: 2 },
-                    { label: "Eu e +2 ou mais", qtd: 3 },
-                  ].map((op) => (
-                    <button
-                      key={op.label}
-                      onClick={() => handleQtd(op.label, op.qtd)}
-                      className="rounded-lg bg-white/5 px-2.5 py-1.5 text-[12px] font-semibold text-white ring-1 ring-white/10 hover:bg-white/10"
-                    >
-                      {op.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {m.content}
             </div>
           ))}
+          {busy && (
+            <div className="self-start rounded-2xl bg-sky-500/10 px-3.5 py-2.5 text-sky-200 ring-1 ring-sky-400/25">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          )}
           <div ref={endRef} />
         </div>
 
-        {step < 3 && (
-          <div className="mt-3 flex gap-2">
-            <input
-              type="text"
-              inputMode={step === 1 ? "tel" : "text"}
-              placeholder="Digite sua resposta..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleText(input);
-              }}
-              className="flex-1 rounded-xl bg-white/[0.04] px-3 py-2.5 text-sm text-white ring-1 ring-white/10 outline-none placeholder:text-muted-foreground focus:ring-sky-400/50"
-            />
-            <button
-              onClick={() => handleText(input)}
-              className="grid h-11 w-11 place-items-center rounded-xl bg-sky-500 text-white shadow-lg shadow-sky-500/30 active:scale-95"
-              aria-label="Enviar"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+        <div className="mt-3 flex gap-2">
+          <input
+            type="text"
+            placeholder="Digite sua mensagem..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") send();
+            }}
+            disabled={busy}
+            className="flex-1 rounded-xl bg-white/[0.04] px-3 py-2.5 text-sm text-white ring-1 ring-white/10 outline-none placeholder:text-muted-foreground focus:ring-sky-400/50 disabled:opacity-50"
+          />
+          <button
+            onClick={send}
+            disabled={busy || !input.trim()}
+            className="grid h-11 w-11 place-items-center rounded-xl bg-sky-500 text-white shadow-lg shadow-sky-500/30 active:scale-95 disabled:opacity-50"
+            aria-label="Enviar"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </motion.div>
   );
