@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      chefe_agenda: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notified_leave: boolean
+          perfil: string | null
+          phone: string | null
+          position: number
+          qtd: number | null
+          referencia: string | null
+          scheduled_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notified_leave?: boolean
+          perfil?: string | null
+          phone?: string | null
+          position?: number
+          qtd?: number | null
+          referencia?: string | null
+          scheduled_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notified_leave?: boolean
+          perfil?: string | null
+          phone?: string | null
+          position?: number
+          qtd?: number | null
+          referencia?: string | null
+          scheduled_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chefe_pendentes: {
         Row: {
           created_at: string
