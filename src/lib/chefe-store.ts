@@ -56,6 +56,20 @@ export interface PortfolioItem {
   createdAt: number;
 }
 
+export interface AgendaItem {
+  id: string;
+  name: string;
+  phone: string | null;
+  qtd: number;
+  referencia: string | null;
+  perfil: string | null;
+  scheduledAt: number;
+  status: string;
+  position: number;
+  notifiedLeave: boolean;
+  createdAt: number;
+}
+
 interface ChefeState {
   status: ChefeStatus;
   currentClientId: string | null;
@@ -68,6 +82,7 @@ interface ChefeState {
   profile: ChefeProfile;
   reviews: Review[];
   portfolio: PortfolioItem[];
+  agenda: AgendaItem[];
   hydrated: boolean;
   dailyInstruction: string;
   dailyInstructionPolite: string;
@@ -109,6 +124,17 @@ interface ChefeState {
   deleteReview: (id: string) => Promise<void>;
   uploadPortfolio: (file: File) => Promise<void>;
   deletePortfolio: (id: string, storagePath: string) => Promise<void>;
+  bookAgenda: (input: {
+    name: string;
+    phone: string;
+    scheduledAt: Date;
+    referencia?: string;
+    perfil?: string;
+    qtd?: number;
+  }) => Promise<AgendaItem | null>;
+  cancelAgenda: (id: string) => Promise<void>;
+  markAgendaNotified: (id: string) => Promise<void>;
+  reorderQueue: (orderedIds: string[]) => Promise<void>;
   hydrate: () => Promise<void>;
   subscribe: () => () => void;
 }
@@ -194,6 +220,7 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   },
   reviews: [],
   portfolio: [],
+  agenda: [],
   hydrated: false,
   dailyInstruction: "",
   dailyInstructionPolite: "",
@@ -255,13 +282,14 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   },
 
   hydrate: async () => {
-    const [{ data: queue }, { data: pendentes }, { data: state }, { data: profile }, { data: reviews }, { data: portfolio }] = await Promise.all([
+    const [{ data: queue }, { data: pendentes }, { data: state }, { data: profile }, { data: reviews }, { data: portfolio }, { data: agenda }] = await Promise.all([
       supabase.from("chefe_queue").select("*").order("position").order("added_at"),
       supabase.from("chefe_pendentes").select("*").order("created_at"),
       supabase.from("chefe_state").select("*").eq("id", 1).maybeSingle(),
       supabase.from("chefe_profile").select("*").eq("id", 1).maybeSingle(),
       supabase.from("chefe_reviews").select("*").order("position").order("created_at"),
       supabase.from("chefe_portfolio").select("*").order("position").order("created_at"),
+      supabase.from("chefe_agenda").select("*").order("scheduled_at"),
     ]);
     set({
       queue: (queue ?? []).map((r) => mapQueue(r as QueueRow)),
@@ -308,6 +336,19 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
         position: r.position,
         createdAt: new Date(r.created_at).getTime(),
       })),
+      agenda: (agenda ?? []).map((r) => ({
+        id: r.id,
+        name: r.name,
+        phone: r.phone,
+        qtd: r.qtd ?? 1,
+        referencia: r.referencia,
+        perfil: r.perfil,
+        scheduledAt: new Date(r.scheduled_at).getTime(),
+        status: r.status,
+        position: r.position,
+        notifiedLeave: r.notified_leave,
+        createdAt: new Date(r.created_at).getTime(),
+      })),
       hydrated: true,
     });
   },
@@ -322,6 +363,7 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       .on("postgres_changes", { event: "*", schema: "public", table: "chefe_profile" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "chefe_reviews" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "chefe_portfolio" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_agenda" }, refresh)
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
@@ -522,6 +564,69 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       current_client_id: null,
       presencial_count: 0,
     });
+    await get().hydrate();
+  },
+
+  bookAgenda: async ({ name, phone, scheduledAt, referencia, perfil, qtd }) => {
+    const nextPos = (get().agenda[get().agenda.length - 1]?.position ?? 0) + 1;
+    const { data, error } = await supabase
+      .from("chefe_agenda")
+      .insert({
+        name,
+        phone,
+        scheduled_at: scheduledAt.toISOString(),
+        referencia: referencia ?? null,
+        perfil: perfil ?? null,
+        qtd: qtd ?? 1,
+        position: nextPos,
+      })
+      .select()
+      .maybeSingle();
+    if (error || !data) return null;
+    await get().hydrate();
+    return {
+      id: data.id,
+      name: data.name,
+      phone: data.phone,
+      qtd: data.qtd ?? 1,
+      referencia: data.referencia,
+      perfil: data.perfil,
+      scheduledAt: new Date(data.scheduled_at).getTime(),
+      status: data.status,
+      position: data.position,
+      notifiedLeave: data.notified_leave,
+      createdAt: new Date(data.created_at).getTime(),
+    };
+  },
+
+  cancelAgenda: async (id) => {
+    await supabase.from("chefe_agenda").delete().eq("id", id);
+    await get().hydrate();
+  },
+
+  markAgendaNotified: async (id) => {
+    await supabase
+      .from("chefe_agenda")
+      .update({ notified_leave: true, updated_at: new Date().toISOString() })
+      .eq("id", id);
+  },
+
+  reorderQueue: async (orderedIds) => {
+    // Optimistic local
+    const current = get().queue;
+    const map = new Map(current.map((c) => [c.id, c]));
+    const reordered = orderedIds
+      .map((id, idx) => {
+        const c = map.get(id);
+        return c ? ({ ...c, position: idx + 1 } as QueueClient) : null;
+      })
+      .filter((c): c is QueueClient => c !== null);
+    set({ queue: reordered });
+    await Promise.all(
+      orderedIds.map((id, idx) =>
+        supabase.from("chefe_queue").update({ position: idx + 1 }).eq("id", id),
+      ),
+    );
     await get().hydrate();
   },
 }));
