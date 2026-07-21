@@ -213,6 +213,7 @@ export type Database = {
           daily_instruction_polite: string | null
           extra_minutes: number
           id: number
+          instrucoes_do_chefe: string
           presencial_count: number
           stage: number
           status: string
@@ -224,6 +225,7 @@ export type Database = {
           daily_instruction_polite?: string | null
           extra_minutes?: number
           id?: number
+          instrucoes_do_chefe?: string
           presencial_count?: number
           stage?: number
           status?: string
@@ -235,6 +237,7 @@ export type Database = {
           daily_instruction_polite?: string | null
           extra_minutes?: number
           id?: number
+          instrucoes_do_chefe?: string
           presencial_count?: number
           stage?: number
           status?: string
