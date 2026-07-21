@@ -96,6 +96,10 @@ export function registerPinFailure(): void {
   if (entry) entry.count += 1;
 }
 
+export function clearPinFailures(): void {
+  attempts.delete(clientKey());
+}
+
 export function verifyPin(pin: string): boolean {
   return pin.length === 4 && safeEqual(pin, CHEFE_PIN);
 }
