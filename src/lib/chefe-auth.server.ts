@@ -7,7 +7,7 @@ import { getCookie, setCookie, deleteCookie, getRequestIP } from "@tanstack/reac
 
 const COOKIE_NAME = "chefe_session";
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-const CHEFE_PIN = "1993";
+const CHEFE_PIN = "3337";
 
 function secret(): string {
   const s = process.env.SESSION_SECRET;
