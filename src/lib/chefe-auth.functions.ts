@@ -8,11 +8,12 @@ export const chefeLogin = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => input as { pin: string })
   .handler(async ({ data }) => {
     const auth = await import("./chefe-auth.server");
-    auth.checkPinRateLimit();
     if (!auth.verifyPin(data.pin)) {
+      auth.checkPinRateLimit();
       auth.registerPinFailure();
       return { ok: false as const };
     }
+    auth.clearPinFailures();
     auth.establishChefeSession();
     return { ok: true as const };
   });
