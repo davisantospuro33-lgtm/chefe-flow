@@ -77,8 +77,8 @@ function Index() {
       {/* AI + progress + queue */}
       <section className="mt-6 space-y-4">
         <AIAlertBox />
-        <SalonMap />
         <ProgressTracker />
+        <SalonMap />
         <QueueList />
       </section>
 
