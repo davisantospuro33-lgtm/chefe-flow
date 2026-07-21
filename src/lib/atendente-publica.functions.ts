@@ -37,10 +37,14 @@ export const atendentePublicaChat = createServerFn({ method: "POST" })
       typeof data.distanceKm === "number" && Number.isFinite(data.distanceKm)
         ? data.distanceKm.toFixed(1)
         : "desconhecida";
-    const durStr =
+    const travelMin =
       typeof data.durationMin === "number" && Number.isFinite(data.durationMin)
-        ? Math.round(data.durationMin).toString()
-        : "desconhecido";
+        ? Math.round(data.durationMin)
+        : null;
+    const durStr = travelMin !== null ? travelMin.toString() : "desconhecido";
+    // Regra fixa: cliente precisa chegar 10 min ANTES da vez.
+    const BUFFER_MIN = 10;
+    const leaveInStr = travelMin !== null ? (travelMin + BUFFER_MIN).toString() : "desconhecido";
 
     const changes: string[] = [];
     const tools = {
@@ -93,7 +97,10 @@ Preço do corte: ${profile?.service_price ?? "R$ 25,00"}
 Duração média: ${profile?.service_duration_min ?? 30} min
 
 ━━━ SENSORES DE LOCALIZAÇÃO DO CLIENTE ━━━
-Distância do cliente até o salão: ${distStr} km (${durStr} min de deslocamento).
+Distância do cliente até o salão: ${distStr} km.
+Tempo puro de trajeto via GPS: ${durStr} min.
+REGRA DE ANTECEDÊNCIA (FIXA E OBRIGATÓRIA): o cliente DEVE chegar 10 min ANTES da vez dele. Portanto o tempo total de aviso pra sair de casa é sempre TRAJETO_GPS + 10 min. Neste caso: SAIA EM ${leaveInStr} MIN.
+Sempre que falar de "hora de sair" ou urgência, use exatamente esse número (${leaveInStr} min) e mencione os 10 min de antecedência. Nunca sugira sair só com o tempo puro do GPS.
 
 LÁBIA E PERSUASÃO: Adapte seu tom de voz imediatamente. Se o cliente estiver PERTO (< 3km ou < 10 min), use o gatilho de urgência para fechar a vaga na cadeira ("você está pertinho, dá pra chegar rapidinho, quer que eu já reserve?"). Se estiver LONGE, valorize a organização ("me manda seus dados que eu já garanto sua posição na fila e te aviso a hora exata de sair"). Se o CHEFE estiver em pausa/fechado, seja transparente e ofereça agendar pra depois.
 
