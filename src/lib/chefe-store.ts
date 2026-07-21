@@ -71,6 +71,8 @@ interface ChefeState {
   hydrated: boolean;
   dailyInstruction: string;
   dailyInstructionPolite: string;
+  instrucoesDoChefe: string;
+  setInstrucoesDoChefe: (text: string) => Promise<void>;
 
   // --- Painel ConfigAI: telefone/endereço fixo do estabelecimento + rastreamento do cliente ---
   telefone: string;
@@ -195,6 +197,16 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   hydrated: false,
   dailyInstruction: "",
   dailyInstructionPolite: "",
+  instrucoesDoChefe: "",
+
+  setInstrucoesDoChefe: async (text) => {
+    set({ instrucoesDoChefe: text });
+    await supabase
+      .from("chefe_state")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update({ instrucoes_do_chefe: text } as any)
+      .eq("id", 1);
+  },
 
   telefone: "",
   endereco: "",
@@ -261,6 +273,7 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       currentClientId: state?.current_client_id ?? null,
       dailyInstruction: ((state as unknown as { daily_instruction?: string })?.daily_instruction) ?? "",
       dailyInstructionPolite: ((state as unknown as { daily_instruction_polite?: string })?.daily_instruction_polite) ?? "",
+      instrucoesDoChefe: ((state as unknown as { instrucoes_do_chefe?: string })?.instrucoes_do_chefe) ?? "",
       telefone: profile?.phone_official ?? "",
       endereco: (profile as unknown as { endereco?: string })?.endereco ?? "",
       latitude: profile?.latitude ?? get().latitude,
