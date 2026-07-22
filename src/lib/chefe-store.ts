@@ -1,709 +1,104 @@
 import { create } from "zustand";
-import { supabase } from "@/integrations/supabase/client";
 
-export type ChefeStatus = "available" | "busy" | "break" | "closed";
-export type Stage = 0 | 1 | 2 | 3;
-
-export interface QueueClient {
+export interface QueueItem {
   id: string;
   name: string;
-  phone?: string | null;
-  addedAt: number;
-  qtd?: number | null;
-  referencia?: string | null;
-  perfil?: string | null;
-  position?: number;
+  joinedAt: string;
 }
 
-export interface PendingRequest {
-  id: string;
-  name: string;
-  phone: string;
-  referencia: string;
-  perfil: string;
-  qtd: number;
-  createdAt: number;
-}
+export type SalonStatus = "open" | "busy" | "break" | "closed";
 
-export interface ChefeProfile {
+interface Profile {
   username: string;
   bio: string;
-  avatarUrl: string | null;
+  avatarUrl: string;
   cutsCount: string;
   rating: string;
-  phoneOfficial: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  servicePrice: string;
-  serviceDurationMin: number;
-  aiGreeting: string;
-}
-
-export interface Review {
-  id: string;
-  name: string;
-  rating: number;
-  comment: string;
-  position: number;
-}
-
-export interface PortfolioItem {
-  id: string;
-  storagePath: string;
-  url: string;
-  mediaType: "image" | "video";
-  position: number;
-  createdAt: number;
-}
-
-export interface AgendaItem {
-  id: string;
-  name: string;
-  phone: string | null;
-  qtd: number;
-  referencia: string | null;
-  perfil: string | null;
-  scheduledAt: number;
-  status: string;
-  position: number;
-  notifiedLeave: boolean;
-  createdAt: number;
 }
 
 interface ChefeState {
-  status: ChefeStatus;
-  currentClientId: string | null;
-  stage: Stage;
-  queue: QueueClient[];
-  distanceKm: number;
-  extraMinutes: number;
+  // Estado do Salão Espelhado
+  status: SalonStatus;
+  setStatus: (status: SalonStatus) => void;
+  
+  // Perfil do Barbeiro
+  profile: Profile;
+  setProfile: (profile: Partial<Profile>) => void;
+
+  // Fila Virtual & Sofá
+  queue: QueueItem[];
   presencialCount: number;
-  pendentes: PendingRequest[];
-  pessoasNoSalao: number;
-  setPessoasNoSalao: (n: number) => Promise<void>;
-  profile: ChefeProfile;
-  reviews: Review[];
-  portfolio: PortfolioItem[];
-  agenda: AgendaItem[];
-  hydrated: boolean;
-  dailyInstruction: string;
-  dailyInstructionPolite: string;
-  instrucoesDoChefe: string;
-  setInstrucoesDoChefe: (text: string) => Promise<void>;
-
-  // --- Painel ConfigAI: telefone/endereço fixo do estabelecimento + rastreamento do cliente ---
-  telefone: string;
-  endereco: string;
-  latitude: number;
-  longitude: number;
-  cliente_latitude: number | null;
-  cliente_longitude: number | null;
-  isTracking: boolean;
-  simulating: boolean;
-  setTelefone: (telefone: string) => Promise<boolean>;
-  setLocalizacao: (endereco: string, lat: number, lon: number) => Promise<boolean>;
-  updateClienteCoords: (lat: number | null, lon: number | null) => void;
-  setTrackingState: (tracking: boolean) => void;
-  setSimulating: (simulating: boolean) => void;
-
-  setDailyInstruction: (raw: string, polite: string) => Promise<void>;
-  setStatus: (s: ChefeStatus) => Promise<void>;
-  addClient: (name: string, phone?: string) => Promise<void>;
-  removeClient: (id: string) => Promise<void>;
-  addSolicitacao: (r: Omit<PendingRequest, "id" | "createdAt">) => Promise<void>;
-  aceitarPendente: (id: string) => Promise<void>;
-  recusarPendente: (id: string) => Promise<void>;
-  startCut: () => Promise<void>;
-  completeAndNext: () => Promise<void>;
-  setStage: (s: Stage) => Promise<void>;
-  addTenMinutes: () => Promise<void>;
-  setDistance: (km: number) => void;
-  incPresencial: () => Promise<void>;
-  decPresencial: () => Promise<void>;
-  resetDemo: () => Promise<void>;
-  updateProfile: (patch: Partial<ChefeProfile>) => Promise<void>;
-  saveReview: (r: Omit<Review, "id"> & { id?: string }) => Promise<void>;
-  deleteReview: (id: string) => Promise<void>;
-  uploadPortfolio: (file: File) => Promise<void>;
-  deletePortfolio: (id: string, storagePath: string) => Promise<void>;
-  bookAgenda: (input: {
-    name: string;
-    phone: string;
-    scheduledAt: Date;
-    referencia?: string;
-    perfil?: string;
-    qtd?: number;
-  }) => Promise<AgendaItem | null>;
-  cancelAgenda: (id: string) => Promise<void>;
-  markAgendaNotified: (id: string) => Promise<void>;
-  reorderQueue: (orderedIds: string[]) => Promise<void>;
-  hydrate: () => Promise<void>;
-  subscribe: () => () => void;
+  
+  // Ações do Painel (Que espelham pro Cliente)
+  addToQueue: (name: string) => void;
+  removeFromQueue: (id: string) => void;
+  nextInQueue: () => void;
+  incrementPresencial: () => void;
+  decrementPresencial: () => void;
+  clearQueue: () => void;
+  
+  // Cálculo do TIC-TAC do Relógio (40min por cliente)
+  getTempoEsperaTotal: () => number;
 }
 
-type QueueRow = {
-  id: string;
-  name: string;
-  phone: string | null;
-  qtd: number | null;
-  referencia: string | null;
-  perfil: string | null;
-  added_at: string;
-  position: number;
-};
+export const useChefeStore = create<ChefeState>((set, get) => ({
+  status: "open",
+  setStatus: (status) => set({ status }),
 
-type PendenteRow = {
-  id: string;
-  name: string;
-  phone: string;
-  referencia: string;
-  perfil: string;
-  qtd: number;
-  created_at: string;
-};
-
-function mapQueue(r: QueueRow): QueueClient {
-  return {
-    id: r.id,
-    name: r.name,
-    phone: r.phone,
-    qtd: r.qtd,
-    referencia: r.referencia,
-    perfil: r.perfil,
-    addedAt: new Date(r.added_at).getTime(),
-    position: r.position,
-  };
-}
-
-function mapPendente(r: PendenteRow): PendingRequest {
-  return {
-    id: r.id,
-    name: r.name,
-    phone: r.phone,
-    referencia: r.referencia,
-    perfil: r.perfil,
-    qtd: r.qtd,
-    createdAt: new Date(r.created_at).getTime(),
-  };
-}
-
-type StatePatch = {
-  status?: string;
-  presencial_count?: number;
-  extra_minutes?: number;
-  stage?: number;
-  current_client_id?: string | null;
-};
-async function updateState(patch: StatePatch) {
-  await supabase.from("chefe_state").update(patch).eq("id", 1);
-}
-
-export const useChefeStore = create<ChefeState>()((set, get) => ({
-  status: "available",
-  currentClientId: null,
-  stage: 1,
-  queue: [],
-  distanceKm: 2.4,
-  extraMinutes: 0,
-  presencialCount: 0,
-  pendentes: [],
-  pessoasNoSalao: 0,
-  setPessoasNoSalao: async (n) => {
-    const val = Math.max(0, Math.floor(n));
-    set({ pessoasNoSalao: val });
-    await supabase
-      .from("chefe_status_salao")
-      .update({ pessoas_no_salao: val, atualizado_em: new Date().toISOString() })
-      .eq("id", 1);
-  },
   profile: {
-    username: "@chefe.oficial",
-    bio: "Barbeiro · Cortes autorais",
-    avatarUrl: null,
-    cutsCount: "1.2k",
+    username: "Comando CHEFE",
+    bio: "Barbearia de Alto Padrão · Atendimento Direto",
+    avatarUrl: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&auto=format&fit=crop&q=80",
+    cutsCount: "1.2k+",
     rating: "4.9",
-    phoneOfficial: null,
-    latitude: null,
-    longitude: null,
-    servicePrice: "R$ 25,00",
-    serviceDurationMin: 30,
-    aiGreeting: "Salve! Sou a Assistente Virtual do CHEFE. 💈 Vamos agendar seu corte rápido.",
   },
-  reviews: [],
-  portfolio: [],
-  agenda: [],
-  hydrated: false,
-  dailyInstruction: "",
-  dailyInstructionPolite: "",
-  instrucoesDoChefe: "",
+  setProfile: (newProfile) =>
+    set((state) => ({ profile: { ...state.profile, ...newProfile } })),
 
-  setInstrucoesDoChefe: async (text) => {
-    set({ instrucoesDoChefe: text });
-    await supabase
-      .from("chefe_state")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .update({ instrucoes_do_chefe: text } as any)
-      .eq("id", 1);
-  },
+  queue: [],
+  presencialCount: 0,
 
-  telefone: "",
-  endereco: "",
-  latitude: -23.5505,
-  longitude: -46.6333,
-  cliente_latitude: null,
-  cliente_longitude: null,
-  isTracking: false,
-  simulating: false,
-
-  setTelefone: async (telefone) => {
-    set({ telefone });
-    const { error } = await supabase
-      .from("chefe_profile")
-      .update({ phone_official: telefone, updated_at: new Date().toISOString() })
-      .eq("id", 1);
-    if (error) return false;
-    await get().hydrate();
-    return true;
-  },
-
-  setLocalizacao: async (endereco, lat, lon) => {
-    set({ endereco, latitude: lat, longitude: lon });
-    const { error } = await supabase
-      .from("chefe_profile")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .update({ endereco, latitude: lat, longitude: lon, updated_at: new Date().toISOString() } as any)
-      .eq("id", 1);
-    if (error) return false;
-    await get().hydrate();
-    return true;
-  },
-
-  // Coordenadas do cliente são apenas estado reativo local (GPS real ou simulador) — não persistidas no banco.
-  updateClienteCoords: (lat, lon) => set({ cliente_latitude: lat, cliente_longitude: lon }),
-  setTrackingState: (tracking) => set({ isTracking: tracking }),
-  setSimulating: (simulating) => set({ simulating }),
-
-  setDailyInstruction: async (raw, polite) => {
-    set({ dailyInstruction: raw, dailyInstructionPolite: polite });
-    await supabase
-      .from("chefe_state")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .update({ daily_instruction: raw, daily_instruction_polite: polite } as any)
-      .eq("id", 1);
-  },
-
-  hydrate: async () => {
-    const [{ data: queue }, { data: pendentes }, { data: state }, { data: profile }, { data: reviews }, { data: portfolio }, { data: agenda }, { data: salao }] = await Promise.all([
-      supabase.from("chefe_queue").select("*").order("position").order("added_at"),
-      supabase.from("chefe_pendentes").select("*").order("created_at"),
-      supabase.from("chefe_state").select("*").eq("id", 1).maybeSingle(),
-      supabase.from("chefe_profile").select("*").eq("id", 1).maybeSingle(),
-      supabase.from("chefe_reviews").select("*").order("position").order("created_at"),
-      supabase.from("chefe_portfolio").select("*").order("position").order("created_at"),
-      supabase.from("chefe_agenda").select("*").order("scheduled_at"),
-      supabase.from("chefe_status_salao").select("pessoas_no_salao").eq("id", 1).maybeSingle(),
-    ]);
-    set({
-      queue: (queue ?? []).map((r) => mapQueue(r as QueueRow)),
-      pendentes: (pendentes ?? []).map((r) => mapPendente(r as PendenteRow)),
-      pessoasNoSalao: (salao as { pessoas_no_salao?: number } | null)?.pessoas_no_salao ?? 0,
-      status: (state?.status as ChefeStatus) ?? "available",
-      presencialCount: state?.presencial_count ?? 0,
-      extraMinutes: state?.extra_minutes ?? 0,
-      stage: (state?.stage as Stage) ?? 1,
-      currentClientId: state?.current_client_id ?? null,
-      dailyInstruction: ((state as unknown as { daily_instruction?: string })?.daily_instruction) ?? "",
-      dailyInstructionPolite: ((state as unknown as { daily_instruction_polite?: string })?.daily_instruction_polite) ?? "",
-      instrucoesDoChefe: ((state as unknown as { instrucoes_do_chefe?: string })?.instrucoes_do_chefe) ?? "",
-      telefone: profile?.phone_official ?? "",
-      endereco: (profile as unknown as { endereco?: string })?.endereco ?? "",
-      latitude: profile?.latitude ?? get().latitude,
-      longitude: profile?.longitude ?? get().longitude,
-      profile: {
-        username: profile?.username ?? "@chefe.oficial",
-        bio: profile?.bio ?? "Barbeiro · Cortes autorais",
-        avatarUrl: profile?.avatar_url ?? null,
-        cutsCount: profile?.cuts_count ?? "1.2k",
-        rating: profile?.rating ?? "4.9",
-        phoneOfficial: profile?.phone_official ?? null,
-        latitude: profile?.latitude ?? null,
-        longitude: profile?.longitude ?? null,
-        servicePrice: profile?.service_price ?? "R$ 25,00",
-        serviceDurationMin: profile?.service_duration_min ?? 30,
-        aiGreeting:
-          profile?.ai_greeting ??
-          "Salve! Sou a Assistente Virtual do CHEFE. 💈 Vamos agendar seu corte rápido.",
-      },
-      reviews: (reviews ?? []).map((r) => ({
-        id: r.id,
-        name: r.name,
-        rating: Number(r.rating),
-        comment: r.comment,
-        position: r.position,
-      })),
-      portfolio: (portfolio ?? []).map((r) => ({
-        id: r.id,
-        storagePath: r.storage_path,
-        url: r.url,
-        mediaType: (r.media_type === "video" ? "video" : "image") as "image" | "video",
-        position: r.position,
-        createdAt: new Date(r.created_at).getTime(),
-      })),
-      agenda: (agenda ?? []).map((r) => ({
-        id: r.id,
-        name: r.name,
-        phone: r.phone,
-        qtd: r.qtd ?? 1,
-        referencia: r.referencia,
-        perfil: r.perfil,
-        scheduledAt: new Date(r.scheduled_at).getTime(),
-        status: r.status,
-        position: r.position,
-        notifiedLeave: r.notified_leave,
-        createdAt: new Date(r.created_at).getTime(),
-      })),
-      hydrated: true,
-    });
-  },
-
-  subscribe: () => {
-    const refresh = () => get().hydrate();
-    const ch = supabase
-      .channel("chefe-sync")
-      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_queue" }, refresh)
-      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_pendentes" }, refresh)
-      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_state" }, refresh)
-      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_profile" }, refresh)
-      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_reviews" }, refresh)
-      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_portfolio" }, refresh)
-      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_agenda" }, refresh)
-      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_status_salao" }, refresh)
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  },
-
-  updateProfile: async (patch) => {
-    const dbPatch: {
-      username?: string;
-      bio?: string;
-      avatar_url?: string | null;
-      cuts_count?: string;
-      rating?: string;
-      phone_official?: string | null;
-      latitude?: number | null;
-      longitude?: number | null;
-      service_price?: string;
-      service_duration_min?: number;
-      ai_greeting?: string;
-      updated_at?: string;
-    } = { updated_at: new Date().toISOString() };
-    if (patch.username !== undefined) dbPatch.username = patch.username;
-    if (patch.bio !== undefined) dbPatch.bio = patch.bio;
-    if (patch.avatarUrl !== undefined) dbPatch.avatar_url = patch.avatarUrl;
-    if (patch.cutsCount !== undefined) dbPatch.cuts_count = patch.cutsCount;
-    if (patch.rating !== undefined) dbPatch.rating = patch.rating;
-    if (patch.phoneOfficial !== undefined) dbPatch.phone_official = patch.phoneOfficial;
-    if (patch.latitude !== undefined) dbPatch.latitude = patch.latitude;
-    if (patch.longitude !== undefined) dbPatch.longitude = patch.longitude;
-    if (patch.servicePrice !== undefined) dbPatch.service_price = patch.servicePrice;
-    if (patch.serviceDurationMin !== undefined) dbPatch.service_duration_min = patch.serviceDurationMin;
-    if (patch.aiGreeting !== undefined) dbPatch.ai_greeting = patch.aiGreeting;
-    await supabase.from("chefe_profile").update(dbPatch).eq("id", 1);
-    await get().hydrate();
-  },
-
-  saveReview: async (r) => {
-    if (r.id) {
-      await supabase
-        .from("chefe_reviews")
-        .update({ name: r.name, rating: r.rating, comment: r.comment, position: r.position })
-        .eq("id", r.id);
-    } else {
-      await supabase
-        .from("chefe_reviews")
-        .insert({ name: r.name, rating: r.rating, comment: r.comment, position: r.position });
-    }
-    await get().hydrate();
-  },
-
-  deleteReview: async (id) => {
-    await supabase.from("chefe_reviews").delete().eq("id", id);
-    await get().hydrate();
-  },
-
-  uploadPortfolio: async (file) => {
-    const isVideo = file.type.startsWith("video/") || /\.(mp4|mov|webm|m4v)$/i.test(file.name);
-    const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
-    const path = `portfolio/${crypto.randomUUID()}.${ext}`;
-    const { error: upErr } = await supabase.storage
-      .from("chefe-media")
-      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
-    if (upErr) throw upErr;
-    const { data: signed } = await supabase.storage
-      .from("chefe-media")
-      .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
-    const url = signed?.signedUrl ?? "";
-    const nextPos = (get().portfolio[get().portfolio.length - 1]?.position ?? 0) + 1;
-    await supabase.from("chefe_portfolio").insert({
-      storage_path: path,
-      url,
-      position: nextPos,
-      media_type: isVideo ? "video" : "image",
-    });
-    await get().hydrate();
-  },
-
-  deletePortfolio: async (id, storagePath) => {
-    await supabase.storage.from("chefe-media").remove([storagePath]);
-    await supabase.from("chefe_portfolio").delete().eq("id", id);
-    await get().hydrate();
-  },
-
-  setStatus: async (status) => {
-    set({ status });
-    await updateState({ status });
-    // Fire push broadcast
-    try {
-      const { broadcastPush } = await import("./push.functions");
-      const map: Record<ChefeStatus, { title: string; body: string }> = {
-        available: {
-          title: "💈 CHEFE está DISPONÍVEL",
-          body: "Fila leve agora. Bora garantir sua vaga na cadeira!",
-        },
-        busy: {
-          title: "✂️ CHEFE está atendendo",
-          body: "Fila em andamento — acompanhe seu progresso em tempo real.",
-        },
-        break: {
-          title: "☕ CHEFE em pausa",
-          body: "Pausa rápida. Ele volta logo — mantém o celular por perto.",
-        },
-        closed: {
-          title: "🏠 CHEFE fechou",
-          body: "Encerramos por hoje. Já pode deixar seu horário marcado.",
-        },
-      };
-      await broadcastPush({
-        data: {
-          ...map[status],
-          url: "/",
-          tag: "chefe-status",
-          actions: [
-            { action: "ver_fila", title: "👀 Ver fila" },
-            { action: "ja_sai", title: "🚗 Já saí" },
-          ],
-          action_map: { ver_fila: "/", ja_sai: "/" },
-        },
-      });
-    } catch (err) {
-      console.warn("push failed", err);
-    }
-  },
-
-  addClient: async (name, phone) => {
-    const nextPos = (get().queue[get().queue.length - 1]?.position ?? 0) + 1;
-    await supabase.from("chefe_queue").insert({ name, phone, position: nextPos });
-    await get().hydrate();
-  },
-
-  removeClient: async (id) => {
-    await supabase.from("chefe_queue").delete().eq("id", id);
-    await get().hydrate();
-  },
-
-  addSolicitacao: async (r) => {
-    await supabase.from("chefe_pendentes").insert(r);
-    await get().hydrate();
-  },
-
-  aceitarPendente: async (id) => {
-    const p = get().pendentes.find((x) => x.id === id);
-    if (!p) return;
-    const nextPos = (get().queue[get().queue.length - 1]?.position ?? 0) + 1;
-    await supabase.from("chefe_queue").insert({
-      name: p.name,
-      phone: p.phone,
-      qtd: p.qtd,
-      referencia: p.referencia,
-      perfil: p.perfil,
-      position: nextPos,
-    });
-    await supabase.from("chefe_pendentes").delete().eq("id", id);
-    await get().hydrate();
-  },
-
-  recusarPendente: async (id) => {
-    await supabase.from("chefe_pendentes").delete().eq("id", id);
-    await get().hydrate();
-  },
-
-  startCut: async () => {
-    const current = get().queue[0];
-    set({ stage: 2, currentClientId: current?.id ?? null, status: "busy" });
-    await updateState({
-      stage: 2,
-      current_client_id: current?.id ?? null,
-      status: "busy",
-    });
-    try {
-      const { broadcastPush } = await import("./push.functions");
-      await broadcastPush({
-        data: {
-          title: "✂️ Corte iniciado",
-          body: `${current?.name ?? "Cliente"} está na cadeira. Próximos: prepara pra sair.`,
-          url: "/",
-          tag: "chefe-progress",
-          actions: [
-            { action: "ja_sai", title: "🚗 Já saí" },
-            { action: "atrasei", title: "⏰ Vou atrasar" },
-          ],
-          action_map: { ja_sai: "/", atrasei: "/" },
-        },
-      });
-    } catch (e) {
-      console.warn("push start failed", e);
-    }
-  },
-
-  completeAndNext: async () => {
-    const first = get().queue[0];
-    if (first) await supabase.from("chefe_queue").delete().eq("id", first.id);
-    const rest = get().queue.slice(1);
-    const next = rest[0];
-    const newStage: Stage = rest.length > 0 ? 1 : 3;
-    const newStatus: ChefeStatus = rest.length > 0 ? "busy" : "available";
-    await updateState({
-      stage: newStage,
-      status: newStatus,
-      current_client_id: next?.id ?? null,
-    });
-    await get().hydrate();
-  },
-
-  setStage: async (stage) => {
-    set({ stage });
-    await updateState({ stage });
-  },
-
-  addTenMinutes: async () => {
-    const extraMinutes = get().extraMinutes + 10;
-    set({ extraMinutes });
-    await updateState({ extra_minutes: extraMinutes });
-    try {
-      const { broadcastPush } = await import("./push.functions");
-      await broadcastPush({
-        data: {
-          title: "⏰ +10 min na fila",
-          body: "O CHEFE ajustou o tempo. Recalcule sua saída (trajeto GPS + 10 min de folga).",
-          url: "/",
-          tag: "chefe-delay",
-          actions: [{ action: "ver_fila", title: "👀 Ver fila" }],
-          action_map: { ver_fila: "/" },
-        },
-      });
-    } catch (e) {
-      console.warn("push +10 failed", e);
-    }
-  },
-
-  setDistance: (km) => set({ distanceKm: km }),
-
-  incPresencial: async () => {
-    const presencialCount = get().presencialCount + 1;
-    set({ presencialCount });
-    await updateState({ presencial_count: presencialCount });
-  },
-
-  decPresencial: async () => {
-    const presencialCount = Math.max(0, get().presencialCount - 1);
-    set({ presencialCount });
-    await updateState({ presencial_count: presencialCount });
-  },
-
-  resetDemo: async () => {
-    await Promise.all([
-      supabase.from("chefe_queue").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
-      supabase.from("chefe_pendentes").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
-    ]);
-    await updateState({
-      status: "available",
-      stage: 1,
-      extra_minutes: 0,
-      current_client_id: null,
-      presencial_count: 0,
-    });
-    await get().hydrate();
-  },
-
-  bookAgenda: async ({ name, phone, scheduledAt, referencia, perfil, qtd }) => {
-    const nextPos = (get().agenda[get().agenda.length - 1]?.position ?? 0) + 1;
-    const { data, error } = await supabase
-      .from("chefe_agenda")
-      .insert({
+  // Adicionar cliente na fila virtual
+  addToQueue: (name) =>
+    set((state) => {
+      const newItem: QueueItem = {
+        id: Date.now().toString(),
         name,
-        phone,
-        scheduled_at: scheduledAt.toISOString(),
-        referencia: referencia ?? null,
-        perfil: perfil ?? null,
-        qtd: qtd ?? 1,
-        position: nextPos,
-      })
-      .select()
-      .maybeSingle();
-    if (error || !data) return null;
-    await get().hydrate();
-    return {
-      id: data.id,
-      name: data.name,
-      phone: data.phone,
-      qtd: data.qtd ?? 1,
-      referencia: data.referencia,
-      perfil: data.perfil,
-      scheduledAt: new Date(data.scheduled_at).getTime(),
-      status: data.status,
-      position: data.position,
-      notifiedLeave: data.notified_leave,
-      createdAt: new Date(data.created_at).getTime(),
-    };
-  },
+        joinedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      return { queue: [...state.queue, newItem] };
+    }),
 
-  cancelAgenda: async (id) => {
-    await supabase.from("chefe_agenda").delete().eq("id", id);
-    await get().hydrate();
-  },
+  // Remover cliente específico
+  removeFromQueue: (id) =>
+    set((state) => ({
+      queue: state.queue.filter((item) => item.id !== id),
+    })),
 
-  markAgendaNotified: async (id) => {
-    await supabase
-      .from("chefe_agenda")
-      .update({ notified_leave: true, updated_at: new Date().toISOString() })
-      .eq("id", id);
-  },
+  // Chamou o próximo no Painel do Barbeiro
+  nextInQueue: () =>
+    set((state) => {
+      if (state.queue.length === 0) return state;
+      const [_, ...rest] = state.queue;
+      return { queue: rest };
+    }),
 
-  reorderQueue: async (orderedIds) => {
-    // Optimistic local
-    const current = get().queue;
-    const map = new Map(current.map((c) => [c.id, c]));
-    const reordered = orderedIds
-      .map((id, idx) => {
-        const c = map.get(id);
-        return c ? ({ ...c, position: idx + 1 } as QueueClient) : null;
-      })
-      .filter((c): c is QueueClient => c !== null);
-    set({ queue: reordered });
-    await Promise.all(
-      orderedIds.map((id, idx) =>
-        supabase.from("chefe_queue").update({ position: idx + 1 }).eq("id", id),
-      ),
-    );
-    await get().hydrate();
+  // Alterar presencial no balcão/sofá
+  incrementPresencial: () =>
+    set((state) => ({ presencialCount: state.presencialCount + 1 })),
+
+  decrementPresencial: () =>
+    set((state) => ({
+      presencialCount: Math.max(0, state.presencialCount - 1),
+    })),
+
+  // Zerar tudo
+  clearQueue: () => set({ queue: [], presencialCount: 0 }),
+
+  // CÉREBRO DE CÁLCULO DE TEMPO DO RELÓGIO (40 minutos cravados por atendimento)
+  getTempoEsperaTotal: () => {
+    const { queue, presencialCount } = get();
+    const totalPessoas = queue.length + presencialCount;
+    return totalPessoas * 40;
   },
 }));
-
-export const statusMeta: Record<ChefeStatus, { label: string; emoji: string; dot: string }> = {
-  available: { label: "Disponível", emoji: "🟢", dot: "bg-neon" },
-  busy: { label: "Atendendo", emoji: "🔴", dot: "bg-destructive" },
-  break: { label: "Pausa", emoji: "☕", dot: "bg-ig-orange" },
-  closed: { label: "Fechado", emoji: "🏠", dot: "bg-muted-foreground" },
-};
