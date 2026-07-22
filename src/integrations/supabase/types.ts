@@ -293,6 +293,24 @@ export type Database = {
         }
         Relationships: []
       }
+      chefe_status_salao: {
+        Row: {
+          atualizado_em: string
+          id: number
+          pessoas_no_salao: number
+        }
+        Insert: {
+          atualizado_em?: string
+          id?: number
+          pessoas_no_salao?: number
+        }
+        Update: {
+          atualizado_em?: string
+          id?: number
+          pessoas_no_salao?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
