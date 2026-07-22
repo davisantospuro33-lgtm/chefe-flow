@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PainelRouteImport } from './routes/painel'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicQuickReplyRouteImport } from './routes/api/public/quick-reply'
 
 const PainelRoute = PainelRouteImport.update({
   id: '/painel',
@@ -22,31 +23,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicQuickReplyRoute = ApiPublicQuickReplyRouteImport.update({
+  id: '/api/public/quick-reply',
+  path: '/api/public/quick-reply',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/painel': typeof PainelRoute
+  '/api/public/quick-reply': typeof ApiPublicQuickReplyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/painel': typeof PainelRoute
+  '/api/public/quick-reply': typeof ApiPublicQuickReplyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/painel': typeof PainelRoute
+  '/api/public/quick-reply': typeof ApiPublicQuickReplyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/painel'
+  fullPaths: '/' | '/painel' | '/api/public/quick-reply'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/painel'
-  id: '__root__' | '/' | '/painel'
+  to: '/' | '/painel' | '/api/public/quick-reply'
+  id: '__root__' | '/' | '/painel' | '/api/public/quick-reply'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PainelRoute: typeof PainelRoute
+  ApiPublicQuickReplyRoute: typeof ApiPublicQuickReplyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,23 +75,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/quick-reply': {
+      id: '/api/public/quick-reply'
+      path: '/api/public/quick-reply'
+      fullPath: '/api/public/quick-reply'
+      preLoaderRoute: typeof ApiPublicQuickReplyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PainelRoute: PainelRoute,
+  ApiPublicQuickReplyRoute: ApiPublicQuickReplyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

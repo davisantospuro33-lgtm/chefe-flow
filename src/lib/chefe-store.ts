@@ -79,6 +79,8 @@ interface ChefeState {
   extraMinutes: number;
   presencialCount: number;
   pendentes: PendingRequest[];
+  pessoasNoSalao: number;
+  setPessoasNoSalao: (n: number) => Promise<void>;
   profile: ChefeProfile;
   reviews: Review[];
   portfolio: PortfolioItem[];
@@ -205,6 +207,15 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   extraMinutes: 0,
   presencialCount: 0,
   pendentes: [],
+  pessoasNoSalao: 0,
+  setPessoasNoSalao: async (n) => {
+    const val = Math.max(0, Math.floor(n));
+    set({ pessoasNoSalao: val });
+    await supabase
+      .from("chefe_status_salao")
+      .update({ pessoas_no_salao: val, atualizado_em: new Date().toISOString() })
+      .eq("id", 1);
+  },
   profile: {
     username: "@chefe.oficial",
     bio: "Barbeiro · Cortes autorais",
@@ -282,7 +293,7 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   },
 
   hydrate: async () => {
-    const [{ data: queue }, { data: pendentes }, { data: state }, { data: profile }, { data: reviews }, { data: portfolio }, { data: agenda }] = await Promise.all([
+    const [{ data: queue }, { data: pendentes }, { data: state }, { data: profile }, { data: reviews }, { data: portfolio }, { data: agenda }, { data: salao }] = await Promise.all([
       supabase.from("chefe_queue").select("*").order("position").order("added_at"),
       supabase.from("chefe_pendentes").select("*").order("created_at"),
       supabase.from("chefe_state").select("*").eq("id", 1).maybeSingle(),
@@ -290,10 +301,12 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       supabase.from("chefe_reviews").select("*").order("position").order("created_at"),
       supabase.from("chefe_portfolio").select("*").order("position").order("created_at"),
       supabase.from("chefe_agenda").select("*").order("scheduled_at"),
+      supabase.from("chefe_status_salao").select("pessoas_no_salao").eq("id", 1).maybeSingle(),
     ]);
     set({
       queue: (queue ?? []).map((r) => mapQueue(r as QueueRow)),
       pendentes: (pendentes ?? []).map((r) => mapPendente(r as PendenteRow)),
+      pessoasNoSalao: (salao as { pessoas_no_salao?: number } | null)?.pessoas_no_salao ?? 0,
       status: (state?.status as ChefeStatus) ?? "available",
       presencialCount: state?.presencial_count ?? 0,
       extraMinutes: state?.extra_minutes ?? 0,
@@ -364,6 +377,7 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       .on("postgres_changes", { event: "*", schema: "public", table: "chefe_reviews" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "chefe_portfolio" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "chefe_agenda" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_status_salao" }, refresh)
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
@@ -454,12 +468,35 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
     try {
       const { broadcastPush } = await import("./push.functions");
       const map: Record<ChefeStatus, { title: string; body: string }> = {
-        available: { title: "💈 CHEFE está DISPONÍVEL", body: "Bora agendar seu corte agora!" },
-        busy: { title: "✂️ CHEFE está atendendo", body: "Fila em andamento." },
-        break: { title: "☕ CHEFE em pausa", body: "Volta logo. Fica ligado!" },
-        closed: { title: "🏠 CHEFE fechou", body: "Nos vemos na próxima." },
+        available: {
+          title: "💈 CHEFE está DISPONÍVEL",
+          body: "Fila leve agora. Bora garantir sua vaga na cadeira!",
+        },
+        busy: {
+          title: "✂️ CHEFE está atendendo",
+          body: "Fila em andamento — acompanhe seu progresso em tempo real.",
+        },
+        break: {
+          title: "☕ CHEFE em pausa",
+          body: "Pausa rápida. Ele volta logo — mantém o celular por perto.",
+        },
+        closed: {
+          title: "🏠 CHEFE fechou",
+          body: "Encerramos por hoje. Já pode deixar seu horário marcado.",
+        },
       };
-      await broadcastPush({ data: { ...map[status], url: "/" } });
+      await broadcastPush({
+        data: {
+          ...map[status],
+          url: "/",
+          tag: "chefe-status",
+          actions: [
+            { action: "ver_fila", title: "👀 Ver fila" },
+            { action: "ja_sai", title: "🚗 Já saí" },
+          ],
+          action_map: { ver_fila: "/", ja_sai: "/" },
+        },
+      });
     } catch (err) {
       console.warn("push failed", err);
     }
@@ -510,6 +547,24 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       current_client_id: current?.id ?? null,
       status: "busy",
     });
+    try {
+      const { broadcastPush } = await import("./push.functions");
+      await broadcastPush({
+        data: {
+          title: "✂️ Corte iniciado",
+          body: `${current?.name ?? "Cliente"} está na cadeira. Próximos: prepara pra sair.`,
+          url: "/",
+          tag: "chefe-progress",
+          actions: [
+            { action: "ja_sai", title: "🚗 Já saí" },
+            { action: "atrasei", title: "⏰ Vou atrasar" },
+          ],
+          action_map: { ja_sai: "/", atrasei: "/" },
+        },
+      });
+    } catch (e) {
+      console.warn("push start failed", e);
+    }
   },
 
   completeAndNext: async () => {
@@ -536,6 +591,21 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
     const extraMinutes = get().extraMinutes + 10;
     set({ extraMinutes });
     await updateState({ extra_minutes: extraMinutes });
+    try {
+      const { broadcastPush } = await import("./push.functions");
+      await broadcastPush({
+        data: {
+          title: "⏰ +10 min na fila",
+          body: "O CHEFE ajustou o tempo. Recalcule sua saída (trajeto GPS + 10 min de folga).",
+          url: "/",
+          tag: "chefe-delay",
+          actions: [{ action: "ver_fila", title: "👀 Ver fila" }],
+          action_map: { ver_fila: "/" },
+        },
+      });
+    } catch (e) {
+      console.warn("push +10 failed", e);
+    }
   },
 
   setDistance: (km) => set({ distanceKm: km }),

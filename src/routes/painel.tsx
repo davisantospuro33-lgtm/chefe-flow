@@ -10,6 +10,7 @@ import { ConfigAI } from "@/components/chefe/ConfigAI";
 import { AdminMap } from "@/components/chefe/AdminMap";
 import { SortableQueue } from "@/components/chefe/SortableQueue";
 import { AgendaAdmin } from "@/components/chefe/AgendaAdmin";
+import { EmergencyBanner } from "@/components/chefe/EmergencyBanner";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/painel")({
@@ -51,6 +52,8 @@ function Painel() {
   const pendentes = useChefeStore((s) => s.pendentes);
   const aceitarPendente = useChefeStore((s) => s.aceitarPendente);
   const recusarPendente = useChefeStore((s) => s.recusarPendente);
+  const pessoasNoSalao = useChefeStore((s) => s.pessoasNoSalao);
+  const setPessoasNoSalao = useChefeStore((s) => s.setPessoasNoSalao);
   const profile = useChefeStore((s) => s.profile);
   const instrucoesDoChefe = useChefeStore((s) => s.instrucoesDoChefe);
 
@@ -131,6 +134,9 @@ function Painel() {
       )}
       {tab !== "operacao" ? null : (
         <>
+      {/* Alertas de emergência (IA → CHEFE) + respostas rápidas de clientes */}
+      <EmergencyBanner />
+
       {/* Share link block */}
       <section className="mb-4">
         <ShareButton variant="block" />
@@ -316,6 +322,50 @@ function Painel() {
               variant="ig"
             />
           </div>
+        </div>
+      </section>
+
+      {/* Pessoas no Salão — ajuste rápido */}
+      <section className="mt-4 glass rounded-3xl p-5">
+        <div className="mb-1 flex items-center gap-2">
+          <Users className="h-4 w-4 text-amber-300" />
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            📍 Pessoas no Salão Agora (sofá)
+          </p>
+        </div>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Informativo público de movimento — separado da fila virtual e da rua.
+        </p>
+        <div className="flex items-center justify-center gap-6">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => {
+              setPessoasNoSalao(pessoasNoSalao - 1);
+              toast("Salão: -1");
+            }}
+            disabled={pessoasNoSalao === 0}
+            className="grid h-14 w-14 place-items-center rounded-2xl bg-white/[0.05] ring-1 ring-border text-white disabled:opacity-30"
+          >
+            <Minus className="h-6 w-6" />
+          </motion.button>
+          <div className="min-w-[80px] text-center">
+            <div className="text-5xl font-black tabular-nums leading-none text-amber-300">
+              {pessoasNoSalao}
+            </div>
+            <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              no sofá
+            </div>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => {
+              setPessoasNoSalao(pessoasNoSalao + 1);
+              toast("Salão: +1");
+            }}
+            className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-amber-500 to-rose-500 text-white shadow-lg"
+          >
+            <Plus className="h-6 w-6" />
+          </motion.button>
         </div>
       </section>
 

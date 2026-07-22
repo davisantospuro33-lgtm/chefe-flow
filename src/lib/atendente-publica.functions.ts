@@ -21,10 +21,15 @@ export const atendentePublicaChat = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Busca contexto AO VIVO
-    const [{ data: state }, { data: queue }, { data: profile }] = await Promise.all([
+    const [{ data: state }, { data: queue }, { data: profile }, { data: agenda }, { data: salao }] = await Promise.all([
       supabaseAdmin.from("chefe_state").select("*").eq("id", 1).maybeSingle(),
       supabaseAdmin.from("chefe_queue").select("id,name,position").order("position"),
       supabaseAdmin.from("chefe_profile").select("*").eq("id", 1).maybeSingle(),
+      supabaseAdmin
+        .from("chefe_agenda")
+        .select("id,name,scheduled_at,status")
+        .order("scheduled_at"),
+      supabaseAdmin.from("chefe_status_salao").select("pessoas_no_salao").eq("id", 1).maybeSingle(),
     ]);
 
     const instrucoes =
@@ -33,6 +38,22 @@ export const atendentePublicaChat = createServerFn({ method: "POST" })
     const status = (state?.status as string) ?? "available";
     const presencial = state?.presencial_count ?? 0;
     const filaTotal = (queue?.length ?? 0) + presencial;
+    const pessoasNoSalao =
+      (salao as { pessoas_no_salao?: number } | null)?.pessoas_no_salao ?? 0;
+    const agendaHoje = (agenda ?? [])
+      .filter((a) => {
+        const t = new Date(a.scheduled_at).getTime();
+        return t > Date.now() - 3600_000 && t < Date.now() + 12 * 3600_000;
+      })
+      .slice(0, 8)
+      .map((a) => {
+        const h = new Date(a.scheduled_at).toLocaleTimeString("pt-BR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        return `${h} ${a.name} (${a.status})`;
+      })
+      .join(" | ") || "sem horários marcados nas próximas horas";
     const distStr =
       typeof data.distanceKm === "number" && Number.isFinite(data.distanceKm)
         ? data.distanceKm.toFixed(1)
@@ -83,16 +104,48 @@ export const atendentePublicaChat = createServerFn({ method: "POST" })
           return { ok: true };
         },
       }),
+      alertarChefeEmergencia: tool({
+        description:
+          "PONTE DE EMERGÊNCIA: chame esta tool SEMPRE que ocorrer imprevisto, dúvida atípica, cliente fora da regra, reclamação, cancelamento inesperado, ou qualquer situação que exija decisão do CHEFE em pessoa. Isso dispara um alerta em tempo real no Chat Privado de Comando do CHEFE com o resumo do problema para tomada de decisão conjunta.",
+        inputSchema: z.object({
+          resumo: z.string(),
+          cliente_nome: z.string().optional(),
+          urgencia: z.enum(["baixa", "media", "alta"]),
+        }),
+        execute: async (input) => {
+          try {
+            const ch = supabaseAdmin.channel("painel_operacao");
+            await ch.send({
+              type: "broadcast",
+              event: "alerta-emergencia",
+              payload: {
+                resumo: input.resumo,
+                cliente_nome: input.cliente_nome ?? null,
+                urgencia: input.urgencia,
+                ts: Date.now(),
+              },
+            });
+            await supabaseAdmin.removeChannel(ch);
+          } catch (e) {
+            console.warn("alertarChefeEmergencia broadcast falhou", e);
+          }
+          changes.push(`🚨 Alerta enviado ao CHEFE: ${input.resumo}`);
+          return { ok: true };
+        },
+      }),
     };
 
-    const system = `Você é a ATENDENTE VIRTUAL PREMIUM da barbearia CHEFE, uma assessora simpática, humana, com lábia refinada e postura profissional. Fale sempre em português brasileiro. Seja curta e direta (2-4 frases por resposta, use emojis com moderação).
+    const system = `Você é a ATENDENTE VIRTUAL ESPECIALISTA da barbearia CHEFE — assessora simpática, humana, com lábia refinada, postura profissional e autonomia para consultar em tempo real o movimento da casa. Fale sempre em português brasileiro. Seja curta e direta (2-4 frases por resposta, use emojis com moderação).
 
 ━━━ DIRETRIZES DA OPERAÇÃO ENVIADAS PELO CHEFE AO VIVO ━━━
 Instrução atual do CHEFE: ${instrucoes || "(nenhuma ordem específica no momento — atenda com o padrão de excelência)"}
 
-━━━ ESTADO ATUAL DA CASA ━━━
+━━━ ESTADO ATUAL DA CASA (3 FRENTES CONSULTADAS AGORA) ━━━
 Status do CHEFE: ${status}
-Clientes na fila (virtual + presencial): ${filaTotal}
+FRENTE 1 (Sequência Virtual do Dia — chefe_queue): ${queue?.length ?? 0} cliente(s) na ordem virtual.
+FRENTE 2 (Agenda Fixa — chefe_agenda): ${agendaHoje}.
+FRENTE 3 (Fila Presencial no Salão — chefe_status_salao): ${pessoasNoSalao} pessoa(s) aguardando fisicamente no sofá do salão agora.
+Total geral aguardando (virtual + presencial + no salão): ${filaTotal + pessoasNoSalao}.
 Preço do corte: ${profile?.service_price ?? "R$ 25,00"}
 Duração média: ${profile?.service_duration_min ?? 30} min
 
@@ -103,6 +156,8 @@ REGRA DE ANTECEDÊNCIA (FIXA E OBRIGATÓRIA): o cliente DEVE chegar 10 min ANTES
 Sempre que falar de "hora de sair" ou urgência, use exatamente esse número (${leaveInStr} min) e mencione os 10 min de antecedência. Nunca sugira sair só com o tempo puro do GPS.
 
 LÁBIA E PERSUASÃO: Adapte seu tom de voz imediatamente. Se o cliente estiver PERTO (< 3km ou < 10 min), use o gatilho de urgência para fechar a vaga na cadeira ("você está pertinho, dá pra chegar rapidinho, quer que eu já reserve?"). Se estiver LONGE, valorize a organização ("me manda seus dados que eu já garanto sua posição na fila e te aviso a hora exata de sair"). Se o CHEFE estiver em pausa/fechado, seja transparente e ofereça agendar pra depois.
+
+PONTE DE EMERGÊNCIA (uso obrigatório): sempre que o cliente reclamar, cancelar em cima da hora, fizer pedido fora do padrão (ex: fora de horário, serviço não listado, dúvida que você não consegue responder), ou você sentir qualquer imprevisto — chame IMEDIATAMENTE a tool alertarChefeEmergencia com um resumo claro. O CHEFE recebe isso ao vivo no Chat Privado de Comando e decide contigo.
 
 FLUXO DE TRIAGEM (colete um por vez, natural, sem parecer formulário):
 1. Nome completo
