@@ -356,3 +356,4 @@ function PainelAdmin() {
     </main>
   );
 }
+export default PainelAdmin;
