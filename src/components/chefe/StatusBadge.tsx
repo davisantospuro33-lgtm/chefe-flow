@@ -1,32 +1,46 @@
-import { motion } from "framer-motion";
-import { useChefeStore, statusMeta } from "@/lib/chefe-store";
+import { useChefeStore } from "@/lib/chefe-store";
 
 export function StatusBadge() {
   const status = useChefeStore((s) => s.status);
-  const meta = statusMeta[status];
-  const isLive = status === "available";
+  const queue = useChefeStore((s) => s.queue);
+  const presencialCount = useChefeStore((s) => s.presencialCount);
+  const total = queue.length + presencialCount;
+
+  const statusConfig = {
+    open: {
+      label: total === 0 ? "DISPONÍVEL AGORA" : "ATENDENDO · FILA ABERTA",
+      color: "bg-emerald-500",
+      textColor: "text-emerald-400",
+      borderColor: "border-emerald-500/30",
+    },
+    busy: {
+      label: "LOTADO · APENAS ENCAIXE",
+      color: "bg-amber-500",
+      textColor: "text-amber-400",
+      borderColor: "border-amber-500/30",
+    },
+    break: {
+      label: "PAUSA RÁPIDA · VOLTA EM BREVE",
+      color: "bg-blue-500",
+      textColor: "text-blue-400",
+      borderColor: "border-blue-500/30",
+    },
+    closed: {
+      label: "SALÃO FECHADO",
+      color: "bg-rose-500",
+      textColor: "text-rose-400",
+      borderColor: "border-rose-500/30",
+    },
+  };
+
+  const current = statusConfig[status] || statusConfig.open;
 
   return (
-    <motion.div
-      initial={{ y: 8, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className="inline-flex items-center gap-2 rounded-full glass-strong px-4 py-2 text-sm font-semibold"
-    >
-      <span className="relative flex h-2.5 w-2.5">
-        {isLive && (
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-neon opacity-75" />
-        )}
-        <span
-          className="relative inline-flex h-2.5 w-2.5 rounded-full"
-          style={{
-            background: isLive ? "var(--neon)" : "var(--muted-foreground)",
-            boxShadow: isLive ? "0 0 12px var(--neon-glow)" : undefined,
-          }}
-        />
+    <div className={`flex items-center gap-2 rounded-full bg-black/60 px-3.5 py-1.5 border ${current.borderColor} backdrop-blur-md`}>
+      <span className={`h-2 w-2 rounded-full ${current.color} animate-pulse`} />
+      <span className={`text-[10px] font-black tracking-wider uppercase ${current.textColor}`}>
+        {current.label}
       </span>
-      <span className={isLive ? "text-neon" : "text-foreground/80"}>
-        {isLive ? "Disponível no Momento" : meta.label}
-      </span>
-    </motion.div>
+    </div>
   );
 }
