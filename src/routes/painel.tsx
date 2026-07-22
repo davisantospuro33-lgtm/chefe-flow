@@ -396,7 +396,52 @@ function Painel() {
 
       {/* Contador presencial — isolado da agenda virtual */}
       <section className="mt-4 glass rounded-3xl p-5">
-        
+     {/* Contador presencial - isolado da agenda virtual */}
+      <section className="mt-4 glass rounded-3xl p-5">
+        <div className="mb-1 flex items-center gap-2">
+          <Users className="h-4 w-4 text-amber-400" />
+          <p className="text-[11px] font-bold uppercase text-zinc-100">
+            Clientes no Presencial (Rua)
+          </p>
+        </div>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Adicione ou remova conforme chegam no salão.
+        </p>
+
+        <div className="flex items-center justify-between">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => {
+              decPresencial();
+              toast("Presencial: -1");
+            }}
+            disabled={presencial === 0}
+            className="grid h-14 w-14 place-items-center rounded-2xl bg-white/5 active:bg-white/10"
+          >
+            <Minus className="h-6 w-6" />
+          </motion.button>
+
+          <div className="min-w-[80px] text-center">
+            <div className="text-5xl font-black tabular-nums text-amber-400">
+              {presencial}
+            </div>
+            <div className="mt-1 text-[10px] font-bold uppercase text-zinc-400">
+              na rua
+            </div>
+          </div>
+
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => {
+              incPresencial();
+              toast("Presencial: +1");
+            }}
+            className="grid h-14 w-14 place-items-center rounded-2xl bg-white/5 active:bg-white/10"
+          >
+            <Plus className="h-6 w-6" />
+          </motion.button>
+        </div>
+      </section>   
 
       {/* Queue mini */}
       <section className="mt-4 glass rounded-3xl p-5">
