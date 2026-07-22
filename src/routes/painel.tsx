@@ -13,7 +13,7 @@ import {
   Share2, 
   Play, 
   Plus, 
-  Minus
+  Minus 
 } from "lucide-react";
 
 export const Route = createFileRoute("/painel")({
@@ -21,32 +21,25 @@ export const Route = createFileRoute("/painel")({
 });
 
 function PainelAdmin() {
-  // Autenticação Privada (PIN 3337)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
 
-  // Navegação das 5 Abas
   const [tab, setTab] = useState<"operacao" | "gps" | "app" | "portfolio" | "ia">("operacao");
   const [status, setStatus] = useState<"disponivel" | "atendendo" | "pausa" | "fechado">("disponivel");
 
-  // Estados locais para controle imediato sem crash de store
   const [presencialCount, setPresencialCount] = useState(0);
-  const [queue, setQueue] = useState<{ id: string; name: string }[]>([]);
   const [recadoIA, setRecadoIA] = useState("");
   const [recadoAtivo, setRecadoAtivo] = useState(false);
 
-  // IA Chat
   const [inputIA, setInputIA] = useState("");
   const [messagesIA, setMessagesIA] = useState([
     {
       id: "1",
       sender: "ai",
-      text: `👊 CHEFE, canal de comando direto ativo. Manda a ordem que eu executo no sistema.`,
+      text: "👊 CHEFE, canal de comando direto ativo. Manda a ordem que eu executo no sistema.",
     },
   ]);
-
-  const currentClient = queue[0] || null;
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,15 +58,14 @@ function PainelAdmin() {
     setInputIA("");
 
     setTimeout(() => {
-      let reply = `✅ Comando executado no motor do app!`;
+      let reply = "✅ Comando executado no motor do app!";
       if (text.toLowerCase().includes("status") || text.toLowerCase().includes("fila")) {
-        reply = `📊 MONITORAMENTO:\n• Sofá: ${presencialCount}\n• Fila Virtual: ${queue.length}`;
+        reply = `📊 MONITORAMENTO:\n• Sofá: ${presencialCount}`;
       }
       setMessagesIA((prev) => [...prev, { id: (Date.now() + 1).toString(), sender: "ai", text: reply }]);
     }, 400);
   };
 
-  // 🔒 TELA DE LOGIN (PIN 3337)
   if (!isAuthenticated) {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center bg-[#0d0914] px-6 text-white font-sans">
@@ -107,10 +99,8 @@ function PainelAdmin() {
     );
   }
 
-  // 🔓 TELA PRINCIPAL
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-[#0a0612] px-4 pb-20 pt-6 text-white font-sans">
-      {/* Topo */}
       <header className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-500 p-0.5 shadow-xl">
@@ -131,7 +121,7 @@ function PainelAdmin() {
         </button>
       </header>
 
-      {/* Menu Principal (5 ABAS IGUAL A SUA FOTO) */}
+      {/* Menu Principal de 5 Abas */}
       <nav className="mb-6 grid grid-cols-5 gap-1 rounded-2xl bg-white/[0.03] p-1 border border-white/10">
         <button
           onClick={() => setTab("operacao")}
@@ -200,15 +190,19 @@ function PainelAdmin() {
           <p className="text-[9px] font-black uppercase tracking-wider text-blue-400">LINK DO APP</p>
           <p className="text-xs font-bold text-white">Enviar para clientes</p>
         </div>
-        <button 
-          onClick={() => navigator.clipboard?.writeText(window.location.origin)}
+        <button
+          onClick={() => {
+            if (typeof window !== "undefined") {
+              navigator.clipboard?.writeText(window.location.origin);
+            }
+          }}
           className="flex items-center gap-1.5 rounded-xl bg-blue-600/30 px-3 py-2 text-xs font-bold text-blue-300 border border-blue-500/30 active:scale-95"
         >
           <Share2 className="h-3.5 w-3.5" /> Compartilhar
         </button>
       </div>
 
-      {/* ABA 1: OPERAÇÃO */}
+      {/* ABA OPERAÇÃO */}
       {tab === "operacao" && (
         <div className="space-y-4">
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
@@ -245,7 +239,9 @@ function PainelAdmin() {
               <button
                 onClick={() => setStatus("disponivel")}
                 className={`flex items-center gap-2 rounded-2xl p-3 text-xs font-bold border transition-all ${
-                  status === "disponivel" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" : "bg-white/[0.02] border-white/5 text-zinc-400"
+                  status === "disponivel"
+                    ? "bg-emerald-500/20 border-emerald-500 text-emerald-400"
+                    : "bg-white/[0.02] border-white/5 text-zinc-400"
                 }`}
               >
                 <span className="h-3 w-3 rounded-full bg-emerald-400" /> Disponível
@@ -253,7 +249,9 @@ function PainelAdmin() {
               <button
                 onClick={() => setStatus("atendendo")}
                 className={`flex items-center gap-2 rounded-2xl p-3 text-xs font-bold border transition-all ${
-                  status === "atendendo" ? "bg-rose-500/20 border-rose-500 text-rose-400" : "bg-white/[0.02] border-white/5 text-zinc-400"
+                  status === "atendendo"
+                    ? "bg-rose-500/20 border-rose-500 text-rose-400"
+                    : "bg-white/[0.02] border-white/5 text-zinc-400"
                 }`}
               >
                 <span className="h-3 w-3 rounded-full bg-rose-500" /> Atendendo
@@ -282,7 +280,7 @@ function PainelAdmin() {
         </div>
       )}
 
-      {/* ABA 2: RADAR GPS (FOTO EXATA) */}
+      {/* ABA RADAR GPS */}
       {tab === "gps" && (
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 space-y-4">
           <div>
@@ -311,15 +309,15 @@ function PainelAdmin() {
         </div>
       )}
 
-      {/* ABA 3: APP */}
+      {/* ABA APP */}
       {tab === "app" && (
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 space-y-3">
           <h3 className="text-xs font-black uppercase tracking-wider text-amber-400">GESTÃO DO APLICATIVO</h3>
-          <p className="text-[10px] text-zinc-400">Sincronia com o cliente rodando normal.</p>
+          <p className="text-[10px] text-zinc-400">Sincronia em tempo real ativa.</p>
         </div>
       )}
 
-      {/* ABA 4: PORTFÓLIO */}
+      {/* ABA PORTFÓLIO */}
       {tab === "portfolio" && (
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-center">
           <Sparkles className="mx-auto h-8 w-8 text-amber-400 mb-2" />
@@ -327,7 +325,7 @@ function PainelAdmin() {
         </div>
       )}
 
-      {/* ABA 5: IA */}
+      {/* ABA IA */}
       {tab === "ia" && (
         <div className="rounded-3xl border border-pink-500/30 bg-black p-5">
           <div className="flex items-center gap-3 mb-4">
