@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { LayoutGrid, Calendar, Users, Clock } from "lucide-react";
+  import { createFileRoute } from "@tanstack/react-router";
+import { LayoutGrid, Calendar } from "lucide-react";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
 import { StatusBadge } from "@/components/chefe/StatusBadge";
 import { Highlights } from "@/components/chefe/Highlights";
@@ -9,7 +9,6 @@ import { AIAlertBox } from "@/components/chefe/AIAlertBox";
 import { SalonMap } from "@/components/chefe/SalonMap";
 import { SalonInfo } from "@/components/chefe/SalonInfo";
 import { QueueList } from "@/components/chefe/QueueList";
-import { AgendaBooking } from "@/components/chefe/AgendaBooking";
 import { LeaveNotifier } from "@/components/chefe/LeaveNotifier";
 import { Manifesto } from "@/components/chefe/Manifesto";
 import { Feed } from "@/components/chefe/Feed";
@@ -28,11 +27,6 @@ function Index() {
     (s) => s.queue.length + s.presencialCount,
   );
   const profile = useChefeStore((s) => s.profile);
-
-  const scrollToAgenda = () => {
-    const el = document.getElementById("agenda-section");
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md px-4 pb-24 pt-6">
@@ -87,31 +81,35 @@ function Index() {
         {/* 1. No Salão Agora */}
         <SalonInfo />
 
-        {/* 2. Sequência Virtual (Encaixe) */}
+        {/* 2. Encaixe Virtual na Fila */}
         <QueueList compact />
 
-        {/* 3. Garantir Horário (Agenda) */}
+        {/* 3. Garantir Horário na Agenda */}
         <button
-          onClick={scrollToAgenda}
+          onClick={() => alert("Selecione o dia e horário desejado no atendimento com a IA!")}
           className="flex flex-col justify-between rounded-3xl glass-strong p-3 text-left transition-transform active:scale-95 border border-white/10"
         >
-          <div className="flex items-center gap-1.5">
-            <div className="grid h-7 w-7 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600">
-              <Calendar className="h-3.5 w-3.5 text-white" />
+          <div>
+            <div className="flex items-center gap-1">
+              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600">
+                <Calendar className="h-3 w-3 text-white" />
+              </div>
+              <p className="text-[9px] font-black uppercase tracking-wider text-muted-foreground leading-tight">
+                📅 Agenda
+              </p>
             </div>
-            <p className="text-[9px] font-black uppercase tracking-wider text-muted-foreground leading-tight">
-              📅 Agenda
+            <p className="mt-1 text-[10px] font-bold text-white leading-tight">
+              Marcar Horário
             </p>
           </div>
-          <div className="mt-2">
-            <p className="text-[10px] font-bold text-white leading-tight">Garantir Horário</p>
-            <span className="mt-1 inline-block text-[9px] font-semibold text-neon">Marcar agora ➔</span>
-          </div>
+          <span className="mt-2 w-full text-center rounded-xl bg-white/10 py-1 text-[9px] font-bold text-neon">
+            Garantir ➔
+          </span>
         </button>
       </div>
 
       {/* ═══════════════════════════════════════════════════ */}
-      {/* CHEFE AI & ALERTA INTELIGENTE (LOGO ABAIXO)         */}
+      {/* CHEFE AI & ALERTA INTELIGENTE                       */}
       {/* ═══════════════════════════════════════════════════ */}
       <div className="mt-4">
         <ChefeAI />
@@ -131,11 +129,6 @@ function Index() {
       {/* Mapa */}
       <div className="mt-4">
         <SalonMap />
-      </div>
-
-      {/* Grade de Agendamento */}
-      <div id="agenda-section" className="mt-4">
-        <AgendaBooking />
       </div>
 
       <div className="mt-6">
@@ -172,4 +165,6 @@ function Stat({ value, label, gradient }: { value: string; label: string; gradie
 
 function Divider() {
   return <span className="h-8 w-px bg-border" />;
-}
+}        
+  
+
