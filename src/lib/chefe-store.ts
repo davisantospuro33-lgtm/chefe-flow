@@ -79,6 +79,8 @@ interface ChefeState {
   extraMinutes: number;
   presencialCount: number;
   pendentes: PendingRequest[];
+  pessoasNoSalao: number;
+  setPessoasNoSalao: (n: number) => Promise<void>;
   profile: ChefeProfile;
   reviews: Review[];
   portfolio: PortfolioItem[];
