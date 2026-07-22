@@ -72,27 +72,43 @@ function Index() {
         <ServiceCard />
       </div>
 
-      {/* CHEFE AI — Atendente conversacional */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* BLOCO SUPERIOR — RESUMO DINÂMICO E IA (TOPO DA TELA) */}
+      {/* ═══════════════════════════════════════════════════ */}
+
+      {/* [1º] CHEFE AI · Atendente conversacional + Alerta Inteligente (GPS + 10 min) */}
       <div className="mt-4">
         <ChefeAI />
       </div>
-
-      {/* Hierarquia oficial do cliente (top → bottom) */}
-      <section className="mt-6 space-y-4">
-        {/* [1º] CHEFE AI · Alerta Inteligente (GPS + 10 min) */}
+      <div className="mt-3">
         <AIAlertBox />
-        <LeaveNotifier />
-        {/* [2º] Acompanhamento ao vivo (Na Fila → Hora de Sair → Na Cadeira → Concluído) */}
-        <ProgressTracker />
-        {/* [3º] Mapa ao vivo (Dark) */}
-        <SalonMap />
-        {/* [4º] Informativo — pessoas no salão agora */}
+      </div>
+      <LeaveNotifier />
+
+      {/* [2º] 📍 NO SALÃO AGORA  +  👥 SEQUÊNCIA VIRTUAL — LADO A LADO no topo */}
+      <div className="mt-3 grid grid-cols-2 gap-2.5">
         <SalonInfo />
-        {/* [5º] Agenda fixa (calendário de horários) */}
+        <QueueList compact />
+      </div>
+
+      {/* [3º] Acompanhamento ao vivo (Na Fila → Hora de Sair → Na Cadeira → Concluído) */}
+      <div className="mt-3">
+        <ProgressTracker />
+      </div>
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* BLOCOS SUBSEQUENTES — LOGO ABAIXO DO TOPO             */}
+      {/* ═══════════════════════════════════════════════════ */}
+
+      {/* [4º] Botões de Rotas e Navegação (Google Maps + Waze) com mapa dark */}
+      <div className="mt-4">
+        <SalonMap />
+      </div>
+
+      {/* [5º] 📅 AGENDAR HORÁRIO — grade de horários de 30min */}
+      <div className="mt-4">
         <AgendaBooking />
-        {/* [6º] Sequência virtual do dia (ordem de atendimento) */}
-        <QueueList />
-      </section>
+      </div>
 
       {/* Manifesto */}
       <div className="mt-6">
