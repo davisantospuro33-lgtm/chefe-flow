@@ -3,16 +3,13 @@ import { useState } from "react";
 import { useChefeStore } from "@/lib/chefe-store";
 import { 
   Users, 
-  Clock, 
   Cpu, 
   Send, 
   MapPin, 
   Sparkles, 
   CheckCircle2, 
   RotateCcw,
-  Calendar,
-  Layers,
-  Bot
+  Layers
 } from "lucide-react";
 
 export const Route = createFileRoute("/painel")({
@@ -23,15 +20,11 @@ function PainelAdmin() {
   const [tab, setTab] = useState<"operacao" | "gps" | "app" | "portfolio" | "ia">("operacao");
   const [inputIA, setInputIA] = useState("");
 
-  // Estado Global Sincronizado (Cérebro do Relógio)
-  const queue = useChefeStore((s) => s.queue);
-  const presencialCount = useChefeStore((s) => s.presencialCount);
-  const incrementPresencial = useChefeStore((s) => s.incrementPresencial);
-  const decrementPresencial = useChefeStore((s) => s.decrementPresencial);
-  const nextInQueue = useChefeStore((s) => s.nextInQueue);
-  const clearQueue = useChefeStore((s) => s.clearQueue);
-
-  // Cálculo do Tempo Sincronizado (40min por cliente)
+  // Estado Global Sincronizado
+  const store = useChefeStore();
+  const queue = store.queue || [];
+  const presencialCount = store.presencialCount || 0;
+  
   const totalFila = queue.length + presencialCount;
   const tempoEstimado = totalFila * 40;
 
@@ -130,12 +123,9 @@ function PainelAdmin() {
         </button>
       </nav>
 
-      {/* ═══════════════════════════════════════════════════ */}
-      {/* ABA 1: OPERAÇÃO DO SALÃO (ÚNICO CONTADOR DE SOFÁ)   */}
-      {/* ═══════════════════════════════════════════════════ */}
+      {/* ABA 1: OPERAÇÃO DO SALÃO (ÚNICO CONTADOR DE SOFÁ) */}
       {tab === "operacao" && (
         <div className="space-y-4">
-          {/* Card Único do Sofá */}
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
@@ -151,7 +141,7 @@ function PainelAdmin() {
 
             <div className="flex items-center justify-around py-2">
               <button
-                onClick={decrementPresencial}
+                onClick={() => store.decrementPresencial && store.decrementPresencial()}
                 className="grid h-12 w-12 place-items-center rounded-2xl bg-white/10 text-white text-xl font-black active:scale-90 transition-transform"
               >
                 -
@@ -163,7 +153,7 @@ function PainelAdmin() {
                 </span>
               </div>
               <button
-                onClick={incrementPresencial}
+                onClick={() => store.incrementPresencial && store.incrementPresencial()}
                 className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 text-black text-xl font-black shadow-lg active:scale-90 transition-transform"
               >
                 +
@@ -171,7 +161,6 @@ function PainelAdmin() {
             </div>
           </div>
 
-          {/* Fila Virtual Atual */}
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
             <div className="flex items-center justify-between mb-3">
               <span className="text-[11px] font-black uppercase tracking-wider text-cyan-400">
@@ -186,16 +175,16 @@ function PainelAdmin() {
               </div>
             ) : (
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {queue.map((item, index) => (
+                {queue.map((item: any, index: number) => (
                   <div
-                    key={item.id}
+                    key={item.id || index}
                     className="flex items-center justify-between rounded-2xl bg-white/[0.05] px-4 py-3 border border-white/5"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="grid h-6 w-6 place-items-center rounded-full bg-amber-500 text-black font-black text-xs">
                         {index + 1}
                       </span>
-                      <span className="text-xs font-bold text-white">{item.name}</span>
+                      <span className="text-xs font-bold text-white">{item.name || item.cliente_nome || "Cliente"}</span>
                     </div>
                     <span className="text-[10px] font-bold text-amber-400">
                       ~{(index + presencialCount) * 40} min
@@ -207,7 +196,7 @@ function PainelAdmin() {
 
             <div className="mt-4 space-y-2">
               <button
-                onClick={nextInQueue}
+                onClick={() => store.nextInQueue && store.nextInQueue()}
                 disabled={queue.length === 0}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 py-3.5 text-xs font-black uppercase tracking-wider text-black shadow-lg disabled:opacity-30 active:scale-95 transition-transform"
               >
@@ -215,7 +204,7 @@ function PainelAdmin() {
               </button>
 
               <button
-                onClick={clearQueue}
+                onClick={() => store.clearQueue && store.clearQueue()}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white/[0.04] py-2.5 text-[10px] font-bold text-rose-400 border border-rose-500/20 active:scale-95 transition-transform"
               >
                 <RotateCcw className="h-3.5 w-3.5" /> Zerar Toda a Fila
@@ -225,12 +214,9 @@ function PainelAdmin() {
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════ */}
-      {/* ABA 5: IA PAINEL PRO MOTOR (100% SINCRONIZADA)     */}
-      {/* ═══════════════════════════════════════════════════ */}
+      {/* ABA 5: IA PAINEL PRO MOTOR */}
       {tab === "ia" && (
         <div className="rounded-3xl border border-pink-500/30 bg-gradient-to-b from-neutral-900 to-black p-5 shadow-2xl">
-          {/* Header do Motor */}
           <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
             <div className="flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-500 to-amber-500 shadow-lg shadow-pink-500/20">
@@ -248,7 +234,6 @@ function PainelAdmin() {
             </div>
           </div>
 
-          {/* Indicadores de Tempo em Tempo Real */}
           <div className="mb-4 grid grid-cols-3 gap-2 rounded-2xl bg-white/[0.04] p-3 text-center border border-white/5">
             <div>
               <p className="text-[8px] font-bold uppercase text-muted-foreground">Sofá</p>
@@ -264,7 +249,6 @@ function PainelAdmin() {
             </div>
           </div>
 
-          {/* Feed do Chat de Comando Interno */}
           <div className="max-h-64 min-h-[140px] overflow-y-auto space-y-2.5 pr-1 text-xs">
             {messagesIA.map((m) => (
               <div
@@ -280,7 +264,6 @@ function PainelAdmin() {
             ))}
           </div>
 
-          {/* Input de Ordem Directa */}
           <div className="mt-4 flex items-center gap-2">
             <input
               type="text"
@@ -300,7 +283,6 @@ function PainelAdmin() {
         </div>
       )}
 
-      {/* Placeholder para outras abas */}
       {(tab === "gps" || tab === "app" || tab === "portfolio") && (
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center text-xs text-muted-foreground">
           Módulo <span className="font-bold text-amber-400 uppercase">{tab}</span> ativo e sincronizado com a Central CHEFE.
