@@ -468,12 +468,35 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
     try {
       const { broadcastPush } = await import("./push.functions");
       const map: Record<ChefeStatus, { title: string; body: string }> = {
-        available: { title: "💈 CHEFE está DISPONÍVEL", body: "Bora agendar seu corte agora!" },
-        busy: { title: "✂️ CHEFE está atendendo", body: "Fila em andamento." },
-        break: { title: "☕ CHEFE em pausa", body: "Volta logo. Fica ligado!" },
-        closed: { title: "🏠 CHEFE fechou", body: "Nos vemos na próxima." },
+        available: {
+          title: "💈 CHEFE está DISPONÍVEL",
+          body: "Fila leve agora. Bora garantir sua vaga na cadeira!",
+        },
+        busy: {
+          title: "✂️ CHEFE está atendendo",
+          body: "Fila em andamento — acompanhe seu progresso em tempo real.",
+        },
+        break: {
+          title: "☕ CHEFE em pausa",
+          body: "Pausa rápida. Ele volta logo — mantém o celular por perto.",
+        },
+        closed: {
+          title: "🏠 CHEFE fechou",
+          body: "Encerramos por hoje. Já pode deixar seu horário marcado.",
+        },
       };
-      await broadcastPush({ data: { ...map[status], url: "/" } });
+      await broadcastPush({
+        data: {
+          ...map[status],
+          url: "/",
+          tag: "chefe-status",
+          actions: [
+            { action: "ver_fila", title: "👀 Ver fila" },
+            { action: "ja_sai", title: "🚗 Já saí" },
+          ],
+          action_map: { ver_fila: "/", ja_sai: "/" },
+        },
+      });
     } catch (err) {
       console.warn("push failed", err);
     }
@@ -524,6 +547,24 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       current_client_id: current?.id ?? null,
       status: "busy",
     });
+    try {
+      const { broadcastPush } = await import("./push.functions");
+      await broadcastPush({
+        data: {
+          title: "✂️ Corte iniciado",
+          body: `${current?.name ?? "Cliente"} está na cadeira. Próximos: prepara pra sair.`,
+          url: "/",
+          tag: "chefe-progress",
+          actions: [
+            { action: "ja_sai", title: "🚗 Já saí" },
+            { action: "atrasei", title: "⏰ Vou atrasar" },
+          ],
+          action_map: { ja_sai: "/", atrasei: "/" },
+        },
+      });
+    } catch (e) {
+      console.warn("push start failed", e);
+    }
   },
 
   completeAndNext: async () => {
@@ -550,6 +591,21 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
     const extraMinutes = get().extraMinutes + 10;
     set({ extraMinutes });
     await updateState({ extra_minutes: extraMinutes });
+    try {
+      const { broadcastPush } = await import("./push.functions");
+      await broadcastPush({
+        data: {
+          title: "⏰ +10 min na fila",
+          body: "O CHEFE ajustou o tempo. Recalcule sua saída (trajeto GPS + 10 min de folga).",
+          url: "/",
+          tag: "chefe-delay",
+          actions: [{ action: "ver_fila", title: "👀 Ver fila" }],
+          action_map: { ver_fila: "/" },
+        },
+      });
+    } catch (e) {
+      console.warn("push +10 failed", e);
+    }
   },
 
   setDistance: (km) => set({ distanceKm: km }),
