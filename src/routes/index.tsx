@@ -7,6 +7,7 @@ import { ServiceCard } from "@/components/chefe/ServiceCard";
 import { ProgressTracker } from "@/components/chefe/ProgressTracker";
 import { AIAlertBox } from "@/components/chefe/AIAlertBox";
 import { SalonMap } from "@/components/chefe/SalonMap";
+import { SalonInfo } from "@/components/chefe/SalonInfo";
 import { QueueList } from "@/components/chefe/QueueList";
 import { AgendaBooking } from "@/components/chefe/AgendaBooking";
 import { LeaveNotifier } from "@/components/chefe/LeaveNotifier";
@@ -76,13 +77,20 @@ function Index() {
         <ChefeAI />
       </div>
 
-      {/* AI + progress + queue */}
+      {/* Hierarquia oficial do cliente (top → bottom) */}
       <section className="mt-6 space-y-4">
+        {/* [1º] CHEFE AI · Alerta Inteligente (GPS + 10 min) */}
         <AIAlertBox />
         <LeaveNotifier />
+        {/* [2º] Acompanhamento ao vivo (Na Fila → Hora de Sair → Na Cadeira → Concluído) */}
         <ProgressTracker />
+        {/* [3º] Mapa ao vivo (Dark) */}
         <SalonMap />
+        {/* [4º] Informativo — pessoas no salão agora */}
+        <SalonInfo />
+        {/* [5º] Agenda fixa (calendário de horários) */}
         <AgendaBooking />
+        {/* [6º] Sequência virtual do dia (ordem de atendimento) */}
         <QueueList />
       </section>
 
