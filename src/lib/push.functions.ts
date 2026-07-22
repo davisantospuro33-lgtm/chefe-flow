@@ -3,7 +3,16 @@ import { createServerFn } from "@tanstack/react-start";
 export const broadcastPush = createServerFn({ method: "POST" })
   .inputValidator(
     (input: unknown) =>
-      input as { title: string; body: string; url?: string; requireInteraction?: boolean },
+      input as {
+        title: string;
+        body: string;
+        url?: string;
+        requireInteraction?: boolean;
+        tag?: string;
+        image?: string;
+        actions?: { action: string; title: string; icon?: string }[];
+        action_map?: Record<string, string>;
+      },
   )
   .handler(async ({ data }) => {
     const { requireChefeSession } = await import("./chefe-auth.server");
@@ -28,7 +37,10 @@ export const broadcastPush = createServerFn({ method: "POST" })
       body: data.body,
       url: data.url ?? "/",
       requireInteraction: data.requireInteraction ?? true,
-      tag: "chefe-status",
+      tag: data.tag ?? "chefe-status",
+      image: data.image,
+      actions: data.actions ?? [],
+      action_map: data.action_map ?? {},
     });
 
     let sent = 0;
