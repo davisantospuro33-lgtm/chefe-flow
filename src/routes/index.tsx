@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, Calendar, Users, Clock } from "lucide-react";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
 import { StatusBadge } from "@/components/chefe/StatusBadge";
 import { Highlights } from "@/components/chefe/Highlights";
@@ -28,9 +28,16 @@ function Index() {
     (s) => s.queue.length + s.presencialCount,
   );
   const profile = useChefeStore((s) => s.profile);
+
+  const scrollToAgenda = () => {
+    const el = document.getElementById("agenda-section");
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-md px-4 pb-24 pt-6">
       <InstallBanner />
+
       {/* Top bar */}
       <header className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -44,13 +51,14 @@ function Index() {
         </div>
       </header>
 
-      {/* Profile header — Instagram style */}
+      {/* Profile header */}
       <section className="flex flex-col items-center gap-3 text-center">
         <GradientAvatar size={128} src={profile.avatarUrl} />
         <div>
           <h2 className="text-2xl font-black tracking-tight">{profile.username}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">{profile.bio}</p>
         </div>
+
         <StatusBadge />
 
         <div className="mt-2 flex w-full max-w-xs items-center justify-around rounded-2xl glass px-4 py-3">
@@ -67,60 +75,77 @@ function Index() {
         <Highlights />
       </div>
 
-      {/* Service card */}
+      {/* Serviço principal */}
       <div className="mt-4">
         <ServiceCard />
       </div>
 
       {/* ═══════════════════════════════════════════════════ */}
-      {/* BLOCO SUPERIOR — RESUMO DINÂMICO E IA (TOPO DA TELA) */}
+      {/* 💥 TRINCA DE CARDS COMPACTOS (3 LADO A LADO) 💥   */}
       {/* ═══════════════════════════════════════════════════ */}
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {/* 1. No Salão Agora */}
+        <SalonInfo />
 
-      {/* [1º] CHEFE AI · Atendente conversacional + Alerta Inteligente (GPS + 10 min) */}
+        {/* 2. Sequência Virtual (Encaixe) */}
+        <QueueList compact />
+
+        {/* 3. Garantir Horário (Agenda) */}
+        <button
+          onClick={scrollToAgenda}
+          className="flex flex-col justify-between rounded-3xl glass-strong p-3 text-left transition-transform active:scale-95 border border-white/10"
+        >
+          <div className="flex items-center gap-1.5">
+            <div className="grid h-7 w-7 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600">
+              <Calendar className="h-3.5 w-3.5 text-white" />
+            </div>
+            <p className="text-[9px] font-black uppercase tracking-wider text-muted-foreground leading-tight">
+              📅 Agenda
+            </p>
+          </div>
+          <div className="mt-2">
+            <p className="text-[10px] font-bold text-white leading-tight">Garantir Horário</p>
+            <span className="mt-1 inline-block text-[9px] font-semibold text-neon">Marcar agora ➔</span>
+          </div>
+        </button>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* CHEFE AI & ALERTA INTELIGENTE (LOGO ABAIXO)         */}
+      {/* ═══════════════════════════════════════════════════ */}
       <div className="mt-4">
         <ChefeAI />
       </div>
+
       <div className="mt-3">
         <AIAlertBox />
       </div>
+
       <LeaveNotifier />
 
-      {/* [2º] 📍 NO SALÃO AGORA  +  👥 SEQUÊNCIA VIRTUAL — LADO A LADO no topo */}
-      <div className="mt-3 grid grid-cols-2 gap-2.5">
-        <SalonInfo />
-        <QueueList compact />
-      </div>
-
-      {/* [3º] Acompanhamento ao vivo (Na Fila → Hora de Sair → Na Cadeira → Concluído) */}
+      {/* Acompanhamento ao vivo */}
       <div className="mt-3">
         <ProgressTracker />
       </div>
 
-      {/* ═══════════════════════════════════════════════════ */}
-      {/* BLOCOS SUBSEQUENTES — LOGO ABAIXO DO TOPO             */}
-      {/* ═══════════════════════════════════════════════════ */}
-
-      {/* [4º] Botões de Rotas e Navegação (Google Maps + Waze) com mapa dark */}
+      {/* Mapa */}
       <div className="mt-4">
         <SalonMap />
       </div>
 
-      {/* [5º] 📅 AGENDAR HORÁRIO — grade de horários de 30min */}
-      <div className="mt-4">
+      {/* Grade de Agendamento */}
+      <div id="agenda-section" className="mt-4">
         <AgendaBooking />
       </div>
 
-      {/* Manifesto */}
       <div className="mt-6">
         <Manifesto />
       </div>
 
-      {/* Feed */}
       <div className="mt-6">
         <Feed />
       </div>
 
-      {/* Reviews */}
       <div className="mt-6">
         <Reviews />
       </div>
