@@ -207,6 +207,15 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   extraMinutes: 0,
   presencialCount: 0,
   pendentes: [],
+  pessoasNoSalao: 0,
+  setPessoasNoSalao: async (n) => {
+    const val = Math.max(0, Math.floor(n));
+    set({ pessoasNoSalao: val });
+    await supabase
+      .from("chefe_status_salao")
+      .update({ pessoas_no_salao: val, atualizado_em: new Date().toISOString() })
+      .eq("id", 1);
+  },
   profile: {
     username: "@chefe.oficial",
     bio: "Barbeiro · Cortes autorais",
@@ -284,7 +293,7 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
   },
 
   hydrate: async () => {
-    const [{ data: queue }, { data: pendentes }, { data: state }, { data: profile }, { data: reviews }, { data: portfolio }, { data: agenda }] = await Promise.all([
+    const [{ data: queue }, { data: pendentes }, { data: state }, { data: profile }, { data: reviews }, { data: portfolio }, { data: agenda }, { data: salao }] = await Promise.all([
       supabase.from("chefe_queue").select("*").order("position").order("added_at"),
       supabase.from("chefe_pendentes").select("*").order("created_at"),
       supabase.from("chefe_state").select("*").eq("id", 1).maybeSingle(),
@@ -292,10 +301,12 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       supabase.from("chefe_reviews").select("*").order("position").order("created_at"),
       supabase.from("chefe_portfolio").select("*").order("position").order("created_at"),
       supabase.from("chefe_agenda").select("*").order("scheduled_at"),
+      supabase.from("chefe_status_salao").select("pessoas_no_salao").eq("id", 1).maybeSingle(),
     ]);
     set({
       queue: (queue ?? []).map((r) => mapQueue(r as QueueRow)),
       pendentes: (pendentes ?? []).map((r) => mapPendente(r as PendenteRow)),
+      pessoasNoSalao: (salao as { pessoas_no_salao?: number } | null)?.pessoas_no_salao ?? 0,
       status: (state?.status as ChefeStatus) ?? "available",
       presencialCount: state?.presencial_count ?? 0,
       extraMinutes: state?.extra_minutes ?? 0,
@@ -366,6 +377,7 @@ export const useChefeStore = create<ChefeState>()((set, get) => ({
       .on("postgres_changes", { event: "*", schema: "public", table: "chefe_reviews" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "chefe_portfolio" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "chefe_agenda" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "chefe_status_salao" }, refresh)
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
