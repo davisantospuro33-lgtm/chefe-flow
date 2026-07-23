@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, Star, ImagePlus, Trash2, Upload, Cpu, Film, Radar } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { useChefeStore, statusMeta, type ChefeStatus, type Review } from "@/lib/chefe-store";
+import { useChefeStore, type ChefeStatus, type Review } from "@/lib/chefe-store";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
 import { ShareButton } from "@/components/chefe/ShareButton";
 import { PinLock } from "@/components/chefe/PinLock";
