@@ -35,6 +35,13 @@ function PainelGate() {
 const statuses: ChefeStatus[] = ["available", "busy", "break", "closed"];
 type Tab = "operacao" | "radar" | "perfil" | "portfolio" | "ia";
 
+const statusMeta: Record<ChefeStatus, { label: string; emoji: string }> = {
+  available: { label: "Disponível", emoji: "🟢" },
+  busy: { label: "Ocupado", emoji: "🔴" },
+  break: { label: "Pausa", emoji: "🟡" },
+  closed: { label: "Fechado", emoji: "⚫" },
+};
+
 function Painel() {
   const [tab, setTab] = useState<Tab>("operacao");
   const status = useChefeStore((s) => s.status);
