@@ -3,8 +3,8 @@ import { Sparkles, Navigation2, Clock } from "lucide-react";
 import { useChefeStore } from "@/lib/chefe-store";
 
 export function AIAlertBox() {
-  const distanceKm = useChefeStore((s) => s.distanceKm);
-  const extra = useChefeStore((s) => s.extraMinutes);
+  const distanceKm = useChefeStore((s) => s.distanceKm) ?? 0;
+  const extra = useChefeStore((s) => s.extraMinutes) ?? 0;
   // Tempo puro de trajeto (approx 3 min/km em cenário urbano) + atrasos globais da fila
   const travelMin = Math.max(3, Math.round(distanceKm * 3) + extra);
   // Regra fixa: cliente precisa chegar 10 min ANTES da vez.
