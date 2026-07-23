@@ -7,7 +7,7 @@ export function StatusBadge() {
   const total = queue.length + presencialCount;
 
   const statusConfig = {
-    open: {
+    available: {
       label: total === 0 ? "DISPONÍVEL AGORA" : "ATENDENDO · FILA ABERTA",
       color: "bg-emerald-500",
       textColor: "text-emerald-400",
@@ -33,7 +33,7 @@ export function StatusBadge() {
     },
   };
 
-  const current = statusConfig[status] || statusConfig.open;
+  const current = statusConfig[status] || statusConfig.available;
 
   return (
     <div className={`flex items-center gap-2 rounded-full bg-black/60 px-3.5 py-1.5 border ${current.borderColor} backdrop-blur-md`}>
