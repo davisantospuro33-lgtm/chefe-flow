@@ -1,221 +1,148 @@
-import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { Zap, Gauge, Sparkles, Volume2, VolumeX } from "lucide-react";
-import { useChefeStore } from "@/lib/chefe-store";
+import React, { useState, useEffect, useRef } from 'react';
 
-export function EnergyCore() {
-  const queueLen = useChefeStore((s) => s.queue.length);
-  const sofa = useChefeStore((s) => s.pessoasNoSalao);
-  const [audioOn, setAudioOn] = useState(false);
-  const ctxRef = useRef<AudioContext | null>(null);
+export const EnergyCore: React.FC = () => {
+  const [isAudioActive, setIsAudioActive] = useState(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
   const lfoRef = useRef<OscillatorNode | null>(null);
-  const gainRef = useRef<GainNode | null>(null);
 
-  useEffect(() => () => stopTone(), []);
+  // MOTOR SONORO PSICODÉLICO E VIBRACIONAL (WEB AUDIO API + LFO)
+  const toggleAudio = () => {
+    if (typeof window === 'undefined') return;
 
-  const stopTone = () => {
-    try {
-      oscRef.current?.stop();
-      lfoRef.current?.stop();
-    } catch {
-      // ignore
+    if (!isAudioActive) {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new AudioCtx();
+
+      // Oscilador Principal (432Hz - Frequência de Alta Vibração)
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      // LFO (Oscilador de Baixa Frequência para efeito Psicodélico/Portal)
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(432, ctx.currentTime);
+
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(2, ctx.currentTime); // Ondulação de 2Hz
+      lfoGain.gain.setValueAtTime(15, ctx.currentTime); // Variação da frequência
+
+      // Conexões
+      lfo.connect(osc.frequency);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      gain.gain.setValueAtTime(0.06, ctx.currentTime); // Volume equilibrado
+
+      osc.start();
+      lfo.start();
+
+      audioCtxRef.current = ctx;
+      oscRef.current = osc;
+      lfoRef.current = lfo;
+      setIsAudioActive(true);
+    } else {
+      if (oscRef.current) oscRef.current.stop();
+      if (lfoRef.current) lfoRef.current.stop();
+      if (audioCtxRef.current) audioCtxRef.current.close();
+      setIsAudioActive(false);
     }
-    oscRef.current = null;
-    lfoRef.current = null;
-    gainRef.current = null;
-    ctxRef.current?.close().catch(() => {});
-    ctxRef.current = null;
   };
 
-  const toggleAudio = async () => {
-    if (typeof window === "undefined") return;
-    if (audioOn) {
-      stopTone();
-      setAudioOn(false);
-      return;
-    }
-    const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AC) return;
-    const ctx = new AC();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const lfo = ctx.createOscillator();
-    const lfoGain = ctx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.value = 432;
-    gain.gain.value = 0.06;
-
-    lfo.type = "sine";
-    lfo.frequency.value = 0.3;
-    lfoGain.gain.value = 12;
-    lfo.connect(lfoGain);
-    lfoGain.connect(osc.frequency);
-
-    osc.connect(gain).connect(ctx.destination);
-    osc.start();
-    lfo.start();
-
-    ctxRef.current = ctx;
-    oscRef.current = osc;
-    lfoRef.current = lfo;
-    gainRef.current = gain;
-    setAudioOn(true);
-  };
+  useEffect(() => {
+    return () => {
+      if (oscRef.current) oscRef.current.stop();
+      if (lfoRef.current) lfoRef.current.stop();
+      if (audioCtxRef.current) audioCtxRef.current.close();
+    };
+  }, []);
 
   return (
-    <div
-      className="relative overflow-hidden rounded-3xl p-[1.5px]"
-      style={{
-        background:
-          "conic-gradient(from 0deg, #00FF66, #00E5FF, #8B00FF, #FF007A, #00FF66)",
-      }}
-    >
-      <div
-        className="relative rounded-[calc(1.5rem-1.5px)] p-5 backdrop-blur-xl"
-        style={{ background: "rgba(15,15,25,0.72)" }}
-      >
-        {/* Rotating gear background */}
-        <motion.svg
-          aria-hidden
-          viewBox="0 0 200 200"
-          className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 opacity-20"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+    <div className="relative w-full overflow-hidden rounded-3xl bg-[#05050d]/90 p-6 backdrop-blur-xl my-4 border border-transparent [background-clip:padding-box,_border-box] [background-origin:border-box] [background-image:linear-gradient(to_bottom_right,#05050d,#080714),conic-gradient(from_0deg,#FF007A,#8B00FF,#00E5FF,#00FF66,#FF007A)] shadow-[0_0_35px_rgba(139,0,255,0.35)]">
+      
+      {/* NÚCLEO QUÂNTICO / PORTAL DO UNIVERSO FLUTUANTE (SEM CÁPSULA) */}
+      <div className="absolute -right-6 top-1/2 -translate-y-1/2 w-48 h-48 pointer-events-none flex items-center justify-center">
+        
+        {/* Glow Radiante Cósmico no Fundo */}
+        <div className="absolute w-32 h-32 rounded-full bg-gradient-to-r from-[#FF007A] via-[#8B00FF] to-[#00FF66] opacity-30 blur-2xl animate-pulse" />
+
+        {/* Órbita 1 - Rosa Shock */}
+        <svg className="absolute w-44 h-44 animate-[spin_8s_linear_infinite]" viewBox="0 0 100 100">
+          <ellipse cx="50" cy="50" rx="42" ry="14" fill="none" stroke="#FF007A" strokeWidth="1.5" strokeDasharray="6 3" className="drop-shadow-[0_0_8px_#FF007A]" />
+        </svg>
+
+        {/* Órbita 2 - Roxo / Azul Cyber (Inclinada) */}
+        <svg className="absolute w-44 h-44 animate-[spin_12s_linear_infinite_reverse] rotate-45" viewBox="0 0 100 100">
+          <ellipse cx="50" cy="50" rx="42" ry="14" fill="none" stroke="#00E5FF" strokeWidth="1.5" strokeDasharray="8 4" className="drop-shadow-[0_0_8px_#00E5FF]" />
+        </svg>
+
+        {/* Órbita 3 - Verde Neon (Cruzada) */}
+        <svg className="absolute w-44 h-44 animate-[spin_10s_linear_infinite] -rotate-45" viewBox="0 0 100 100">
+          <ellipse cx="50" cy="50" rx="42" ry="14" fill="none" stroke="#00FF66" strokeWidth="1.5" strokeDasharray="4 2" className="drop-shadow-[0_0_8px_#00FF66]" />
+        </svg>
+
+        {/* Centro Brilhante de Alta Densidade (O Coração da Energia) */}
+        <div className="relative w-10 h-10 rounded-full bg-white shadow-[0_0_25px_#fff,0_0_50px_#00FF66,0_0_75px_#FF007A] animate-ping opacity-75" />
+        <div className="absolute w-8 h-8 rounded-full bg-gradient-to-r from-[#00FF66] via-white to-[#00E5FF] shadow-[0_0_20px_#00FF66]" />
+      </div>
+
+      {/* CABEÇALHO DO NÚCLEO */}
+      <div className="flex items-center justify-between mb-3 relative z-10 pr-36">
+        <span className="text-[9px] font-black tracking-widest px-3 py-1 rounded-full bg-gradient-to-r from-[#FF007A]/20 via-[#8B00FF]/20 to-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/40 shadow-[0_0_12px_rgba(0,255,102,0.3)] animate-pulse">
+          ⚡ NÚCLEO CHEFE VIVO
+        </span>
+      </div>
+
+      {/* TÍTULO PRINCIPAL */}
+      <div className="relative z-10 pr-32 mb-4">
+        <h3 className="text-xl font-black text-white tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(0,229,255,0.5)]">
+          MATÉRIA EM <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF66] via-[#00E5FF] via-[#8B00FF] to-[#FF007A]">
+            EXPANSÃO CÓSMICA
+          </span>
+        </h3>
+        <p className="text-[10px] text-gray-300 font-medium mt-1">
+          Sincronia de alta frequência & Portal do Universo
+        </p>
+      </div>
+
+      {/* CONTROLE SONORO PSICODÉLICO */}
+      <div className="relative z-10 mb-4">
+        <button
+          onClick={toggleAudio}
+          className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center gap-2 border ${
+            isAudioActive
+              ? 'bg-gradient-to-r from-[#00FF66]/20 to-[#00E5FF]/20 border-[#00FF66] text-[#00FF66] shadow-[0_0_15px_#00FF66]'
+              : 'bg-white/5 border-white/15 text-gray-300 hover:text-white hover:border-white/30'
+          }`}
         >
-          <defs>
-            <linearGradient id="gearGrad" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stopColor="#00FF66" />
-              <stop offset="50%" stopColor="#00E5FF" />
-              <stop offset="100%" stopColor="#FF007A" />
-            </linearGradient>
-          </defs>
-          <g fill="none" stroke="url(#gearGrad)" strokeWidth="1.5">
-            <circle cx="100" cy="100" r="70" />
-            <circle cx="100" cy="100" r="40" />
-            {Array.from({ length: 12 }).map((_, i) => {
-              const a = (i * Math.PI * 2) / 12;
-              const x1 = 100 + Math.cos(a) * 70;
-              const y1 = 100 + Math.sin(a) * 70;
-              const x2 = 100 + Math.cos(a) * 90;
-              const y2 = 100 + Math.sin(a) * 90;
-              return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} />;
-            })}
-          </g>
-        </motion.svg>
+          {isAudioActive ? '🌀 PORTAL SONORO ATIVO (432Hz LFO)' : '🔊 ATIVAR FREQUÊNCIA DO PORTAL'}
+        </button>
+      </div>
 
-        {/* Pulse particles */}
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(circle at 20% 30%, rgba(0,255,102,0.15), transparent 40%), radial-gradient(circle at 80% 70%, rgba(139,0,255,0.15), transparent 40%)",
-          }}
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        />
+      {/* METRICAS DO NÚCLEO */}
+      <div className="grid grid-cols-3 gap-2 relative z-10">
+        <div className="bg-black/60 border border-[#00FF66]/30 rounded-xl p-2 text-center backdrop-blur-md shadow-[0_0_10px_rgba(0,255,102,0.1)]">
+          <p className="text-[8px] font-black text-[#00FF66] tracking-wider uppercase">FREQUÊNCIA</p>
+          <p className="text-xs font-black text-white mt-0.5">432 Hz</p>
+          <p className="text-[7px] text-gray-400">LUZ RADIANTE</p>
+        </div>
 
-        <div className="relative">
-          <div className="mb-3 flex items-start justify-between gap-2">
-            <div>
-              <span
-                className="inline-block rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest"
-                style={{
-                  background: "linear-gradient(90deg, rgba(0,255,102,0.2), rgba(139,0,255,0.2))",
-                  color: "#00FF66",
-                  border: "1px solid rgba(0,255,102,0.4)",
-                }}
-              >
-                ⚡ Energia CHEFE · Matéria em Expansão
-              </span>
-              <h3 className="mt-2 text-base font-black leading-tight text-white">
-                Fluxo de Alta Frequência
-                <br />
-                <span
-                  className="text-transparent bg-clip-text"
-                  style={{ backgroundImage: "linear-gradient(90deg,#00FF66,#00E5FF,#FF007A)" }}
-                >
-                  em Tempo Real
-                </span>
-              </h3>
-            </div>
-            <button
-              onClick={toggleAudio}
-              className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white transition ${
-                audioOn ? "bg-emerald-500/30 ring-1 ring-emerald-400" : "bg-white/5 ring-1 ring-white/10"
-              }`}
-              aria-label="Sincro sonora"
-              title={audioOn ? "Desligar 432Hz" : "Sincro Sonora 432Hz"}
-            >
-              {audioOn ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-            </button>
-          </div>
+        <div className="bg-black/60 border border-[#00E5FF]/30 rounded-xl p-2 text-center backdrop-blur-md shadow-[0_0_10px_rgba(0,229,255,0.1)]">
+          <p className="text-[8px] font-black text-[#00E5FF] tracking-wider uppercase">MOVIMENTO</p>
+          <p className="text-xs font-black text-white mt-0.5">CONTINUO</p>
+          <p className="text-[7px] text-gray-400">FLUXO VIVO</p>
+        </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <Metric
-              icon={<Zap className="h-3.5 w-3.5" />}
-              label="Frequência"
-              value="432 Hz"
-              sub="Energia pura"
-              color="#00FF66"
-            />
-            <Metric
-              icon={<Gauge className="h-3.5 w-3.5" />}
-              label="Engrenagem"
-              value={`${queueLen + sofa}`}
-              sub="Tempo sincro"
-              color="#00E5FF"
-            />
-            <Metric
-              icon={<Sparkles className="h-3.5 w-3.5" />}
-              label="Matéria"
-              value="Fluxo"
-              sub="Contínuo"
-              color="#FF007A"
-            />
-          </div>
-
-          {audioOn && (
-            <p className="mt-3 text-center text-[10px] font-bold uppercase tracking-widest text-emerald-300">
-              🔊 432Hz ativo · LFO 0.3Hz
-            </p>
-          )}
+        <div className="bg-black/60 border border-[#FF007A]/30 rounded-xl p-2 text-center backdrop-blur-md shadow-[0_0_10px_rgba(255,0,122,0.1)]">
+          <p className="text-[8px] font-black text-[#FF007A] tracking-wider uppercase">ENERGIA</p>
+          <p className="text-xs font-black text-white mt-0.5">PORTAL</p>
+          <p className="text-[7px] text-gray-400">UNIVERSO</p>
         </div>
       </div>
-    </div>
-  );
-}
 
-function Metric({
-  icon,
-  label,
-  value,
-  sub,
-  color,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  sub: string;
-  color: string;
-}) {
-  return (
-    <div
-      className="rounded-2xl p-2.5 ring-1"
-      style={{
-        background: "rgba(0,0,0,0.35)",
-        borderColor: color,
-        boxShadow: `inset 0 0 20px ${color}22`,
-      }}
-    >
-      <div className="flex items-center gap-1" style={{ color }}>
-        {icon}
-        <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
-      </div>
-      <p className="mt-1 text-sm font-black text-white leading-tight">{value}</p>
-      <p className="text-[9px] font-semibold uppercase tracking-wider text-white/50">{sub}</p>
     </div>
   );
-}
+};
