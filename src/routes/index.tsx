@@ -48,13 +48,23 @@ function Index() {
       </header>
 
       {/* Profile header */}
-      <section className="flex flex-col items-center gap-3 text-center">
-        <GradientAvatar
-          size={128}
-          src={profile.avatarUrl}
-          hasStories={stories.length > 0}
-          onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
-        />
+<section className="flex flex-col items-center text-center">
+  <div className="relative flex items-center justify-center">
+    {/* PORTAL DE FREQUÊNCIA (ATRAS DO AVATAR) */}
+    <div className="absolute -inset-10 z-0 pointer-events-none flex items-center justify-center">
+      <FrequencyPortal />
+    </div>
+
+    {/* AVATAR ORIGINAL (NA FRENTE DO PORTAL) */}
+    <div className="relative z-10">
+      <GradientAvatar
+        size={128}
+        src={profile.avatarUrl}
+        hasStories={stories.length > 0}
+        onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
+      />
+    </div>
+  </div>
         <div>
           <h2 className="text-2xl font-black tracking-tight">{profile.username}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">{profile.bio}</p>
