@@ -1,44 +1,44 @@
-  import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { LayoutGrid, Calendar } from "lucide-react";
-import { GradientAvatar } from "@/components/chefe/GradientAvatar";
-import { StatusAvatar } from "@/components/chefe/StatusAvatar";
-import { Highlights } from "@/components/chefe/Highlights";
-import { FrequencyPortal } from "@/components/FrequencyPortal";
-import { StoriesViewer } from "@/components/chefe/StoriesViewer";
-import { ServiceCard } from "@/components/chefe/ServiceCard";
-import { ProgressTracker } from "@/components/chefe/ProgressTracker";
-import { AIAlertBox } from "@/components/chefe/AIAlertBox";
-import { SalonMap } from "@/components/chefe/SalonMap";
-import { SalonInfo } from "@/components/chefe/SalonInfo";
-import { QueueList } from "@/components/chefe/QueueList";
-import { LeaveNotifier } from "@/components/chefe/LeaveNotifier";
-import { Manifesto } from "@/components/chefe/Manifesto";
-import { Feed } from "@/components/chefe/Feed";
-import { InstallBanner } from "@/components/chefe/InstallBanner";
-import { ShareButton } from "@/components/chefe/ShareButton";
-import { ChefeAI } from "@/components/chefe/ChefeAI";
-import { Reviews } from "@/components/chefe/Reviews";
-import { useChefeStore } from "@/lib/chefe-store";
+import { createFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
+import { LayoutGrid, Calendar } from 'lucide-react'
+import { GradientAvatar } from '@/components/chefe/GradientAvatar'
+import { StatusAvatar } from '@/components/chefe/StatusAvatar'
+import { Highlights } from '@/components/chefe/Highlights'
+import { FrequencyPortal } from '@/components/FrequencyPortal'
+import { StoriesViewer } from '@/components/chefe/StoriesViewer'
+import { ServiceCard } from '@/components/chefe/ServiceCard'
+import { ProgressTracker } from '@/components/chefe/ProgressTracker'
+import { AIAlertBox } from '@/components/chefe/AIAlertBox'
+import { SalonMap } from '@/components/chefe/SalonMap'
+import { SalonInfo } from '@/components/chefe/SalonInfo'
+import { QueueList } from '@/components/chefe/QueueList'
+import { LeaveNotifier } from '@/components/chefe/LeaveNotifier'
+import { Manifesto } from '@/components/chefe/Manifesto'
+import { Feed } from '@/components/chefe/Feed'
+import { InstallBanner } from '@/components/chefe/InstallBanner'
+import { ShareButton } from '@/components/chefe/ShareButton'
+import { ChefeAI } from '@/components/chefe/ChefeAI'
+import { Reviews } from '@/components/chefe/Reviews'
+import { useChefeStore } from '@/lib/chefe-store'
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute('/')({
   component: Index,
-});
+})
 
 function Index() {
-  const profile = useChefeStore((s) => s.profile);
-  const stories = useChefeStore((s) => s.stories);
-  const [storiesOpen, setStoriesOpen] = useState(false);
+  const profile = useChefeStore((s) => s.profile)
+  const stories = useChefeStore((s) => s.stories)
+  const [storiesOpen, setStoriesOpen] = useState(false)
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-md px-4 pb-24 pt-6">
+    <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-20 text-foreground">
       <InstallBanner />
 
       {/* Top bar */}
-      <header className="mb-6 flex items-center justify-between">
+      <header className="mb-6 flex items-center justify-between px-4 pt-4">
         <div className="flex items-center gap-2">
           <LayoutGrid className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-xl font-black tracking-tight">
+          <h1 className="text-xl font-black tracking-wider uppercase text-foreground">
             <span className="text-gradient-ig">CHEFE</span>
           </h1>
         </div>
@@ -48,36 +48,35 @@ function Index() {
       </header>
 
       {/* Profile header */}
-<section className="flex flex-col items-center text-center">
-  <div className="relative flex items-center justify-center">
-    {/* PORTAL DE FREQUÊNCIA (ATRAS DO AVATAR) */}
-    <div className="absolute -inset-10 z-0 pointer-events-none flex items-center justify-center">
-      <FrequencyPortal />
-    </div>
+      <section className="flex flex-col items-center text-center">
+        <div className="relative flex items-center justify-center">
+          {/* PORTAL ATRÁS */}
+          <div className="absolute -inset-10 z-0 pointer-events-none flex items-center justify-center">
+            <FrequencyPortal />
+          </div>
 
-    {/* AVATAR ORIGINAL (NA FRENTE DO PORTAL) */}
-    <div className="relative z-10">
-      <GradientAvatar
-        size={128}
-        src={profile.avatarUrl}
-        hasStories={stories.length > 0}
-        onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
-      />
-    </div>
-  </div>
-      
-          <h2 className="text-2xl font-black tracking-tight">{profile.username}</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">{profile.bio}</p>
+          {/* AVATAR NA FRENTE */}
+          <div className="relative z-10">
+            <GradientAvatar
+              size={128}
+              src={profile.avatarUrl}
+              hasStories={stories.length > 0}
+              onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
+            />
+          </div>
         </div>
+
+        <h2 className="text-2xl font-black tracking-tight mt-2">{profile.name}</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">{profile.subtitle}</p>
       </section>
 
-      {/* Highlights (Stories + Destaques) */}
-      <div className="mt-6"> px-4">
+      {/* Highlights (Stories / Destaques) */}
+      <div className="mt-6 px-4">
         <Highlights />
       </div>
 
       {/* Avatar de status dinâmico */}
-      <div className="mt-4"> px-4">
+      <div className="mt-4 px-4">
         <StatusAvatar />
       </div>
 
