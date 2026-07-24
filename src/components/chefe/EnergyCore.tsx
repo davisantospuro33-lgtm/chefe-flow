@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export const EnergyCore: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isAudioActive, setIsAudioActive] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
   const lfoRef = useRef<OscillatorNode | null>(null);
 
-  // MOTOR SONORO PSICODÉLICO E VIBRACIONAL (WEB AUDIO API + LFO)
+  // SINTETIZADOR PSICODÉLICO VIBRACIONAL 432HZ
   const toggleAudio = () => {
     if (typeof window === 'undefined') return;
 
@@ -14,27 +15,23 @@ export const EnergyCore: React.FC = () => {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const ctx = new AudioCtx();
 
-      // Oscilador Principal (432Hz - Frequência de Alta Vibração)
       const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      // LFO (Oscilador de Baixa Frequência para efeito Psicodélico/Portal)
       const lfo = ctx.createOscillator();
+      const gain = ctx.createGain();
       const lfoGain = ctx.createGain();
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(432, ctx.currentTime);
 
       lfo.type = 'sine';
-      lfo.frequency.setValueAtTime(2, ctx.currentTime); // Ondulação de 2Hz
-      lfoGain.gain.setValueAtTime(15, ctx.currentTime); // Variação da frequência
+      lfo.frequency.setValueAtTime(1.8, ctx.currentTime);
+      lfoGain.gain.setValueAtTime(16, ctx.currentTime);
 
-      // Conexões
       lfo.connect(osc.frequency);
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      gain.gain.setValueAtTime(0.06, ctx.currentTime); // Volume equilibrado
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
 
       osc.start();
       lfo.start();
@@ -51,98 +48,167 @@ export const EnergyCore: React.FC = () => {
     }
   };
 
+  // MOTOR GRÁFICO WEBGL / CANVAS 3D INTERATIVO
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let width = (canvas.width = canvas.offsetWidth);
+    let height = (canvas.height = canvas.offsetHeight);
+
+    // Paleta Neon Chefe: Verde Neon, Rosa Shock, Roxo Cyber, Azul Elétrico
+    const colors = ['#00FF66', '#FF007A', '#8B00FF', '#00E5FF'];
+
+    // Partículas da Poeira Cósmica
+    const numParticles = 100;
+    const particles = Array.from({ length: numParticles }, () => ({
+      x: (Math.random() - 0.5) * width,
+      y: (Math.random() - 0.5) * height,
+      z: Math.random() * width,
+      size: Math.random() * 2.5 + 1,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      speed: Math.random() * 2 + 0.8,
+    }));
+
+    let rotX = 0;
+    let rotY = 0;
+    let targetRotX = 0;
+    let targetRotY = 0;
+
+    const handleInteraction = (clientX: number, clientY: number) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left - width / 2;
+      const y = clientY - rect.top - height / 2;
+      targetRotY = (x / width) * 2.5;
+      targetRotX = -(y / height) * 2.5;
+    };
+
+    const onMouseMove = (e: MouseEvent) => handleInteraction(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches[0]) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+    };
+
+    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('touchmove', onTouchMove);
+
+    let angle = 0;
+
+    // LOOP DE RENDERIZAÇÃO 3D EM ALTA DEFINIÇÃO
+    const render = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      rotX += (targetRotX - rotX) * 0.08;
+      rotY += (targetRotY - rotY) * 0.08;
+      angle += 0.025;
+
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      // 1. GLOW RADIANTE DE FUNDO
+      const bgGlow = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, width * 0.45);
+      bgGlow.addColorStop(0, 'rgba(139, 0, 255, 0.4)');
+      bgGlow.addColorStop(0.4, 'rgba(0, 255, 102, 0.2)');
+      bgGlow.addColorStop(0.8, 'rgba(255, 0, 122, 0.1)');
+      bgGlow.addColorStop(1, 'rgba(5, 5, 13, 0)');
+      ctx.fillStyle = bgGlow;
+      ctx.fillRect(0, 0, width, height);
+
+      // 2. ÓRBITAS 3D MULTIDIMENSIONAIS
+      for (let i = 0; i < 4; i++) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(angle * (i % 2 === 0 ? 1.2 : -1.2) + rotY);
+        ctx.scale(1, 0.3 + Math.sin(angle + i) * 0.15);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, 65 + i * 20, 0, Math.PI * 2);
+        ctx.strokeStyle = colors[i % colors.length];
+        ctx.lineWidth = 2.2;
+        ctx.shadowColor = colors[i % colors.length];
+        ctx.shadowBlur = 15;
+        ctx.setLineDash([15, 10]);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 3. NÚCLEO CENTRAL RADIANTE (MATÉRIA EXPANDIDA)
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      const pulseSize = 32 + Math.sin(angle * 3) * 5;
+      const coreGlow = ctx.createRadialGradient(0, 0, 2, 0, 0, pulseSize);
+      coreGlow.addColorStop(0, '#FFFFFF');
+      coreGlow.addColorStop(0.25, '#00FF66');
+      coreGlow.addColorStop(0.6, '#FF007A');
+      coreGlow.addColorStop(1, 'rgba(0, 229, 255, 0)');
+      ctx.fillStyle = coreGlow;
+      ctx.shadowColor = '#00FF66';
+      ctx.shadowBlur = 30;
+      ctx.beginPath();
+      ctx.arc(0, 0, pulseSize, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // 4. CAMPO DE PARTÍCULAS EM PERSPECTIVA FLUTUANTE
+      particles.forEach((p) => {
+        p.z -= p.speed;
+        if (p.z <= 0) p.z = width;
+
+        const k = 280 / p.z;
+        const px = p.x * k + centerX + rotY * 15;
+        const py = p.y * k + centerY + rotX * 15;
+
+        if (px >= 0 && px <= width && py >= 0 && py <= height) {
+          const alpha = 1 - p.z / width;
+          ctx.beginPath();
+          ctx.arc(px, py, p.size * k * 0.6, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = alpha;
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 10;
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      });
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
     return () => {
-      if (oscRef.current) oscRef.current.stop();
-      if (lfoRef.current) lfoRef.current.stop();
-      if (audioCtxRef.current) audioCtxRef.current.close();
+      cancelAnimationFrame(animationFrameId);
+      canvas.removeEventListener('mousemove', onMouseMove);
+      canvas.removeEventListener('touchmove', onTouchMove);
     };
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden rounded-3xl bg-[#05050d]/90 p-6 backdrop-blur-xl my-4 border border-transparent [background-clip:padding-box,_border-box] [background-origin:border-box] [background-image:linear-gradient(to_bottom_right,#05050d,#080714),conic-gradient(from_0deg,#FF007A,#8B00FF,#00E5FF,#00FF66,#FF007A)] shadow-[0_0_35px_rgba(139,0,255,0.35)]">
+    <div className="relative w-full h-80 rounded-3xl bg-[#05050d]/95 overflow-hidden my-4 border border-transparent [background-clip:padding-box,_border-box] [background-origin:border-box] [background-image:linear-gradient(to_bottom_right,#05050d,#080714),conic-gradient(from_0deg,#FF007A,#8B00FF,#00E5FF,#00FF66,#FF007A)] shadow-[0_0_40px_rgba(139,0,255,0.4)]">
       
-      {/* NÚCLEO QUÂNTICO / PORTAL DO UNIVERSO FLUTUANTE (SEM CÁPSULA) */}
-      <div className="absolute -right-6 top-1/2 -translate-y-1/2 w-48 h-48 pointer-events-none flex items-center justify-center">
-        
-        {/* Glow Radiante Cósmico no Fundo */}
-        <div className="absolute w-32 h-32 rounded-full bg-gradient-to-r from-[#FF007A] via-[#8B00FF] to-[#00FF66] opacity-30 blur-2xl animate-pulse" />
+      {/* CANVAS 3D DO PORTAL DO UNIVERSO */}
+      <canvas ref={canvasRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
-        {/* Órbita 1 - Rosa Shock */}
-        <svg className="absolute w-44 h-44 animate-[spin_8s_linear_infinite]" viewBox="0 0 100 100">
-          <ellipse cx="50" cy="50" rx="42" ry="14" fill="none" stroke="#FF007A" strokeWidth="1.5" strokeDasharray="6 3" className="drop-shadow-[0_0_8px_#FF007A]" />
-        </svg>
+      {/* BOTÃO DISCRETO DE SOM 432HZ */}
+      <button
+        onClick={toggleAudio}
+        className={`absolute top-4 right-4 z-20 px-3.5 py-1.5 rounded-full text-[10px] font-black tracking-wider transition-all duration-300 border backdrop-blur-md ${
+          isAudioActive
+            ? 'bg-[#00FF66]/20 border-[#00FF66] text-[#00FF66] shadow-[0_0_15px_#00FF66] animate-pulse'
+            : 'bg-black/60 border-white/20 text-gray-300 hover:text-white'
+        }`}
+      >
+        {isAudioActive ? '🌀 PORTAL 432Hz ATIVO' : '🔊 SINCRO SONORA'}
+      </button>
 
-        {/* Órbita 2 - Roxo / Azul Cyber (Inclinada) */}
-        <svg className="absolute w-44 h-44 animate-[spin_12s_linear_infinite_reverse] rotate-45" viewBox="0 0 100 100">
-          <ellipse cx="50" cy="50" rx="42" ry="14" fill="none" stroke="#00E5FF" strokeWidth="1.5" strokeDasharray="8 4" className="drop-shadow-[0_0_8px_#00E5FF]" />
-        </svg>
-
-        {/* Órbita 3 - Verde Neon (Cruzada) */}
-        <svg className="absolute w-44 h-44 animate-[spin_10s_linear_infinite] -rotate-45" viewBox="0 0 100 100">
-          <ellipse cx="50" cy="50" rx="42" ry="14" fill="none" stroke="#00FF66" strokeWidth="1.5" strokeDasharray="4 2" className="drop-shadow-[0_0_8px_#00FF66]" />
-        </svg>
-
-        {/* Centro Brilhante de Alta Densidade (O Coração da Energia) */}
-        <div className="relative w-10 h-10 rounded-full bg-white shadow-[0_0_25px_#fff,0_0_50px_#00FF66,0_0_75px_#FF007A] animate-ping opacity-75" />
-        <div className="absolute w-8 h-8 rounded-full bg-gradient-to-r from-[#00FF66] via-white to-[#00E5FF] shadow-[0_0_20px_#00FF66]" />
-      </div>
-
-      {/* CABEÇALHO DO NÚCLEO */}
-      <div className="flex items-center justify-between mb-3 relative z-10 pr-36">
-        <span className="text-[9px] font-black tracking-widest px-3 py-1 rounded-full bg-gradient-to-r from-[#FF007A]/20 via-[#8B00FF]/20 to-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/40 shadow-[0_0_12px_rgba(0,255,102,0.3)] animate-pulse">
+      {/* BADGE DISCRETO NO CANTO INFERIOR */}
+      <div className="absolute bottom-3 left-4 z-20 pointer-events-none">
+        <span className="text-[9px] font-black tracking-widest text-[#00FF66] uppercase drop-shadow-[0_0_8px_#00FF66]">
           ⚡ NÚCLEO CHEFE VIVO
         </span>
       </div>
-
-      {/* TÍTULO PRINCIPAL */}
-      <div className="relative z-10 pr-32 mb-4">
-        <h3 className="text-xl font-black text-white tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(0,229,255,0.5)]">
-          MATÉRIA EM <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF66] via-[#00E5FF] via-[#8B00FF] to-[#FF007A]">
-            EXPANSÃO CÓSMICA
-          </span>
-        </h3>
-        <p className="text-[10px] text-gray-300 font-medium mt-1">
-          Sincronia de alta frequência & Portal do Universo
-        </p>
-      </div>
-
-      {/* CONTROLE SONORO PSICODÉLICO */}
-      <div className="relative z-10 mb-4">
-        <button
-          onClick={toggleAudio}
-          className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center gap-2 border ${
-            isAudioActive
-              ? 'bg-gradient-to-r from-[#00FF66]/20 to-[#00E5FF]/20 border-[#00FF66] text-[#00FF66] shadow-[0_0_15px_#00FF66]'
-              : 'bg-white/5 border-white/15 text-gray-300 hover:text-white hover:border-white/30'
-          }`}
-        >
-          {isAudioActive ? '🌀 PORTAL SONORO ATIVO (432Hz LFO)' : '🔊 ATIVAR FREQUÊNCIA DO PORTAL'}
-        </button>
-      </div>
-
-      {/* METRICAS DO NÚCLEO */}
-      <div className="grid grid-cols-3 gap-2 relative z-10">
-        <div className="bg-black/60 border border-[#00FF66]/30 rounded-xl p-2 text-center backdrop-blur-md shadow-[0_0_10px_rgba(0,255,102,0.1)]">
-          <p className="text-[8px] font-black text-[#00FF66] tracking-wider uppercase">FREQUÊNCIA</p>
-          <p className="text-xs font-black text-white mt-0.5">432 Hz</p>
-          <p className="text-[7px] text-gray-400">LUZ RADIANTE</p>
-        </div>
-
-        <div className="bg-black/60 border border-[#00E5FF]/30 rounded-xl p-2 text-center backdrop-blur-md shadow-[0_0_10px_rgba(0,229,255,0.1)]">
-          <p className="text-[8px] font-black text-[#00E5FF] tracking-wider uppercase">MOVIMENTO</p>
-          <p className="text-xs font-black text-white mt-0.5">CONTINUO</p>
-          <p className="text-[7px] text-gray-400">FLUXO VIVO</p>
-        </div>
-
-        <div className="bg-black/60 border border-[#FF007A]/30 rounded-xl p-2 text-center backdrop-blur-md shadow-[0_0_10px_rgba(255,0,122,0.1)]">
-          <p className="text-[8px] font-black text-[#FF007A] tracking-wider uppercase">ENERGIA</p>
-          <p className="text-xs font-black text-white mt-0.5">PORTAL</p>
-          <p className="text-[7px] text-gray-400">UNIVERSO</p>
-        </div>
-      </div>
-
     </div>
   );
 };
