@@ -65,19 +65,19 @@ function Index() {
       />
     </div>
   </div>
-        <div>
+      
           <h2 className="text-2xl font-black tracking-tight">{profile.username}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">{profile.bio}</p>
         </div>
       </section>
 
       {/* Highlights (Stories + Destaques) */}
-      <div className="mt-6">
+      <div className="mt-6"> px-4">
         <Highlights />
       </div>
 
       {/* Avatar de status dinâmico */}
-      <div className="mt-4">
+      <div className="mt-4"> px-4">
         <StatusAvatar />
       </div>
 
