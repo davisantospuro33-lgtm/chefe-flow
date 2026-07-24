@@ -5,17 +5,25 @@ interface Props {
   size?: number;
   src?: string | null;
   animated?: boolean;
+  onClick?: () => void;
+  hasStories?: boolean;
 }
 
-export function GradientAvatar({ size = 120, src, animated = true }: Props) {
+export function GradientAvatar({ size = 120, src, animated = true, onClick, hasStories }: Props) {
   const resolved = src || profileImg;
+  const Wrapper = onClick ? "button" : "div";
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
+    <Wrapper
+      onClick={onClick}
+      className="relative shrink-0"
+      style={{ width: size, height: size }}
+      aria-label={onClick ? "Ver stories do CHEFE" : undefined}
+    >
       <motion.div
         aria-hidden
         className="absolute inset-0 rounded-full bg-gradient-ig"
         animate={animated ? { rotate: 360 } : undefined}
-        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: hasStories ? 4 : 8, repeat: Infinity, ease: "linear" }}
       />
       <motion.div
         aria-hidden
@@ -32,6 +40,6 @@ export function GradientAvatar({ size = 120, src, animated = true }: Props) {
         className="absolute inset-[6px] rounded-full object-cover"
         style={{ width: size - 12, height: size - 12 }}
       />
-    </div>
+    </Wrapper>
   );
 }
