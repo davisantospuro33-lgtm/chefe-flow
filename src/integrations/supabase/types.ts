@@ -59,6 +59,36 @@ export type Database = {
         }
         Relationships: []
       }
+      chefe_highlights: {
+        Row: {
+          cover_image: string | null
+          created_at: string
+          id: string
+          order_index: number
+          story_ids: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image?: string | null
+          created_at?: string
+          id?: string
+          order_index?: number
+          story_ids?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image?: string | null
+          created_at?: string
+          id?: string
+          order_index?: number
+          story_ids?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chefe_pendentes: {
         Row: {
           created_at: string
@@ -308,6 +338,36 @@ export type Database = {
           atualizado_em?: string
           id?: number
           pessoas_no_salao?: number
+        }
+        Relationships: []
+      }
+      chefe_stories: {
+        Row: {
+          caption: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          media_type: string
+          media_url: string
+          storage_path: string | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          media_type?: string
+          media_url: string
+          storage_path?: string | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          media_type?: string
+          media_url?: string
+          storage_path?: string | null
         }
         Relationships: []
       }
