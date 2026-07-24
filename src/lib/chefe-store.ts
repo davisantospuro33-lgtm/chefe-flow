@@ -44,6 +44,24 @@ export interface Review {
   position: number;
 }
 
+export interface Story {
+  id: string;
+  mediaUrl: string;
+  mediaType: "image" | "video";
+  storagePath: string | null;
+  caption: string | null;
+  createdAt: number;
+  expiresAt: number;
+}
+
+export interface Highlight {
+  id: string;
+  title: string;
+  coverImage: string | null;
+  storyIds: string[];
+  orderIndex: number;
+}
+
 export interface Profile {
   username: string;
   bio: string;
@@ -96,6 +114,8 @@ interface ChefeState {
   pendentes: Pendente[];
   portfolio: PortfolioItem[];
   reviews: Review[];
+  stories: Story[];
+  highlights: Highlight[];
 
   // Setters / actions
   setStatus: (s: ChefeStatus) => Promise<void>;
@@ -132,6 +152,11 @@ interface ChefeState {
 
   uploadPortfolio: (file: File) => Promise<void>;
   deletePortfolio: (id: string, storagePath: string) => Promise<void>;
+
+  uploadStory: (file: File, caption?: string) => Promise<void>;
+  deleteStory: (id: string, storagePath: string | null) => Promise<void>;
+  saveHighlight: (h: Omit<Highlight, "id"> & { id?: string }) => Promise<void>;
+  deleteHighlight: (id: string) => Promise<void>;
 
   hydrate: () => Promise<void>;
   subscribe: () => () => void;
@@ -235,6 +260,8 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
   pendentes: [],
   portfolio: [],
   reviews: [],
+  stories: [],
+  highlights: [],
 
   setStatus: async (s) => {
     set({ status: s });
@@ -413,8 +440,56 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
     await supabase.from("chefe_portfolio").delete().eq("id", id);
   },
 
+  uploadStory: async (file, caption) => {
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `stories/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("chefe-media")
+      .upload(path, file, { contentType: file.type, upsert: false });
+    if (upErr) throw upErr;
+    const { data: signed } = await supabase.storage
+      .from("chefe-media")
+      .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+    const mediaType = file.type.startsWith("video/") ? "video" : "image";
+    await supabase.from("chefe_stories").insert({
+      media_url: signed?.signedUrl ?? "",
+      media_type: mediaType,
+      storage_path: path,
+      caption: caption ?? null,
+    });
+  },
+  deleteStory: async (id, storagePath) => {
+    if (storagePath) {
+      await supabase.storage.from("chefe-media").remove([storagePath]).catch(() => {});
+    }
+    await supabase.from("chefe_stories").delete().eq("id", id);
+  },
+  saveHighlight: async (h) => {
+    if (h.id) {
+      await supabase
+        .from("chefe_highlights")
+        .update({
+          title: h.title,
+          cover_image: h.coverImage,
+          story_ids: h.storyIds,
+          order_index: h.orderIndex,
+        })
+        .eq("id", h.id);
+    } else {
+      await supabase.from("chefe_highlights").insert({
+        title: h.title,
+        cover_image: h.coverImage,
+        story_ids: h.storyIds,
+        order_index: h.orderIndex,
+      });
+    }
+  },
+  deleteHighlight: async (id) => {
+    await supabase.from("chefe_highlights").delete().eq("id", id);
+  },
+
   hydrate: async () => {
-    const [state, profile, queue, agenda, pendentes, portfolio, reviews, salao] =
+    const [state, profile, queue, agenda, pendentes, portfolio, reviews, salao, stories, highlights] =
       await Promise.all([
         supabase.from("chefe_state").select("*").eq("id", 1).maybeSingle(),
         supabase.from("chefe_profile").select("*").eq("id", 1).maybeSingle(),
@@ -440,6 +515,15 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
           .select("pessoas_no_salao")
           .eq("id", 1)
           .maybeSingle(),
+        supabase
+          .from("chefe_stories")
+          .select("id,media_url,media_type,storage_path,caption,created_at,expires_at")
+          .gt("expires_at", new Date().toISOString())
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("chefe_highlights")
+          .select("id,title,cover_image,story_ids,order_index")
+          .order("order_index"),
       ]);
 
     const s = state.data;
@@ -456,6 +540,22 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
       pendentes: (pendentes.data ?? []) as Pendente[],
       portfolio: (portfolio.data ?? []).map(mapPortfolio),
       reviews: (reviews.data ?? []) as Review[],
+      stories: (stories.data ?? []).map((r) => ({
+        id: r.id,
+        mediaUrl: r.media_url,
+        mediaType: r.media_type === "video" ? "video" : "image",
+        storagePath: r.storage_path,
+        caption: r.caption,
+        createdAt: new Date(r.created_at).getTime(),
+        expiresAt: new Date(r.expires_at).getTime(),
+      })),
+      highlights: (highlights.data ?? []).map((r) => ({
+        id: r.id,
+        title: r.title,
+        coverImage: r.cover_image,
+        storyIds: (r.story_ids ?? []) as string[],
+        orderIndex: r.order_index,
+      })),
     });
   },
 
@@ -500,6 +600,16 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "chefe_status_salao" },
+        () => get().hydrate(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chefe_stories" },
+        () => get().hydrate(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chefe_highlights" },
         () => get().hydrate(),
       )
       .subscribe();
