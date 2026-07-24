@@ -4,7 +4,7 @@ import { LayoutGrid, Calendar } from "lucide-react";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
 import { StatusAvatar } from "@/components/chefe/StatusAvatar";
 import { Highlights } from "@/components/chefe/Highlights";
-import { EnergyCore } from "@/components/chefe/EnergyCore";
+import { FrequencyPortal } from "@/components/FrequencyPortal";
 import { StoriesViewer } from "@/components/chefe/StoriesViewer";
 import { ServiceCard } from "@/components/chefe/ServiceCard";
 import { ProgressTracker } from "@/components/chefe/ProgressTracker";
