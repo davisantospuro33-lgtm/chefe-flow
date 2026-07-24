@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, Star, ImagePlus, Trash2, Upload, Cpu, Film, Radar } from "lucide-react";
+import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, Star, ImagePlus, Trash2, Upload, Cpu, Film, Radar, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useChefeStore, type ChefeStatus, type Review } from "@/lib/chefe-store";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
@@ -11,6 +11,7 @@ import { AdminMap } from "@/components/chefe/AdminMap";
 import { SortableQueue } from "@/components/chefe/SortableQueue";
 import { AgendaAdmin } from "@/components/chefe/AgendaAdmin";
 import { EmergencyBanner } from "@/components/chefe/EmergencyBanner";
+import { StoriesManager } from "@/components/chefe/StoriesManager";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/painel")({
@@ -33,7 +34,7 @@ function PainelGate() {
 }
 
 const statuses: ChefeStatus[] = ["available", "busy", "break", "closed"];
-type Tab = "operacao" | "radar" | "perfil" | "portfolio" | "ia";
+type Tab = "operacao" | "radar" | "perfil" | "portfolio" | "stories" | "ia";
 
 const statusMeta: Record<ChefeStatus, { label: string; emoji: string }> = {
   available: { label: "Disponível", emoji: "🟢" },
@@ -53,9 +54,6 @@ function Painel() {
   const addTenMinutes = useChefeStore((s) => s.addTenMinutes);
   const resetDemo = useChefeStore((s) => s.resetDemo);
   const extra = useChefeStore((s) => s.extraMinutes);
-  const presencial = useChefeStore((s) => s.presencialCount);
-  const incPresencial = useChefeStore((s) => s.incPresencial);
-  const decPresencial = useChefeStore((s) => s.decPresencial);
   const pendentes = useChefeStore((s) => s.pendentes);
   const aceitarPendente = useChefeStore((s) => s.aceitarPendente);
   const recusarPendente = useChefeStore((s) => s.recusarPendente);
@@ -94,13 +92,14 @@ function Painel() {
       </div>
 
       {/* Tabs */}
-      <nav className="mb-4 grid grid-cols-5 gap-1 rounded-2xl glass p-1">
+      <nav className="mb-4 grid grid-cols-6 gap-1 rounded-2xl glass p-1">
         {(
           [
             { id: "operacao", label: "Operação", icon: Play },
             { id: "radar", label: "Radar GPS", icon: Radar },
             { id: "perfil", label: "App", icon: User },
             { id: "portfolio", label: "Portfólio", icon: ImagePlus },
+            { id: "stories", label: "Stories", icon: Sparkles },
             { id: "ia", label: "IA", icon: Cpu },
           ] as const
         ).map((t) => {
@@ -125,6 +124,7 @@ function Painel() {
 
       {tab === "perfil" && <EditorPerfil />}
       {tab === "portfolio" && <EditorPortfolio />}
+      {tab === "stories" && <StoriesManager />}
       {tab === "ia" && <ConfigAI />}
       {tab === "radar" && (
         <section className="space-y-3">
