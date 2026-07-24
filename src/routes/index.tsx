@@ -1,8 +1,11 @@
   import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { LayoutGrid, Calendar } from "lucide-react";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
-import { StatusBadge } from "@/components/chefe/StatusBadge";
+import { StatusAvatar } from "@/components/chefe/StatusAvatar";
 import { Highlights } from "@/components/chefe/Highlights";
+import { EnergyCore } from "@/components/chefe/EnergyCore";
+import { StoriesViewer } from "@/components/chefe/StoriesViewer";
 import { ServiceCard } from "@/components/chefe/ServiceCard";
 import { ProgressTracker } from "@/components/chefe/ProgressTracker";
 import { AIAlertBox } from "@/components/chefe/AIAlertBox";
@@ -23,10 +26,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const totalQueue = useChefeStore(
-    (s) => s.queue.length + s.presencialCount,
-  );
   const profile = useChefeStore((s) => s.profile);
+  const stories = useChefeStore((s) => s.stories);
+  const [storiesOpen, setStoriesOpen] = useState(false);
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md px-4 pb-24 pt-6">
@@ -47,26 +49,31 @@ function Index() {
 
       {/* Profile header */}
       <section className="flex flex-col items-center gap-3 text-center">
-        <GradientAvatar size={128} src={profile.avatarUrl} />
+        <GradientAvatar
+          size={128}
+          src={profile.avatarUrl}
+          hasStories={stories.length > 0}
+          onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
+        />
         <div>
           <h2 className="text-2xl font-black tracking-tight">{profile.username}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">{profile.bio}</p>
         </div>
-
-        <StatusBadge />
-
-        <div className="mt-2 flex w-full max-w-xs items-center justify-around rounded-2xl glass px-4 py-3">
-          <Stat value={profile.cutsCount} label="Cortes" />
-          <Divider />
-          <Stat value={profile.rating} label="Nota" gradient />
-          <Divider />
-          <Stat value={String(totalQueue)} label="Na fila" />
-        </div>
       </section>
 
-      {/* Highlights */}
+      {/* Highlights (Stories + Destaques) */}
       <div className="mt-6">
         <Highlights />
+      </div>
+
+      {/* Avatar de status dinâmico */}
+      <div className="mt-4">
+        <StatusAvatar />
+      </div>
+
+      {/* Energy Core */}
+      <div className="mt-4">
+        <EnergyCore />
       </div>
 
       {/* Serviço principal */}
@@ -146,25 +153,15 @@ function Index() {
       <footer className="mt-10 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
         Powered by <span className="text-gradient-ig">CHEFE AI</span>
       </footer>
+
+      <StoriesViewer
+        stories={stories}
+        open={storiesOpen}
+        onClose={() => setStoriesOpen(false)}
+      />
     </main>
   );
 }
-
-function Stat({ value, label, gradient }: { value: string; label: string; gradient?: boolean }) {
-  return (
-    <div className="flex flex-col items-center">
-      <span className={`text-lg font-black leading-none ${gradient ? "text-gradient-ig" : "text-foreground"}`}>
-        {value}
-      </span>
-      <span className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-        {label}
-      </span>
-    </div>
-  );
-}
-
-function Divider() {
-  return <span className="h-8 w-px bg-border" />;
-}        
+       
   
 
