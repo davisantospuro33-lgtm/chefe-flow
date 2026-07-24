@@ -48,12 +48,32 @@ function Index() {
       </header>
 
       {/* Profile header */}
-      <section className="flex flex-col items-center text-center">
-        <div className="relative flex items-center justify-center">
-          {/* PORTAL ATRÁS */}
-          <div className="absolute -inset-10 z-0 pointer-events-none flex items-center justify-center">
-            <FrequencyPortal />
-          </div>
+<section className="flex flex-col items-center text-center">
+  {/* CONTAINER QUE CENTRALIZA O PORTAL E O AVATAR */}
+  <div className="relative flex items-center justify-center">
+    
+    {/* PORTAL ATRÁS DO CAPACETE (z-0) */}
+    <div className="absolute -inset-10 z-0 pointer-events-none flex items-center justify-center">
+      <FrequencyPortal />
+    </div>
+
+    {/* AVATAR ORIGINAL NA FRENTE (z-10) */}
+    <div className="relative z-10">
+      <GradientAvatar
+        size={128}
+        src={profile.avatarUrl}
+        hasStories={stories.length > 0}
+        onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
+      />
+    </div>
+
+  </div>
+
+  <div>
+    <h2 className="text-2xl font-black tracking-tight">{profile.name}</h2>
+    <p className="text-sm text-muted-foreground mt-0.5">{profile.subtitle}</p>
+  </div>
+</section>
 
           {/* AVATAR NA FRENTE */}
           <div className="relative z-10">
