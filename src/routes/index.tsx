@@ -81,11 +81,6 @@ function Index() {
         <StatusAvatar />
       </div>
 
-      {/* Energy Core */}
-      <div className="mt-4">
-        <EnergyCore />
-      </div>
-
       {/* Serviço principal */}
       <div className="mt-4">
         <ServiceCard />
