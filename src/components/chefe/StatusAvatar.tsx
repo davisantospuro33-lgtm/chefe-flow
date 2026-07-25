@@ -20,9 +20,9 @@ const VARIANTS: Record<ChefeStatus, Variant> = {
     emoji: "⚡",
     headline: "Chefe livre! Chegue e corte.",
     bar: "#00FF66",
-    glow: "rgba(0,255,102,0.35)",
-    ring: "rgba(0,255,102,0.5)",
-    bg: "radial-gradient(120% 100% at 0% 0%, rgba(0,255,102,0.18), rgba(10,20,15,0.85))",
+    glow: "rgba(0,255,102,0.45)",
+    ring: "rgba(0,255,102,0.6)",
+    bg: "radial-gradient(120% 100% at 0% 0%, rgba(0,255,102,0.22), rgba(10,20,15,0.88))",
     accent: "text-emerald-300",
     gestureY: [0, -2, 0],
     gestureRotate: [0, 2, 0],
@@ -31,11 +31,11 @@ const VARIANTS: Record<ChefeStatus, Variant> = {
     label: "EM ATENDIMENTO",
     emoji: "💈",
     headline: "Chefe focado no momento.",
-    bar: "#00E5FF",
-    glow: "rgba(139,0,255,0.35)",
-    ring: "rgba(0,229,255,0.55)",
-    bg: "radial-gradient(120% 100% at 100% 0%, rgba(139,0,255,0.22), rgba(0,229,255,0.10), rgba(6,10,20,0.9))",
-    accent: "text-cyan-300",
+    bar: "#FFB020",
+    glow: "rgba(255,176,32,0.4)",
+    ring: "rgba(255,120,32,0.55)",
+    bg: "radial-gradient(120% 100% at 100% 0%, rgba(255,176,32,0.22), rgba(255,80,0,0.12), rgba(20,10,5,0.9))",
+    accent: "text-amber-300",
     gestureY: [0, 1, -1, 0],
     gestureRotate: [0, -3, 3, 0],
   },
@@ -44,9 +44,9 @@ const VARIANTS: Record<ChefeStatus, Variant> = {
     emoji: "☕",
     headline: "Recarregando energias, já retorna.",
     bar: "#FFD700",
-    glow: "rgba(255,215,0,0.32)",
+    glow: "rgba(255,215,0,0.35)",
     ring: "rgba(255,215,0,0.5)",
-    bg: "radial-gradient(120% 100% at 50% 0%, rgba(255,215,0,0.18), rgba(20,15,5,0.9))",
+    bg: "radial-gradient(120% 100% at 50% 0%, rgba(255,215,0,0.2), rgba(20,15,5,0.9))",
     accent: "text-amber-300",
     gestureY: [0, -1, 0],
     gestureRotate: [0, -1, 0],
@@ -67,37 +67,66 @@ const VARIANTS: Record<ChefeStatus, Variant> = {
 
 export function StatusAvatar() {
   const status = useChefeStore((s) => s.status);
-  const v = VARIANTS[status] ?? VARIANTS.available;
+  const queue = useChefeStore((s) => s.queue);
+  // Fila cheia (>=3) força tom amarelo/laranja quando disponível
+  const effective: ChefeStatus =
+    status === "available" && queue && queue.length >= 3 ? "busy" : status;
+  const v = VARIANTS[effective] ?? VARIANTS.available;
 
   return (
     <motion.div
-      key={status}
+      key={effective}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="relative overflow-hidden rounded-3xl p-[1.5px]"
       style={{ background: `linear-gradient(135deg, ${v.bar}, ${v.ring})` }}
     >
+      {/* respiração neon envolvendo o card */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute -inset-1 rounded-[calc(1.5rem+2px)]"
+        style={{ boxShadow: `0 0 40px ${v.glow}` }}
+        animate={{ opacity: [0.4, 0.9, 0.4] }}
+        transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+      />
       <div
         className="relative flex items-center gap-4 rounded-[calc(1.5rem-1.5px)] p-4 backdrop-blur-xl"
-        style={{ background: v.bg, boxShadow: `0 0 40px ${v.glow}, inset 0 1px 0 rgba(255,255,255,0.06)` }}
+        style={{ background: v.bg, boxShadow: `inset 0 1px 0 rgba(255,255,255,0.06)` }}
       >
-        {/* Character avatar */}
+        {/* Personagem */}
         <motion.div
           animate={{ y: v.gestureY, rotate: v.gestureRotate }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           className="relative shrink-0"
-          style={{ width: 72, height: 72 }}
+          style={{ width: 76, height: 76 }}
         >
-          <div
+          {/* aura pulsante */}
+          <motion.div
+            aria-hidden
             className="absolute inset-0 rounded-2xl"
             style={{
               background: `conic-gradient(from 0deg, ${v.bar}, ${v.ring}, ${v.bar})`,
-              filter: "blur(8px)",
-              opacity: 0.7,
+              filter: "blur(10px)",
+            }}
+            animate={{ opacity: [0.5, 0.95, 0.5], rotate: [0, 360] }}
+            transition={{
+              opacity: { duration: 2.2, repeat: Infinity, ease: "easeInOut" },
+              rotate: { duration: 12, repeat: Infinity, ease: "linear" },
             }}
           />
-          <div className="absolute inset-[2px] grid place-items-center rounded-2xl bg-black">
-            <span className="text-3xl">🕴️</span>
+          <div className="absolute inset-[2px] grid place-items-center rounded-2xl bg-black overflow-hidden">
+            <span className="text-3xl leading-none">🕴️</span>
+            {/* brilho no óculos/capacete */}
+            <motion.span
+              aria-hidden
+              className="absolute left-2 right-2 top-1/2 h-[2px] rounded-full"
+              style={{
+                background: `linear-gradient(90deg, transparent, ${v.bar}, transparent)`,
+                filter: `drop-shadow(0 0 6px ${v.bar})`,
+              }}
+              animate={{ x: ["-60%", "60%"] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            />
             <span className="absolute bottom-1 right-1 text-sm">🕶️</span>
           </div>
         </motion.div>
@@ -107,8 +136,8 @@ export function StatusAvatar() {
             <motion.span
               className="h-2 w-2 rounded-full"
               style={{ background: v.bar, boxShadow: `0 0 12px ${v.bar}` }}
-              animate={{ opacity: [0.4, 1, 0.4], scale: [0.9, 1.15, 0.9] }}
-              transition={{ duration: 1.4, repeat: Infinity }}
+              animate={{ opacity: [0.35, 1, 0.35], scale: [0.85, 1.2, 0.85] }}
+              transition={{ duration: 1.2, repeat: Infinity }}
             />
             <p className={`text-[10px] font-black uppercase tracking-widest ${v.accent}`}>
               {v.emoji} {v.label}

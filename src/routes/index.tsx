@@ -23,6 +23,16 @@ import { useChefeStore } from '@/lib/chefe-store'
 
 export const Route = createFileRoute('/')({
   component: Index,
+  head: () => ({
+    meta: [
+      { title: 'CHEFE · Barbearia inteligente em tempo real' },
+      { name: 'description', content: 'Acompanhe a fila, status e agenda do CHEFE ao vivo. Corte CHEFE por R$ 25 em 40 min.' },
+      { property: 'og:title', content: 'CHEFE · Barbearia inteligente em tempo real' },
+      { property: 'og:description', content: 'Fila ao vivo, status do barbeiro e agendamento inteligente.' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+    ],
+  }),
 })
 
 function Index() {
@@ -31,11 +41,14 @@ function Index() {
   const [storiesOpen, setStoriesOpen] = useState(false)
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-20 text-foreground">
+    <main className="relative mx-auto min-h-screen w-full max-w-md bg-background pb-20 text-foreground overflow-hidden">
+      {/* PORTAL DE FREQUÊNCIA — tela cheia, fundido no fundo via mask radial */}
+      <FrequencyPortal />
+
       <InstallBanner />
 
       {/* Top bar */}
-      <header className="mb-6 flex items-center justify-between px-4 pt-4">
+      <header className="relative z-10 mb-6 flex items-center justify-between px-4 pt-4">
         <div className="flex items-center gap-2">
           <LayoutGrid className="h-5 w-5 text-muted-foreground" />
           <h1 className="text-xl font-black tracking-wider uppercase text-foreground">
@@ -47,94 +60,37 @@ function Index() {
         </div>
       </header>
 
-      {/* Profile header */}
-<section className="relative flex flex-col items-center text-center">
-  {/* PORTAL DE FREQUÊNCIA TELA CHEIA ATRÁS DO AVATAR */}
-  <FrequencyPortal />
-
-  {/* AVATAR ORIGINAL NA FRENTE (z-10) */}
-  <div className="relative z-10">
-    <GradientAvatar
-      size={128}
-      src={profile.avatarUrl}
-      hasStories={stories.length > 0}
-      onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
-    />
-  </div>
-
-  <div className="mt-2 z-10">
-    <h2 className="text-2xl font-black tracking-tight">{profile.name}</h2>
-    <p className="text-sm text-muted-foreground mt-0.5">{profile.subtitle}</p>
-  </div>
-</section>
-      
-    
-    {/* PORTAL ATRÁS DO CAPACETE (z-0) */}
-    <div className="absolute -inset-10 z-0 pointer-events-none flex items-center justify-center">
-      <FrequencyPortal />
-    </div>
-
-    {/* AVATAR ORIGINAL NA FRENTE (z-10) */}
-    <div className="relative z-10">
-      <GradientAvatar
-        size={128}
-        src={profile.avatarUrl}
-        hasStories={stories.length > 0}
-        onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
-      />
-    </div>
-
-  </div>
-
-  <div>
-    <h2 className="text-2xl font-black tracking-tight">{profile.name}</h2>
-    <p className="text-sm text-muted-foreground mt-0.5">{profile.subtitle}</p>
-  </div>
-</section>
-
-          {/* AVATAR NA FRENTE */}
-          <div className="relative z-10">
-            <GradientAvatar
-              size={128}
-              src={profile.avatarUrl}
-              hasStories={stories.length > 0}
-              onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
-            />
-          </div>
-        </div>
-
-        <h2 className="text-2xl font-black tracking-tight mt-2">{profile.name}</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">{profile.subtitle}</p>
+      {/* Header de perfil */}
+      <section className="relative z-10 flex flex-col items-center text-center px-4">
+        <GradientAvatar
+          size={128}
+          src={profile.avatarUrl}
+          hasStories={stories.length > 0}
+          onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
+        />
+        <h2 className="mt-3 text-2xl font-black tracking-tight">{profile.username}</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">{profile.bio}</p>
       </section>
 
-      {/* Highlights (Stories / Destaques) */}
-      <div className="mt-6 px-4">
+      {/* Carrossel de destaques estilo Instagram — direto abaixo do perfil */}
+      <div className="relative z-10 mt-5 px-4">
         <Highlights />
       </div>
 
       {/* Avatar de status dinâmico */}
-      <div className="mt-4 px-4">
+      <div className="relative z-10 mt-4 px-4">
         <StatusAvatar />
       </div>
 
-      {/* Serviço principal */}
-      <div className="mt-4">
+      <div className="relative z-10 mt-4 px-4">
         <ServiceCard />
       </div>
 
-      {/* ═══════════════════════════════════════════════════ */}
-      {/* 💥 TRINCA DE CARDS COMPACTOS (3 LADO A LADO) 💥   */}
-      {/* ═══════════════════════════════════════════════════ */}
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        {/* 1. No Salão Agora */}
+      <div className="relative z-10 mt-4 px-4 grid grid-cols-3 gap-2">
         <SalonInfo />
-
-        {/* 2. Encaixe Virtual na Fila */}
         <QueueList compact />
-
-        {/* 3. Garantir Horário na Agenda */}
         <button
-          onClick={() => alert("Selecione o dia e horário desejado no atendimento com a IA!")}
+          onClick={() => alert('Selecione o dia e horário desejado no atendimento com a IA!')}
           className="flex flex-col justify-between rounded-3xl glass-strong p-3 text-left transition-transform active:scale-95 border border-white/10"
         >
           <div>
@@ -146,9 +102,7 @@ function Index() {
                 📅 Agenda
               </p>
             </div>
-            <p className="mt-1 text-[10px] font-bold text-white leading-tight">
-              Marcar Horário
-            </p>
+            <p className="mt-1 text-[10px] font-bold text-white leading-tight">Marcar Horário</p>
           </div>
           <span className="mt-2 w-full text-center rounded-xl bg-white/10 py-1 text-[9px] font-bold text-neon">
             Garantir ➔
@@ -156,42 +110,37 @@ function Index() {
         </button>
       </div>
 
-      {/* ═══════════════════════════════════════════════════ */}
-      {/* CHEFE AI & ALERTA INTELIGENTE                       */}
-      {/* ═══════════════════════════════════════════════════ */}
-      <div className="mt-4">
+      <div className="relative z-10 mt-4 px-4">
         <ChefeAI />
       </div>
 
-      <div className="mt-3">
+      <div className="relative z-10 mt-3 px-4">
         <AIAlertBox />
       </div>
 
       <LeaveNotifier />
 
-      {/* Acompanhamento ao vivo */}
-      <div className="mt-3">
+      <div className="relative z-10 mt-3 px-4">
         <ProgressTracker />
       </div>
 
-      {/* Mapa */}
-      <div className="mt-4">
+      <div className="relative z-10 mt-4 px-4">
         <SalonMap />
       </div>
 
-      <div className="mt-6">
+      <div className="relative z-10 mt-6 px-4">
         <Manifesto />
       </div>
 
-      <div className="mt-6">
+      <div className="relative z-10 mt-6 px-4">
         <Feed />
       </div>
 
-      <div className="mt-6">
+      <div className="relative z-10 mt-6 px-4">
         <Reviews />
       </div>
 
-      <footer className="mt-10 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+      <footer className="relative z-10 mt-10 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
         Powered by <span className="text-gradient-ig">CHEFE AI</span>
       </footer>
 
@@ -201,8 +150,5 @@ function Index() {
         onClose={() => setStoriesOpen(false)}
       />
     </main>
-  );
+  )
 }
-       
-  
-
