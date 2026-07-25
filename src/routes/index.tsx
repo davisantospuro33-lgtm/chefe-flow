@@ -68,8 +68,8 @@ function Index() {
           hasStories={stories.length > 0}
           onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
         />
-        <h2 className="mt-3 text-2xl font-black tracking-tight">{profile.name}</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">{profile.subtitle}</p>
+        <h2 className="mt-3 text-2xl font-black tracking-tight">{profile.username}</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">{profile.bio}</p>
       </section>
 
       {/* Carrossel de destaques estilo Instagram — direto abaixo do perfil */}
