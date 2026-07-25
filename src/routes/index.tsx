@@ -60,16 +60,23 @@ function Index() {
         </div>
       </header>
 
-      {/* Header de perfil */}
-      <section className="relative z-10 flex flex-col items-center text-center px-4">
-        <GradientAvatar
-          size={128}
-          src={profile.avatarUrl}
-          hasStories={stories.length > 0}
-          onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
-        />
-        <h2 className="mt-3 text-2xl font-black tracking-tight">{profile.username}</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">{profile.bio}</p>
+      {/* Header de perfil (Capacete + FrequencyPortal) */}
+      <section className="relative z-10 flex flex-col items-center text-center">
+        {/* PORTAL DE FREQUÊNCIA NO CAPACETE / FOTO PRINCIPAL */}
+        <div className="relative flex items-center justify-center">
+          <FrequencyPortal />
+          <div className="relative z-10">
+            <GradientAvatar
+              size={128}
+              src={profile.avatarUrl}
+              hasStories={stories.length > 0}
+              onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
+            />
+          </div>
+        </div>
+
+        <h2 className="mt-3 text-2xl font-black tracking-tight z-10">{profile.name}</h2>
+        <p className="text-sm text-muted-foreground z-10">{profile.subtitle}</p>
       </section>
 
       {/* Carrossel de destaques estilo Instagram — direto abaixo do perfil */}
