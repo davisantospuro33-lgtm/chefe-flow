@@ -1,17 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Scissors, MapPin, Clock, Layers, Sparkles, ShieldCheck } from "lucide-react";
 import { useChefeStore } from "@/lib/chefe-store";
 import { StoriesViewer } from "./StoriesViewer";
-
-const DEFAULT_ITEMS = [
-  { id: "cortes", label: "Cortes", icon: Scissors, gradient: "from-fuchsia-500 via-pink-500 to-orange-400" },
-  { id: "estrutura", label: "Estrutura", icon: Layers, gradient: "from-cyan-400 via-blue-500 to-indigo-600" },
-  { id: "localizacao", label: "Localização", icon: MapPin, gradient: "from-emerald-400 via-teal-500 to-cyan-500" },
-  { id: "regras", label: "Regras", icon: ShieldCheck, gradient: "from-amber-400 via-orange-500 to-rose-500" },
-  { id: "horarios", label: "Horários", icon: Clock, gradient: "from-violet-500 via-fuchsia-500 to-pink-500" },
-  { id: "vibe", label: "Vibe", icon: Sparkles, gradient: "from-lime-400 via-emerald-500 to-teal-500" },
-];
 
 export function Highlights() {
   const highlights = useChefeStore((s) => s.highlights);
@@ -35,6 +25,8 @@ export function Highlights() {
         : [],
     [openIds, stories],
   );
+
+  if (stories.length === 0 && highlights.length === 0) return null;
 
   return (
     <>
@@ -90,31 +82,6 @@ export function Highlights() {
             </span>
           </motion.button>
         ))}
-
-        {/* Categorias padrão sempre visíveis */}
-        {DEFAULT_ITEMS.map((item) => {
-          const Icon = item.icon;
-          return (
-            <motion.button
-              key={item.id}
-              whileTap={{ scale: 0.94 }}
-              className="flex shrink-0 snap-start flex-col items-center gap-1.5"
-            >
-              <span className="relative grid h-[74px] w-[74px] place-items-center">
-                <span
-                  className={`absolute inset-0 rounded-full bg-gradient-to-br ${item.gradient}`}
-                />
-                <span className="absolute inset-[2px] rounded-full bg-background" />
-                <span className="relative grid h-[62px] w-[62px] place-items-center rounded-full bg-white/5">
-                  <Icon className="h-6 w-6 text-white/90" />
-                </span>
-              </span>
-              <span className="max-w-[74px] truncate text-[11px] font-semibold text-foreground/90">
-                {item.label}
-              </span>
-            </motion.button>
-          );
-        })}
       </div>
 
       <StoriesViewer
