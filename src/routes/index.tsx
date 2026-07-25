@@ -77,11 +77,11 @@ function Index() {
         <Highlights />
       </div>
 
-      {/* Avatar de status dinâmico */}
+      {/* Avatar de status dinâmico (Personagem Chefe Vivo) */}
       <div className="relative z-10 mt-4 px-4">
-        <StatusAvatar />
+        <StatusAvatar status="disponivel" />
       </div>
-
+      
       <div className="relative z-10 mt-4 px-4">
         <ServiceCard />
       </div>
