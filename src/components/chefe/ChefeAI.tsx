@@ -157,10 +157,12 @@ export function ChefeAI() {
               }`}
             >
               <p>{msg.text}</p>
-              <span
-                className={`mt-1 block text-[8px] text-right ${
-                  msg.sender === "user" ? "text-black/60" : "text-muted-foreground"
-                }`}
+              <span 
+  suppressHydrationWarning
+  className={`mt-1 block text-[8px] text-right ${
+    msg.sender === "user" ? "text-black/70" : "text-white/70"
+  }`}
+>
               >
                 {msg.time}
               </span>
