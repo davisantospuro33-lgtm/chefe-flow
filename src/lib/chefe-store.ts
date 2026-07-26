@@ -92,7 +92,29 @@ export interface Profile {
   serviceDurationMin: number;
   aiGreeting: string;
 }
+// --- TIPOS DE CHAT E MENSAGENS ---
+export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'story_reply' | 'call_log';
 
+export interface Message {
+  id: string;
+  senderId: 'customer' | 'chefe';
+  text?: string;
+  mediaUrl?: string;
+  type: MessageType;
+  timestamp: number;
+  storyContext?: {
+    storyId: string;
+    mediaUrl: string;
+  };
+}
+
+export interface Conversation {
+  id: string;
+  customerName: string;
+  unreadCount: number;
+  lastMessage: string;
+  messages: Message[];
+}
 const DEFAULT_PROFILE: Profile = {
   username: "Comando CHEFE",
   bio: "Barbearia de Alto Padrão · Atendimento Direto",
