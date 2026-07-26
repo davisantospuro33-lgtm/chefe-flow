@@ -157,7 +157,10 @@ interface ChefeState {
   highlights: Highlight[];
   highlightMedia: HighlightMedia[];
   storyInteractions: StoryInteraction[];
-
+conversations: Conversation[];
+  activeConversationId: string | null;
+  selectConversation: (id: string | null) => void;
+  sendMessage: (conversationId: string, message: Omit<Message, 'id' | 'timestamp'>) => void;
   // Setters / actions
   setStatus: (s: ChefeStatus) => Promise<void>;
   setDistance: (km: number) => void;
