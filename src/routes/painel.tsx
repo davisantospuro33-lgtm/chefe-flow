@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, Star, ImagePlus, Trash2, Upload, Cpu, Film, Radar, Sparkles } from "lucide-react";
+import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, ImagePlus, Trash2, Upload, Cpu, Film, Radar, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { useChefeStore, type ChefeStatus, type Review } from "@/lib/chefe-store";
+import { useChefeStore, type ChefeStatus } from "@/lib/chefe-store";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
 import { ShareButton } from "@/components/chefe/ShareButton";
 import { PinLock } from "@/components/chefe/PinLock";
@@ -427,10 +427,6 @@ function Painel() {
 function EditorPerfil() {
   const profile = useChefeStore((s) => s.profile);
   const updateProfile = useChefeStore((s) => s.updateProfile);
-  const reviews = useChefeStore((s) => s.reviews);
-  const saveReview = useChefeStore((s) => s.saveReview);
-  const deleteReview = useChefeStore((s) => s.deleteReview);
-  const uploadPortfolio = useChefeStore((s) => s.uploadPortfolio);
 
   const [form, setForm] = useState(profile);
   useEffect(() => setForm(profile), [profile]);
@@ -462,7 +458,6 @@ function EditorPerfil() {
     }
     e.target.value = "";
   };
-  void uploadPortfolio;
 
   return (
     <div className="space-y-4">
@@ -633,139 +628,6 @@ function EditorPerfil() {
         </motion.button>
       </section>
 
-      <section className="glass rounded-3xl p-5">
-        <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-fuchsia-300">
-          🤖 IA Atendente — Saudação Inicial
-        </p>
-        <Field label="Saudação Inicial da IA">
-          <textarea
-            value={form.aiGreeting}
-            onChange={(e) => setForm({ ...form, aiGreeting: e.target.value })}
-            rows={3}
-            className={inputCls}
-          />
-        </Field>
-        <p className="mb-2 text-[10px] text-muted-foreground">
-          Esta é a primeira frase que a IA Atendente fala com o cliente no chat público.
-        </p>
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={onSaveProfile}
-          className="mt-2 w-full rounded-2xl bg-gradient-ig px-4 py-3 text-sm font-black text-white"
-        >
-          Salvar saudação
-        </motion.button>
-      </section>
-
-      <section className="glass rounded-3xl p-5">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Star className="h-4 w-4 text-amber-400" />
-            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-              Depoimentos ({reviews.length}/3)
-            </p>
-          </div>
-        </div>
-        <div className="space-y-3">
-          {reviews.map((r) => (
-            <ReviewEditor
-              key={r.id}
-              review={r}
-              onSave={saveReview}
-              onDelete={() => deleteReview(r.id)}
-            />
-          ))}
-          {reviews.length < 3 && (
-            <ReviewEditor
-              onSave={async (r) => {
-                await saveReview({ ...r, position: reviews.length + 1 });
-                toast.success("Depoimento adicionado");
-              }}
-            />
-          )}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function ReviewEditor({
-  review,
-  onSave,
-  onDelete,
-}: {
-  review?: Review;
-  onSave: (r: Omit<Review, "id"> & { id?: string }) => Promise<void>;
-  onDelete?: () => void;
-}) {
-  const [name, setName] = useState(review?.name ?? "");
-  const [rating, setRating] = useState(review?.rating ?? 5);
-  const [comment, setComment] = useState(review?.comment ?? "");
-  const isNew = !review;
-
-  return (
-    <div className="rounded-2xl bg-white/[0.03] p-3 ring-1 ring-white/5">
-      <div className="mb-2 grid grid-cols-[1fr_auto] gap-2">
-        <input
-          placeholder="Nome do cliente"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className={inputCls}
-        />
-        <select
-          value={rating}
-          onChange={(e) => setRating(Number(e.target.value))}
-          className={`${inputCls} w-20`}
-        >
-          {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>
-              {n}★
-            </option>
-          ))}
-        </select>
-      </div>
-      <textarea
-        placeholder="Comentário"
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        rows={2}
-        className={inputCls}
-      />
-      <div className="mt-2 flex gap-2">
-        <button
-          onClick={async () => {
-            if (!name.trim() || !comment.trim()) {
-              toast.error("Preencha nome e comentário");
-              return;
-            }
-            await onSave({
-              id: review?.id,
-              name: name.trim(),
-              rating,
-              comment: comment.trim(),
-              position: review?.position ?? 0,
-            });
-            if (isNew) {
-              setName("");
-              setComment("");
-              setRating(5);
-            } else {
-              toast.success("Depoimento salvo");
-            }
-          }}
-          className="flex-1 rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-bold text-emerald-300 ring-1 ring-emerald-400/30"
-        >
-          {isNew ? "Adicionar" : "Salvar"}
-        </button>
-        {onDelete && (
-          <button
-            onClick={onDelete}
-            className="rounded-xl bg-rose-500/15 px-3 py-2 text-xs font-bold text-rose-300 ring-1 ring-rose-400/30"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
     </div>
   );
 }

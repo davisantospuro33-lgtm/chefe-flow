@@ -1,30 +1,35 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { useChefeStore } from "@/lib/chefe-store";
+import { useChefeStore, type Story } from "@/lib/chefe-store";
 import { StoriesViewer } from "./StoriesViewer";
 
 export function Highlights() {
   const highlights = useChefeStore((s) => s.highlights);
+  const highlightMedia = useChefeStore((s) => s.highlightMedia);
   const stories = useChefeStore((s) => s.stories);
-  const [openIds, setOpenIds] = useState<string[] | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [liveOpen, setLiveOpen] = useState(false);
 
-  const openHighlight = (storyIds: string[]) => {
-    const ordered = storyIds
+  const viewerStories = useMemo<Story[]>(() => {
+    if (!openId) return [];
+    const album = highlightMedia
+      .filter((m) => m.highlightId === openId)
+      .sort((a, b) => a.position - b.position)
+      .map((m) => ({
+        id: m.id,
+        mediaUrl: m.url,
+        mediaType: m.mediaType,
+        storagePath: m.storagePath,
+        caption: null,
+        createdAt: 0,
+        expiresAt: 0,
+      }));
+    if (album.length > 0) return album;
+    const h = highlights.find((x) => x.id === openId);
+    return (h?.storyIds ?? [])
       .map((id) => stories.find((s) => s.id === id))
-      .filter((s): s is (typeof stories)[number] => Boolean(s));
-    if (ordered.length === 0) return;
-    setOpenIds(ordered.map((s) => s.id));
-  };
-
-  const viewerStories = useMemo(
-    () =>
-      openIds
-        ? openIds
-            .map((id) => stories.find((s) => s.id === id))
-            .filter((s): s is (typeof stories)[number] => Boolean(s))
-        : [],
-    [openIds, stories],
-  );
+      .filter((s): s is Story => Boolean(s));
+  }, [openId, highlightMedia, highlights, stories]);
 
   if (highlights.length === 0) return null;
 
@@ -34,7 +39,7 @@ export function Highlights() {
         {stories.length > 0 && (
           <motion.button
             whileTap={{ scale: 0.94 }}
-            onClick={() => setOpenIds(stories.map((s) => s.id))}
+            onClick={() => setLiveOpen(true)}
             className="flex shrink-0 snap-start flex-col items-center gap-1.5"
           >
             <span className="relative grid h-[74px] w-[74px] place-items-center">
@@ -59,16 +64,23 @@ export function Highlights() {
           <motion.button
             key={h.id}
             whileTap={{ scale: 0.94 }}
-            onClick={() => openHighlight(h.storyIds)}
+            onClick={() => setOpenId(h.id)}
             className="flex shrink-0 snap-start flex-col items-center gap-1.5"
           >
             <span className="relative grid h-[74px] w-[74px] place-items-center">
               <span className="absolute inset-0 rounded-full bg-gradient-ig" />
               <span className="absolute inset-[2px] rounded-full bg-background" />
-              {h.coverImage ? (
+              {(h.coverImage ??
+                highlightMedia.find((m) => m.highlightId === h.id && m.mediaType === "image")
+                  ?.url) ? (
                 <img
-                  src={h.coverImage}
-                  alt={h.title}
+                  src={
+                    h.coverImage ??
+                    highlightMedia.find(
+                      (m) => m.highlightId === h.id && m.mediaType === "image",
+                    )!.url
+                  }
+                  alt={h.title || "Destaque"}
                   className="relative h-[62px] w-[62px] rounded-full object-cover"
                 />
               ) : (
@@ -77,17 +89,24 @@ export function Highlights() {
                 </span>
               )}
             </span>
-            <span className="max-w-[74px] truncate text-[11px] font-semibold text-foreground/90">
-              {h.title}
-            </span>
+            {h.title.trim() !== "" && (
+              <span className="max-w-[74px] truncate text-[11px] font-semibold text-foreground/90">
+                {h.title}
+              </span>
+            )}
           </motion.button>
         ))}
       </div>
 
       <StoriesViewer
         stories={viewerStories}
-        open={openIds !== null}
-        onClose={() => setOpenIds(null)}
+        open={openId !== null && viewerStories.length > 0}
+        onClose={() => setOpenId(null)}
+      />
+      <StoriesViewer
+        stories={stories}
+        open={liveOpen}
+        onClose={() => setLiveOpen(false)}
       />
     </>
   );
