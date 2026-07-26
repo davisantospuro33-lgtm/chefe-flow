@@ -218,7 +218,7 @@ function HighlightEditor({
         </button>
       </div>
 
-      {media.length > 0 && (
+      {media && media.length > 0 && (
         <div className="mb-2 grid grid-cols-4 gap-1.5">
           {media.map((m) => (
             <div key={m.id} className="group relative aspect-square overflow-hidden rounded-lg">
