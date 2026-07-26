@@ -503,6 +503,69 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
     await supabase.from("chefe_highlights").delete().eq("id", id);
   },
 
+  createHighlight: async (title) => {
+    const { data } = await supabase
+      .from("chefe_highlights")
+      .insert({
+        title: title ?? "",
+        cover_image: null,
+        story_ids: [],
+        order_index: get().highlights.length,
+      })
+      .select("id")
+      .maybeSingle();
+    await get().hydrate();
+    return data?.id ?? null;
+  },
+
+  uploadHighlightMedia: async (highlightId, file) => {
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `highlights/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("chefe-media")
+      .upload(path, file, { contentType: file.type, upsert: false });
+    if (upErr) throw upErr;
+    const { data: signed } = await supabase.storage
+      .from("chefe-media")
+      .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+    const mediaType = file.type.startsWith("video/") ? "video" : "image";
+    const position =
+      get().highlightMedia.filter((m) => m.highlightId === highlightId).length + 1;
+    await supabase.from("chefe_highlight_media").insert({
+      highlight_id: highlightId,
+      url: signed?.signedUrl ?? "",
+      media_type: mediaType,
+      storage_path: path,
+      position,
+    });
+    await get().hydrate();
+  },
+
+  deleteHighlightMedia: async (id, storagePath) => {
+    if (storagePath) {
+      await supabase.storage.from("chefe-media").remove([storagePath]).catch(() => {});
+    }
+    await supabase.from("chefe_highlight_media").delete().eq("id", id);
+    await get().hydrate();
+  },
+
+  uploadHighlightCover: async (highlightId, file) => {
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `highlights/cover-${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("chefe-media")
+      .upload(path, file, { contentType: file.type, upsert: false });
+    if (upErr) throw upErr;
+    const { data: signed } = await supabase.storage
+      .from("chefe-media")
+      .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+    await supabase
+      .from("chefe_highlights")
+      .update({ cover_image: signed?.signedUrl ?? null })
+      .eq("id", highlightId);
+    await get().hydrate();
+  },
+
   hydrate: async () => {
     const [state, profile, queue, agenda, pendentes, portfolio, reviews, salao, stories, highlights] =
       await Promise.all([
@@ -541,6 +604,11 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
           .order("order_index"),
       ]);
 
+    const { data: hlMedia } = await supabase
+      .from("chefe_highlight_media")
+      .select("id,highlight_id,url,media_type,storage_path,position")
+      .order("position");
+
     const s = state.data;
     set({
       status: ((s?.status as ChefeStatus) ?? "available") as ChefeStatus,
@@ -566,10 +634,18 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
       })),
       highlights: (highlights.data ?? []).map((r) => ({
         id: r.id,
-        title: r.title,
+        title: r.title ?? "",
         coverImage: r.cover_image,
         storyIds: (r.story_ids ?? []) as string[],
         orderIndex: r.order_index,
+      })),
+      highlightMedia: (hlMedia ?? []).map((r) => ({
+        id: r.id,
+        highlightId: r.highlight_id,
+        url: r.url,
+        mediaType: r.media_type === "video" ? ("video" as const) : ("image" as const),
+        storagePath: r.storage_path,
+        position: r.position,
       })),
     });
   },
@@ -625,6 +701,11 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "chefe_highlights" },
+        () => get().hydrate(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chefe_highlight_media" },
         () => get().hydrate(),
       )
       .subscribe();
