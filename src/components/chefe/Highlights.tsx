@@ -26,7 +26,7 @@ export function Highlights() {
     [openIds, stories],
   );
 
-  if (stories.length === 0 && highlights.length === 0) return null;
+  if (highlights.length === 0) return null;
 
   return (
     <>
