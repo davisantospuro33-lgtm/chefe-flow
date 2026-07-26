@@ -1,258 +1,373 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Star, X } from "lucide-react";
+import { useState, useRef } from "react";
+import { motion } from "framer-motion";
+import { Upload, Trash2, Plus, Film, X } from "lucide-react";
 import { toast } from "sonner";
-import type { Story } from "@/lib/chefe-store";
+import { useChefeStore } from "@/lib/chefe-store";
 
-interface StoriesManagerProps {
-  stories: Story[];
-  open: boolean;
-  onClose: () => void;
-  initialIndex?: number;
-}
+export function StoriesManager() {
+  const stories = useChefeStore((s) => s.stories);
+  const highlights = useChefeStore((s) => s.highlights);
+  const uploadStory = useChefeStore((s) => s.uploadStory);
+  const deleteStory = useChefeStore((s) => s.deleteStory);
+  const createHighlight = useChefeStore((s) => s.createHighlight);
+  const deleteHighlight = useChefeStore((s) => s.deleteHighlight);
+  const uploadHighlightMedia = useChefeStore((s) => s.uploadHighlightMedia);
+  const deleteHighlightMedia = useChefeStore((s) => s.deleteHighlightMedia);
+  const uploadHighlightCover = useChefeStore((s) => s.uploadHighlightCover);
 
-const STORY_DURATION = 5000; // 5 segundos por story de imagem
+  const storyFileInput = useRef<HTMLInputElement>(null);
+  const highlightFileInput = useRef<HTMLInputElement>(null);
+  const highlightCoverInput = useRef<HTMLInputElement>(null);
 
-export function StoriesManager({
-  stories,
-  open,
-  onClose,
-  initialIndex = 0,
-}: StoriesManagerProps) {
-  const [index, setIndex] = useState(initialIndex);
-  const [progress, setProgress] = useState(0);
-  const [liked, setLiked] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
+  const [storyCaption, setStoryCaption] = useState("");
+  const [storyMediaType, setStoryMediaType] = useState<"image" | "video">("image");
+  const [uploading, setUploading] = useState(false);
+  const [newHighlightTitle, setNewHighlightTitle] = useState("");
+  const [selectedHighlightId, setSelectedHighlightId] = useState<string | null>(null);
 
-  // Reinicia estado quando abre/fecha ou muda índice inicial
-  useEffect(() => {
-    if (open) {
-      setIndex(initialIndex);
-      setProgress(0);
-      setLiked(false);
-      setRating(0);
-      setComment("");
+  // Handle story upload
+  const handleStoryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      await uploadStory(file, storyCaption);
+      toast.success("Story publicado com sucesso!");
+      setStoryCaption("");
+      setStoryMediaType("image");
+      e.target.value = "";
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao publicar story");
+    } finally {
+      setUploading(false);
     }
-  }, [open, initialIndex]);
+  };
 
-  // Auto-avança stories de imagem após STORY_DURATION
-  useEffect(() => {
-    if (!open || !stories.length) return;
-    const currentStory = stories[index];
-    if (!currentStory) return;
+  // Handle story deletion
+  const handleDeleteStory = async (id: string, storagePath: string | null) => {
+    if (!confirm("Excluir este story?")) return;
+    try {
+      await deleteStory(id, storagePath);
+      toast.success("Story excluído");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao excluir story");
+    }
+  };
 
-    // Pula lógica de auto-avance para vídeos
-    if (currentStory.mediaType === "video") return;
-
-    setProgress(0);
-    const start = Date.now();
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - start;
-      const p = Math.min(1, elapsed / STORY_DURATION);
-      setProgress(p);
-
-      if (p >= 1) {
-        clearInterval(interval);
-        // Avança para próximo story ou fecha viewer
-        if (index + 1 < stories.length) {
-          setIndex((prev) => prev + 1);
-        } else {
-          onClose();
-        }
+  // Handle create highlight
+  const handleCreateHighlight = async () => {
+    if (!newHighlightTitle.trim()) {
+      toast.error("Digite um título para o destaque");
+      return;
+    }
+    setUploading(true);
+    try {
+      const id = await createHighlight(newHighlightTitle);
+      if (id) {
+        setSelectedHighlightId(id);
+        setNewHighlightTitle("");
+        toast.success("Destaque criado!");
       }
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [open, index, stories, onClose]);
-
-  if (!open || !stories.length) return null;
-
-  const currentStory = stories[index];
-  if (!currentStory) return null;
-
-  const handlePrevious = () => {
-    if (index > 0) {
-      setIndex(index - 1);
-      setProgress(0);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao criar destaque");
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleNext = () => {
-    if (index + 1 < stories.length) {
-      setIndex(index + 1);
-      setProgress(0);
-    } else {
-      onClose();
+  // Handle delete highlight
+  const handleDeleteHighlight = async (id: string) => {
+    if (!confirm("Excluir este destaque?")) return;
+    try {
+      await deleteHighlight(id);
+      toast.success("Destaque excluído");
+      if (selectedHighlightId === id) setSelectedHighlightId(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao excluir destaque");
     }
   };
 
-  const handleVideoEnded = () => {
-    handleNext();
+  // Handle highlight media upload
+  const handleHighlightMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedHighlightId) return;
+
+    setUploading(true);
+    try {
+      await uploadHighlightMedia(selectedHighlightId, file);
+      toast.success("Mídia adicionada ao destaque!");
+      e.target.value = "";
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao adicionar mídia");
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const handleSendComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!comment.trim()) return;
-    toast.success("Comentário enviado para o Chefe!");
-    setComment("");
+  // Handle highlight cover upload
+  const handleHighlightCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedHighlightId) return;
+
+    setUploading(true);
+    try {
+      await uploadHighlightCover(selectedHighlightId, file);
+      toast.success("Capa do destaque atualizada!");
+      e.target.value = "";
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao atualizar capa");
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        key="stories-manager"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex flex-col bg-black text-white"
-      >
-        {/* Barras de Progresso no Topo */}
-        <div className="absolute top-3 inset-x-0 z-20 flex gap-1 px-3">
-          {stories.map((s, idx) => (
-            <div
-              key={s.id}
-              className="h-1 flex-1 overflow-hidden rounded-full bg-white/30"
-            >
-              <div
-                className="h-full bg-white transition-all duration-75"
-                style={{
-                  width: `${
-                    idx < index
-                      ? 100
-                      : idx === index
-                        ? s.mediaType === "video"
-                          ? 100
-                          : progress * 100
-                        : 0
-                  }%`,
-                }}
-              />
-            </div>
-          ))}
-        </div>
+    <div className="space-y-4">
+      {/* Stories Section */}
+      <section className="glass rounded-3xl p-5">
+        <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          📸 Stories · Ao Vivo
+        </p>
 
-        {/* Botão Fechar */}
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-6 z-30 rounded-full bg-black/40 p-2 backdrop-blur-md hover:bg-black/60 transition-colors"
-          aria-label="Fechar stories"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        {/* Mídia Principal em Tela Cheia */}
-        <div className="relative flex-1 w-full h-full flex items-center justify-center bg-black overflow-hidden">
-          {currentStory.mediaType === "video" ? (
-            <video
-              key={`video-${currentStory.id}`}
-              src={currentStory.mediaUrl}
-              autoPlay
-              playsInline
-              controls={false}
-              onEnded={handleVideoEnded}
-              className="h-full w-full object-contain"
-            />
-          ) : (
-            <img
-              key={`image-${currentStory.id}`}
-              src={currentStory.mediaUrl}
-              alt={currentStory.caption || "Story"}
-              className="h-full w-full object-contain"
-            />
-          )}
-
-          {/* Áreas de Toque para Navegação */}
-          <button
-            onClick={handlePrevious}
-            className="absolute left-0 top-0 bottom-24 w-1/3 z-10"
-            aria-label="Story anterior"
-          />
-          <button
-            onClick={handleNext}
-            className="absolute right-0 top-0 bottom-24 w-1/3 z-10"
-            aria-label="Próximo story"
-          />
-        </div>
-
-        {/* Legenda do Story */}
-        {currentStory.caption && (
-          <div className="absolute bottom-24 inset-x-0 z-20 px-4 text-center">
-            <p className="inline-block rounded-xl bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md border border-white/10">
-              {currentStory.caption}
-            </p>
-          </div>
-        )}
-
-        {/* Rodapé de Interações */}
-        <div className="absolute bottom-0 inset-x-0 z-20 p-4 bg-gradient-to-t from-black via-black/80 to-transparent space-y-3">
-          {/* Avaliação com 5 Estrelas */}
-          <div className="flex justify-center items-center gap-2">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={`star-${star}`}
-                type="button"
-                onClick={() => {
-                  setRating(star);
-                  toast.success(`Avaliado com ${star} estrela(s)!`);
-                }}
-                className="transition-transform active:scale-125"
-                aria-label={`Avaliar ${star} estrela(s)`}
-              >
-                <Star
-                  className={`h-6 w-6 ${
-                    star <= rating
-                      ? "fill-amber-400 text-amber-400"
-                      : "text-white/40"
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
-
-          {/* Campo de Comentário e Curtida */}
-          <form
-            onSubmit={handleSendComment}
-            className="flex items-center gap-2"
-          >
+        {/* New Story Form */}
+        <div className="mb-4 space-y-3 rounded-2xl bg-white/[0.02] p-4 border border-white/10">
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              Legenda do Story
+            </label>
             <input
               type="text"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Enviar mensagem ao Chefe..."
-              className="flex-1 rounded-full bg-white/10 border border-white/20 px-4 py-2.5 text-xs text-white placeholder:text-zinc-400 focus:outline-none focus:border-amber-500 backdrop-blur-md transition-colors"
+              value={storyCaption}
+              onChange={(e) => setStoryCaption(e.target.value)}
+              placeholder="Escreva uma legenda (opcional)"
+              className="w-full rounded-xl bg-white/[0.04] px-3 py-2.5 text-sm text-foreground outline-none ring-1 ring-border transition placeholder:text-muted-foreground/60 focus:ring-neon/60"
             />
-            <button
-              type="button"
-              onClick={() => {
-                setLiked(!liked);
-                toast.success(
-                  !liked
-                    ? "Você curtiu o story!"
-                    : "Curtida removida"
-                );
-              }}
-              className="p-2.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md active:scale-110 transition-transform"
-              aria-label="Curtir story"
-            >
-              <Heart
-                className={`h-5 w-5 ${
-                  liked
-                    ? "fill-rose-500 text-rose-500"
-                    : "text-white"
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              Tipo de Mídia
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setStoryMediaType("image")}
+                className={`flex-1 rounded-lg px-3 py-2 text-xs font-bold transition ${
+                  storyMediaType === "image"
+                    ? "bg-gradient-ig text-white"
+                    : "bg-white/[0.05] text-muted-foreground"
                 }`}
-              />
-            </button>
-            <button
-              type="submit"
-              className="p-2.5 rounded-full bg-amber-500 text-black font-bold hover:bg-amber-600 transition-colors"
-              aria-label="Enviar comentário"
-            >
-              ✓
-            </button>
-          </form>
+              >
+                📷 Imagem
+              </button>
+              <button
+                onClick={() => setStoryMediaType("video")}
+                className={`flex-1 rounded-lg px-3 py-2 text-xs font-bold transition ${
+                  storyMediaType === "video"
+                    ? "bg-gradient-ig text-white"
+                    : "bg-white/[0.05] text-muted-foreground"
+                }`}
+              >
+                🎬 Vídeo
+              </button>
+            </div>
+          </div>
+
+          <input
+            ref={storyFileInput}
+            type="file"
+            accept={storyMediaType === "image" ? "image/*" : "video/*"}
+            onChange={handleStoryUpload}
+            className="hidden"
+          />
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            disabled={uploading}
+            onClick={() => storyFileInput.current?.click()}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-ig px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+          >
+            <Upload className="h-4 w-4" />
+            {uploading ? "Publicando..." : "Publicar Story"}
+          </motion.button>
         </div>
-      </motion.div>
-    </AnimatePresence>
+
+        {/* Stories List */}
+        {stories.length === 0 ? (
+          <p className="rounded-2xl bg-white/[0.03] px-4 py-6 text-center text-xs text-muted-foreground">
+            Nenhum story publicado. Publica um para começar!
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            {stories.map((story) => (
+              <div
+                key={story.id}
+                className="group relative aspect-square overflow-hidden rounded-lg border border-white/10"
+              >
+                {story.mediaType === "video" ? (
+                  <video
+                    src={story.mediaUrl}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={story.mediaUrl}
+                    alt={story.caption || "Story"}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                )}
+                {story.mediaType === "video" && (
+                  <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-white flex items-center gap-1">
+                    <Film className="h-3 w-3" />
+                  </span>
+                )}
+                {story.caption && (
+                  <span className="absolute bottom-1 left-1 right-1 rounded bg-black/60 px-2 py-1 text-[9px] font-semibold text-white truncate">
+                    {story.caption}
+                  </span>
+                )}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleDeleteStory(story.id, story.storagePath)}
+                  className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all group-hover:bg-black/60 group-hover:opacity-100"
+                >
+                  <Trash2 className="h-5 w-5 text-white" />
+                </motion.button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Highlights Section */}
+      <section className="glass rounded-3xl p-5">
+        <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          ✨ Destaques · Fixos
+        </p>
+
+        {/* Create New Highlight */}
+        <div className="mb-4 space-y-3 rounded-2xl bg-white/[0.02] p-4 border border-white/10">
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              Título do Destaque
+            </label>
+            <input
+              type="text"
+              value={newHighlightTitle}
+              onChange={(e) => setNewHighlightTitle(e.target.value)}
+              placeholder="Ex: Cortes Premium, Events, etc"
+              className="w-full rounded-xl bg-white/[0.04] px-3 py-2.5 text-sm text-foreground outline-none ring-1 ring-border transition placeholder:text-muted-foreground/60 focus:ring-neon/60"
+            />
+          </div>
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            disabled={uploading}
+            onClick={handleCreateHighlight}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-ig px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+          >
+            <Plus className="h-4 w-4" />
+            {uploading ? "Criando..." : "Criar Destaque"}
+          </motion.button>
+        </div>
+
+        {/* Highlights List */}
+        {highlights.length === 0 ? (
+          <p className="rounded-2xl bg-white/[0.03] px-4 py-6 text-center text-xs text-muted-foreground">
+            Nenhum destaque criado. Cria um para começar!
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {highlights.map((highlight) => (
+              <div
+                key={highlight.id}
+                className="rounded-2xl bg-white/[0.02] p-3 border border-white/10 transition hover:border-white/20"
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold truncate">{highlight.title}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {highlight.storyIds.length} story{highlight.storyIds.length !== 1 ? "s" : ""} vinculado{highlight.storyIds.length !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleDeleteHighlight(highlight.id)}
+                    className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30"
+                  >
+                    <X className="h-4 w-4" />
+                  </motion.button>
+                </div>
+
+                {selectedHighlightId === highlight.id && (
+                  <div className="space-y-2 mt-3 pt-3 border-t border-white/10">
+                    <div className="flex gap-2">
+                      <input
+                        ref={highlightCoverInput}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleHighlightCoverUpload}
+                        className="hidden"
+                      />
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        disabled={uploading}
+                        onClick={() => highlightCoverInput.current?.click()}
+                        className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-amber-500/20 px-3 py-2 text-xs font-bold text-amber-400 hover:bg-amber-500/30 disabled:opacity-50"
+                      >
+                        <Upload className="h-3 w-3" />
+                        Capa
+                      </motion.button>
+
+                      <input
+                        ref={highlightFileInput}
+                        type="file"
+                        accept="image/*,video/*"
+                        onChange={handleHighlightMediaUpload}
+                        className="hidden"
+                      />
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        disabled={uploading}
+                        onClick={() => highlightFileInput.current?.click()}
+                        className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-sky-500/20 px-3 py-2 text-xs font-bold text-sky-400 hover:bg-sky-500/30 disabled:opacity-50"
+                      >
+                        <Upload className="h-3 w-3" />
+                        Mídia
+                      </motion.button>
+                    </div>
+                  </div>
+                )}
+
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() =>
+                    setSelectedHighlightId(
+                      selectedHighlightId === highlight.id ? null : highlight.id
+                    )
+                  }
+                  className="mt-2 w-full rounded-lg bg-white/5 px-3 py-2 text-xs font-bold text-foreground hover:bg-white/10"
+                >
+                  {selectedHighlightId === highlight.id ? "Fechar" : "Adicionar Mídia"}
+                </motion.button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
