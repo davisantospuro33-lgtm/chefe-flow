@@ -12,7 +12,6 @@ export function StoriesManager() {
   const createHighlight = useChefeStore((s) => s.createHighlight);
   const deleteHighlight = useChefeStore((s) => s.deleteHighlight);
   const uploadHighlightMedia = useChefeStore((s) => s.uploadHighlightMedia);
-  const deleteHighlightMedia = useChefeStore((s) => s.deleteHighlightMedia);
   const uploadHighlightCover = useChefeStore((s) => s.uploadHighlightCover);
 
   const storyFileInput = useRef<HTMLInputElement>(null);
@@ -57,7 +56,7 @@ export function StoriesManager() {
     }
   };
 
-  // Handle create highlight
+  // Handle create highlight - CAPTION COMPLETAMENTE OPCIONAL
   const handleCreateHighlight = async () => {
     if (!newHighlightTitle.trim()) {
       toast.error("Digite um título para o destaque");
@@ -257,7 +256,7 @@ export function StoriesManager() {
           ✨ Destaques · Fixos
         </p>
 
-        {/* Create New Highlight */}
+        {/* Create New Highlight - LEGENDA/CAPTION OPCIONAL */}
         <div className="mb-4 space-y-3 rounded-2xl bg-white/[0.02] p-4 border border-white/10">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
@@ -297,7 +296,7 @@ export function StoriesManager() {
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold truncate">{highlight.title}</p>
+                    <p className="text-sm font-bold truncate">{highlight.title || "Sem título"}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {highlight.storyIds.length} story{highlight.storyIds.length !== 1 ? "s" : ""} vinculado{highlight.storyIds.length !== 1 ? "s" : ""}
                     </p>
@@ -306,7 +305,7 @@ export function StoriesManager() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleDeleteHighlight(highlight.id)}
-                    className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30"
+                    className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition-colors"
                   >
                     <X className="h-4 w-4" />
                   </motion.button>
@@ -326,7 +325,7 @@ export function StoriesManager() {
                         whileTap={{ scale: 0.97 }}
                         disabled={uploading}
                         onClick={() => highlightCoverInput.current?.click()}
-                        className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-amber-500/20 px-3 py-2 text-xs font-bold text-amber-400 hover:bg-amber-500/30 disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-amber-500/20 px-3 py-2 text-xs font-bold text-amber-400 hover:bg-amber-500/30 disabled:opacity-50 transition-colors"
                       >
                         <Upload className="h-3 w-3" />
                         Capa
@@ -343,7 +342,7 @@ export function StoriesManager() {
                         whileTap={{ scale: 0.97 }}
                         disabled={uploading}
                         onClick={() => highlightFileInput.current?.click()}
-                        className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-sky-500/20 px-3 py-2 text-xs font-bold text-sky-400 hover:bg-sky-500/30 disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-sky-500/20 px-3 py-2 text-xs font-bold text-sky-400 hover:bg-sky-500/30 disabled:opacity-50 transition-colors"
                       >
                         <Upload className="h-3 w-3" />
                         Mídia
@@ -359,7 +358,7 @@ export function StoriesManager() {
                       selectedHighlightId === highlight.id ? null : highlight.id
                     )
                   }
-                  className="mt-2 w-full rounded-lg bg-white/5 px-3 py-2 text-xs font-bold text-foreground hover:bg-white/10"
+                  className="mt-2 w-full rounded-lg bg-white/5 px-3 py-2 text-xs font-bold text-foreground hover:bg-white/10 transition-colors"
                 >
                   {selectedHighlightId === highlight.id ? "Fechar" : "Adicionar Mídia"}
                 </motion.button>
