@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Upload, Trash2, Film, Plus, Star } from "lucide-react";
+import { Upload, Trash2, Film, Plus, Star, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { useChefeStore, type Highlight } from "@/lib/chefe-store";
 
@@ -9,7 +9,7 @@ export function StoriesManager() {
   const highlights = useChefeStore((s) => s.highlights);
   const uploadStory = useChefeStore((s) => s.uploadStory);
   const deleteStory = useChefeStore((s) => s.deleteStory);
-  const saveHighlight = useChefeStore((s) => s.saveHighlight);
+  const createHighlight = useChefeStore((s) => s.createHighlight);
   const deleteHighlight = useChefeStore((s) => s.deleteHighlight);
 
   const input = useRef<HTMLInputElement>(null);
