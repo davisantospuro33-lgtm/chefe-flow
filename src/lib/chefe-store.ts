@@ -62,6 +62,15 @@ export interface Highlight {
   orderIndex: number;
 }
 
+export interface HighlightMedia {
+  id: string;
+  highlightId: string;
+  url: string;
+  mediaType: "image" | "video";
+  storagePath: string | null;
+  position: number;
+}
+
 export interface Profile {
   username: string;
   bio: string;
@@ -116,6 +125,7 @@ interface ChefeState {
   reviews: Review[];
   stories: Story[];
   highlights: Highlight[];
+  highlightMedia: HighlightMedia[];
 
   // Setters / actions
   setStatus: (s: ChefeStatus) => Promise<void>;
@@ -156,7 +166,11 @@ interface ChefeState {
   uploadStory: (file: File, caption?: string) => Promise<void>;
   deleteStory: (id: string, storagePath: string | null) => Promise<void>;
   saveHighlight: (h: Omit<Highlight, "id"> & { id?: string }) => Promise<void>;
+  createHighlight: (title?: string) => Promise<string | null>;
   deleteHighlight: (id: string) => Promise<void>;
+  uploadHighlightMedia: (highlightId: string, file: File) => Promise<void>;
+  deleteHighlightMedia: (id: string, storagePath: string | null) => Promise<void>;
+  uploadHighlightCover: (highlightId: string, file: File) => Promise<void>;
 
   hydrate: () => Promise<void>;
   subscribe: () => () => void;
@@ -262,6 +276,7 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
   reviews: [],
   stories: [],
   highlights: [],
+  highlightMedia: [],
 
   setStatus: async (s) => {
     set({ status: s });
