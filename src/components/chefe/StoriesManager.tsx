@@ -1,308 +1,178 @@
-import { useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { Upload, Trash2, Film, Plus, Star, ImagePlus, Heart, MessageCircle } from "lucide-react";
+imporimport { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Heart, MessageCircle, Star, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import { useChefeStore, type Highlight } from "@/lib/chefe-store";
+import { useChefeStore } from "@/lib/chefe-store";
 
-export function StoriesManager() {
+export function StoriesViewer() {
   const stories = useChefeStore((s) => s?.stories) ?? [];
-  const highlights = useChefeStore((s) => s?.highlights) ?? [];
-  const uploadStory = useChefeStore((s) => s?.uploadStory);
-  const deleteStory = useChefeStore((s) => s?.deleteStory);
-  const createHighlight = useChefeStore((s) => s?.createHighlight);
-  const deleteHighlight = useChefeStore((s) => s?.deleteHighlight);
+  const activeStoryIndex = useChefeStore((s) => s?.activeStoryIndex) ?? null;
+  const setActiveStoryIndex = useChefeStore((s) => s?.setActiveStoryIndex);
+  
+  const [liked, setLiked] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
 
-  const input = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
-  const [caption, setCaption] = useState("");
+  const isOpen = activeStoryIndex !== null && stories.length > 0;
+  const currentStory = isOpen ? stories[activeStoryIndex] : null;
 
-  const onFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    if (files.length === 0) return;
-    setBusy(true);
-    try {
-      if (uploadStory) {
-        for (const f of files) await uploadStory(f, caption);
-        toast.success(`${files.length} story(s) publicado(s)`);
-      }
-      setCaption("");
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao enviar story");
-    } finally {
-      setBusy(false);
-      e.target.value = "";
+  useEffect(() => {
+    setLiked(false);
+    setRating(0);
+    setComment("");
+  }, [activeStoryIndex]);
+
+  if (!isOpen || !currentStory) return null;
+
+  const handleNext = () => {
+    if (activeStoryIndex < stories.length - 1) {
+      setActiveStoryIndex?.(activeStoryIndex + 1);
+    } else {
+      setActiveStoryIndex?.(null);
     }
   };
 
-  return (
-    <div className="space-y-4">
-      {/* SEÇÃO 1: PUBLICAR STORY (ESTILO INSTAGRAM 24H) */}
-      <section className="glass rounded-3xl p-5 border border-white/10 bg-black/40">
-        <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-          <Film className="h-3.5 w-3.5 text-amber-400" /> Publicar Story (expira em 24h)
-        </p>
-        <input
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          placeholder="Legenda ou frase marcante..."
-          className="mb-3 w-full rounded-xl bg-white/5 border border-white/10 p-3 text-xs text-white placeholder:text-muted-foreground focus:outline-none focus:border-amber-500/50"
-        />
-        <input
-          ref={input}
-          type="file"
-          accept="image/*,video/*"
-          multiple
-          onChange={onFiles}
-          className="hidden"
-        />
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          disabled={busy}
-          onClick={() => input.current?.click()}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 py-3 text-xs font-bold text-black hover:bg-amber-400 transition-colors"
-        >
-          <Upload className="h-4 w-4" />
-          {busy ? "Publicando..." : "Postar no Stories"}
-        </motion.button>
-      </section>
+  const handlePrev = () => {
+    if (activeStoryIndex > 0) {
+      setActiveStoryIndex?.(activeStoryIndex - 1);
+    }
+  };
 
-      {/* SEÇÃO 2: STORIES ATIVOS */}
-      <section className="glass rounded-3xl p-5 border border-white/10 bg-black/40">
-        <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-          Stories Ativos ({stories.length})
-        </p>
-        {stories.length === 0 ? (
-          <p className="rounded-2xl bg-white/[0.02] p-4 text-center text-xs text-muted-foreground border border-white/5">
-            Nenhum story ativo no momento.
-          </p>
-        ) : (
-          <div className="grid grid-cols-3 gap-2">
-            {stories.map((s) => (
-              <div key={s.id} className="group relative aspect-[9/16] overflow-hidden rounded-2xl bg-black border border-white/10">
-                {s.mediaType === "video" ? (
-                  <video src={s.mediaUrl} muted playsInline className="h-full w-full object-cover" />
-                ) : (
-                  <img src={s.mediaUrl} alt="" className="h-full w-full object-cover" />
-                )}
-                
-                {/* Ícone de Tipo */}
-                <div className="absolute top-2 left-2 flex gap-1">
-                  {s.mediaType === "video" && (
-                    <span className="rounded-md bg-black/60 p-1 text-[10px] text-white backdrop-blur-md">
-                      <Film className="h-3 w-3" />
-                    </span>
-                  )}
-                </div>
-
-                {/* Ações / Botão Excluir */}
-                <button
-                  onClick={async () => {
-                    if (confirm("Deseja apagar este story antes de expirar?")) {
-                      if (deleteStory) await deleteStory(s.id, s.storagePath);
-                      toast("Story excluído com sucesso");
-                    }
-                  }}
-                  className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-rose-950/80 p-2 text-[10px] font-bold text-rose-300 backdrop-blur-md hover:bg-rose-900"
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> Excluir
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* SEÇÃO 3: DESTAQUES DO PERFIL (ÁLBUNS PERMANENTES) */}
-      <section className="glass rounded-3xl p-5 border border-white/10 bg-black/40">
-        <div className="mb-3">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-            <Star className="h-3.5 w-3.5 text-amber-400" /> Destaques do Perfil
-          </p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            Crie álbuns com foto de capa e várias fotos/vídeos que nunca expiram.
-          </p>
-        </div>
-
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={async () => {
-            if (createHighlight) {
-              await createHighlight("Novo Destaque");
-              toast.success("Álbum de destaque criado!");
-            }
-          }}
-          className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 py-3 text-xs font-bold text-amber-400 hover:bg-amber-500/20 transition-colors"
-        >
-          <Plus className="h-4 w-4" /> Criar Novo Destaque
-        </motion.button>
-
-        <div className="space-y-3">
-          {highlights.map((h) => (
-            <HighlightEditor
-              key={h.id}
-              highlight={h}
-              onDelete={async () => {
-                if (confirm("Excluir este destaque e todas as mídias dele?")) {
-                  if (deleteHighlight) await deleteHighlight(h.id);
-                  toast("Destaque excluído");
-                }
-              }}
-            />
-          ))}
-          {highlights.length === 0 && (
-            <p className="rounded-2xl bg-white/[0.02] p-4 text-center text-xs text-muted-foreground border border-white/5">
-              Nenhum destaque criado ainda.
-            </p>
-          )}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function HighlightEditor({
-  highlight,
-  onDelete,
-}: {
-  highlight: Highlight;
-  onDelete: () => void;
-}) {
-  const saveHighlight = useChefeStore((s) => s?.saveHighlight);
-  const highlightMedia = useChefeStore((s) => s?.highlightMedia) ?? [];
-  const deleteHighlightMedia = useChefeStore((s) => s?.deleteHighlightMedia);
-  const uploadHighlightMedia = useChefeStore((s) => s?.uploadHighlightMedia);
-  const uploadHighlightCover = useChefeStore((s) => s?.uploadHighlightCover);
-
-  // Filtra de forma segura sem estourar se o array for indefinido
-  const media = (highlightMedia ?? []).filter((m) => m && m.highlightId === highlight.id);
-
-  const [title, setTitle] = useState(highlight?.title ?? "");
-  const [busy, setBusy] = useState(false);
-  const mediaInput = useRef<HTMLInputElement>(null);
-  const coverInput = useRef<HTMLInputElement>(null);
-
-  // Pega a capa escolhida ou a primeira imagem da lista com fallback de segurança
-  const cover = highlight?.coverImage ?? media.find((m) => m?.mediaType === "image")?.url;
+  const handleSendComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!comment.trim()) return;
+    toast.success("Comentário enviado para o Chefe!");
+    setComment("");
+  };
 
   return (
-    <div className="rounded-2xl bg-white/[0.03] p-3.5 border border-white/10 space-y-3">
-      <div className="flex items-center gap-3">
-        {/* Capa do Destaque (Redonda tipo Instagram) */}
-        <button
-          onClick={() => coverInput.current?.click()}
-          className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-amber-500/50 bg-black/60 shadow-lg"
-          title="Alterar Capa"
-        >
-          {cover ? (
-            <img src={cover} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <ImagePlus className="h-4 w-4 text-amber-400" />
-          )}
-        </button>
-
-        <input
-          ref={coverInput}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={async (e) => {
-            const f = e.target.files?.[0];
-            e.target.value = "";
-            if (!f) return;
-            setBusy(true);
-            try {
-              if (uploadHighlightCover) {
-                await uploadHighlightCover(highlight.id, f);
-                toast.success("Capa do destaque atualizada!");
-              }
-            } catch {
-              toast.error("Erro ao enviar capa");
-            } finally {
-              setBusy(false);
-            }
-          }}
-        />
-
-        {/* Título do Destaque */}
-        <input
-          placeholder="Nome do Destaque..."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={async () => {
-            if ((highlight.title ?? "") !== title && saveHighlight) {
-              await saveHighlight({ ...highlight, title });
-              toast.success("Título salvo");
-            }
-          }}
-          className="min-w-0 flex-1 rounded-xl bg-black/50 border border-white/10 px-3 py-2 text-xs text-white placeholder:text-muted-foreground focus:outline-none focus:border-amber-500"
-        />
-
-        {/* Botão Apagar Destaque */}
-        <button
-          onClick={onDelete}
-          className="rounded-xl bg-rose-500/10 p-2.5 text-rose-400 hover:bg-rose-500/20 transition-colors"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </div>
-
-      {/* Grid de Mídias dentro do Destaque */}
-      {media.length > 0 && (
-        <div className="grid grid-cols-4 gap-1.5">
-          {media.map((m) => (
-            <div key={m.id} className="group relative aspect-square overflow-hidden rounded-xl bg-black border border-white/10">
-              {m.mediaType === "video" ? (
-                <video src={m.url} muted playsInline className="h-full w-full object-cover" />
-              ) : (
-                <img src={m.url} alt="" className="h-full w-full object-cover" />
-              )}
-              <button
-                onClick={async () => {
-                  if (confirm("Remover esta mídia do destaque?") && deleteHighlightMedia) {
-                    await deleteHighlightMedia(m.id, m.storagePath);
-                  }
-                }}
-                className="absolute inset-0 flex items-center justify-center bg-black/70 text-[9px] font-bold text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                Excluir
-              </button>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex flex-col bg-black text-white"
+      >
+        {/* Barras de Progresso Topo */}
+        <div className="absolute top-3 inset-x-0 z-20 flex gap-1 px-3">
+          {stories.map((s, idx) => (
+            <div key={s.id} className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
+              <div
+                className={`h-full bg-white transition-all duration-300 ${
+                  idx < activeStoryIndex
+                    ? "w-full"
+                    : idx === activeStoryIndex
+                    ? "w-full animate-pulse"
+                    : "w-0"
+                }`}
+              />
             </div>
           ))}
         </div>
-      )}
 
-      {/* Adicionar Mídias ao Destaque */}
-      <input
-        ref={mediaInput}
-        type="file"
-        accept="image/*,video/*"
-        multiple
-        className="hidden"
-        onChange={async (e) => {
-          const files = Array.from(e.target.files ?? []);
-          e.target.value = "";
-          if (files.length === 0) return;
-          setBusy(true);
-          try {
-            if (uploadHighlightMedia) {
-              for (const f of files) await uploadHighlightMedia(highlight.id, f);
-              toast.success(`${files.length} mídia(s) adicionada(s)`);
-            }
-          } catch {
-            toast.error("Erro ao enviar mídias");
-          } finally {
-            setBusy(false);
-          }
-        }}
-      />
-      <button
-        disabled={busy}
-        onClick={() => mediaInput.current?.click()}
-        className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 py-2 text-[11px] font-medium text-white hover:bg-white/10 transition-colors"
-      >
-        <Upload className="h-3.5 w-3.5" /> {busy ? "Enviando..." : "+ Adicionar Fotos / Vídeos a este Destaque"}
-      </button>
-    </div>
+        {/* Cabeçalho do Story */}
+        <div className="absolute top-6 inset-x-0 z-20 flex items-center justify-between px-4 py-2 bg-gradient-to-b from-black/80 to-transparent">
+          <div className="flex items-center gap-2">
+            <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 p-[2px]">
+              <div className="h-full w-full rounded-full bg-black overflow-hidden">
+                <img src="/avatar-chefe.png" alt="Chefe" className="h-full w-full object-cover" />
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-bold leading-none">Comando CHEFE</p>
+              <p className="text-[10px] text-zinc-400">Há alguns minutos</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveStoryIndex?.(null)}
+            className="rounded-full bg-black/40 p-2 backdrop-blur-md hover:bg-black/60"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Mídia Principal em Tela Cheia */}
+        <div className="relative flex-1 w-full h-full flex items-center justify-center bg-black">
+          {currentStory.mediaType === "video" ? (
+            <video
+              src={currentStory.mediaUrl}
+              autoPlay
+              playsInline
+              className="h-full w-full object-contain"
+              onEnded={handleNext}
+            />
+          ) : (
+            <img
+              src={currentStory.mediaUrl}
+              alt=""
+              className="h-full w-full object-contain"
+            />
+          )}
+
+          {/* Navegação por Toque Lateral */}
+          <div onClick={handlePrev} className="absolute left-0 top-0 bottom-0 w-1/3 z-10" />
+          <div onClick={handleNext} className="absolute right-0 top-0 bottom-0 w-1/3 z-10" />
+        </div>
+
+        {/* Legenda do Story */}
+        {currentStory.caption && (
+          <div className="absolute bottom-20 inset-x-0 z-20 px-4 text-center">
+            <p className="rounded-xl bg-black/60 px-3 py-2 text-xs font-medium backdrop-blur-md border border-white/10 inline-block">
+              {currentStory.caption}
+            </p>
+          </div>
+        )}
+
+        {/* Rodapé de Interações (Curtida, Estrelas e Comentário) */}
+        <div className="absolute bottom-0 inset-x-0 z-20 p-4 bg-gradient-to-t from-black via-black/80 to-transparent space-y-3">
+          {/* Avaliação por Estrelas */}
+          <div className="flex justify-center items-center gap-2">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => {
+                  setRating(star);
+                  toast.success(`Você avaliou com ${star} estrela(s)!`);
+                }}
+                className="transition-transform active:scale-125"
+              >
+                <Star
+                  className={`h-6 w-6 ${
+                    star <= rating ? "fill-amber-400 text-amber-400" : "text-white/40"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+
+          {/* Comentário e Curtida */}
+          <form onSubmit={handleSendComment} className="flex items-center gap-2">
+            <input
+              type="text"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Enviar mensagem ao Chefe..."
+              className="flex-1 rounded-full bg-white/10 border border-white/20 px-4 py-2.5 text-xs text-white placeholder:text-zinc-400 focus:outline-none focus:border-amber-500 backdrop-blur-md"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setLiked(!liked);
+                toast.success(!liked ? "Você curtiu o story!" : "Curtida removida");
+              }}
+              className="p-2.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md active:scale-110 transition-transform"
+            >
+              <Heart className={`h-5 w-5 ${liked ? "fill-rose-500 text-rose-500" : "text-white"}`} />
+            </button>
+            <button
+              type="submit"
+              className="p-2.5 rounded-full bg-amber-500 text-black font-bold"
+            >
+              <MessageCircle className="h-5 w-5" />
+            </button>
+          </form>
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
