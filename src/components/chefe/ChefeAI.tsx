@@ -34,7 +34,7 @@ export function ChefeAI() {
       id: "1",
       sender: "ai",
       text: getInitialMessage(),
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      time: "00:00",
     },
   ]);
 
