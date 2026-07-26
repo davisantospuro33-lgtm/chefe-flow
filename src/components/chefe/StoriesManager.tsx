@@ -155,9 +155,7 @@ function HighlightEditor({
   onDelete: () => void;
 }) {
   const saveHighlight = useChefeStore((s) => s.saveHighlight);
-  const media = useChefeStore((s) =>
-    s.highlightMedia.filter((m) => m.highlightId === highlight.id),
-  );
+ const media = useChefeStore((s) => s.highlightMedia?.filter((m) => m.highlightId === highlight.id)) || [];
   const uploadHighlightMedia = useChefeStore((s) => s.uploadHighlightMedia);
   const deleteHighlightMedia = useChefeStore((s) => s.deleteHighlightMedia);
   const uploadHighlightCover = useChefeStore((s) => s.uploadHighlightCover);
