@@ -3,6 +3,10 @@ import { Radar, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useChefeStore } from "@/lib/chefe-store";
 import { ensureLeaflet } from "@/lib/leaflet-loader";
+import { useIsDark } from "@/hooks/use-is-dark";
+
+const TILE_DARK = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+const TILE_LIGHT = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 
 interface ClientPing {
   cliente_id: string;
@@ -19,6 +23,8 @@ export function AdminMap() {
   const salonLon = profile.longitude ?? -46.50292;
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  const tileLayerRef = useRef<any>(null);
+  const isDark = useIsDark();
   const markersRef = useRef<Map<string, any>>(new Map());
   const [pings, setPings] = useState<Record<string, ClientPing>>({});
   const [alertOn, setAlertOn] = useState(false);
@@ -36,10 +42,13 @@ export function AdminMap() {
         zoomControl: false,
         attributionControl: false,
       });
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        maxZoom: 19,
-        subdomains: "abcd",
-      }).addTo(map);
+      tileLayerRef.current = L.tileLayer(
+        document.documentElement.classList.contains("dark") ? TILE_DARK : TILE_LIGHT,
+        {
+          maxZoom: 19,
+          subdomains: "abcd",
+        },
+      ).addTo(map);
       const salonIcon = L.divIcon({
         className: "chefe-marker-salon",
         html: `<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#e94179,#8a2be2);display:grid;place-items:center;box-shadow:0 0 22px rgba(233,65,121,.8);border:2px solid #fff"><span style="font-size:17px">✂️</span></div>`,
@@ -57,6 +66,13 @@ export function AdminMap() {
       }
     };
   }, [salonLat, salonLon]);
+
+  // Troca os tiles do mapa conforme o tema (claro/escuro)
+  useEffect(() => {
+    if (tileLayerRef.current) {
+      tileLayerRef.current.setUrl(isDark ? TILE_DARK : TILE_LIGHT);
+    }
+  }, [isDark]);
 
   // Subscribe realtime
   useEffect(() => {
@@ -97,17 +113,16 @@ export function AdminMap() {
           markersRef.current.set(p.cliente_id, m);
         } else {
           m.setLatLng(latlng);
-          m.setTooltipContent(
-            `Cliente · ${p.distance_km.toFixed(1)} km · ~${p.eta_min} min`,
-          );
+          m.setTooltipContent(`Cliente · ${p.distance_km.toFixed(1)} km · ~${p.eta_min} min`);
         }
         if (p.distance_km < 0.5) {
           anyClose = true;
           if (!alertedRef.current.has(p.cliente_id)) {
             alertedRef.current.add(p.cliente_id);
             try {
-              const ctx = new ((window as any).AudioContext ||
-                (window as any).webkitAudioContext)();
+              const ctx = new (
+                (window as any).AudioContext || (window as any).webkitAudioContext
+              )();
               const o = ctx.createOscillator();
               const g = ctx.createGain();
               o.type = "square";
@@ -133,22 +148,15 @@ export function AdminMap() {
   const list = Object.values(pings).sort((a, b) => a.distance_km - b.distance_km);
 
   return (
-    <section
-      className="mb-4 overflow-hidden rounded-3xl"
-      style={{
-        border: "1px solid rgba(14,165,233,0.35)",
-        boxShadow: "0 0 24px rgba(14,165,233,0.2)",
-        background: "rgba(10,15,25,0.7)",
-      }}
-    >
+    <section className="mb-4 overflow-hidden rounded-3xl border border-sky-200 bg-white shadow-[0_0_24px_rgba(14,165,233,0.12)] dark:border-sky-400/35 dark:bg-[rgba(10,15,25,0.7)] dark:shadow-[0_0_24px_rgba(14,165,233,0.2)]">
       <div className="flex items-center justify-between px-4 pt-4">
         <div className="flex items-center gap-2">
-          <Radar className="h-4 w-4 text-sky-400" />
-          <p className="text-[11px] font-black uppercase tracking-widest text-sky-300">
+          <Radar className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+          <p className="text-[11px] font-black uppercase tracking-widest text-sky-700 dark:text-sky-300">
             Radar de Clientes · Ao Vivo
           </p>
         </div>
-        <span className="rounded-full bg-sky-500/10 px-2.5 py-0.5 text-[10px] font-black tabular-nums text-sky-300 ring-1 ring-sky-400/30">
+        <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-[10px] font-black tabular-nums text-sky-700 ring-1 ring-sky-300 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-400/30">
           {list.length}
         </span>
       </div>
@@ -158,7 +166,11 @@ export function AdminMap() {
           🚨 CLIENTE CHEGANDO NA BARBEARIA!
         </div>
       )}
-      <div ref={containerRef} className="mt-3 w-full" style={{ height: 260, background: "#0a0f19" }} />
+      <div
+        ref={containerRef}
+        className="mt-3 w-full bg-slate-200 dark:bg-[#0a0f19]"
+        style={{ height: 260 }}
+      />
       {list.length > 0 && (
         <ul className="space-y-1.5 p-3">
           {list.slice(0, 5).map((p) => (
@@ -166,9 +178,7 @@ export function AdminMap() {
               key={p.cliente_id}
               className="flex items-center justify-between rounded-xl bg-white/[0.03] px-3 py-2 text-[11px]"
             >
-              <span className="font-mono text-muted-foreground">
-                {p.cliente_id.slice(0, 8)}
-              </span>
+              <span className="font-mono text-muted-foreground">{p.cliente_id.slice(0, 8)}</span>
               <span className="font-bold text-sky-200 tabular-nums">
                 {p.distance_km.toFixed(2)} km · ~{p.eta_min} min
               </span>

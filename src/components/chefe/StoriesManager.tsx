@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { useChefeStore, type Highlight } from "@/lib/chefe-store";
 
 export function StoriesManager() {
-  const stories = useChefeStore((s) => s.stories);
-  const highlights = useChefeStore((s) => s.highlights);
+  const stories = useChefeStore((s) => s.stories) ?? [];
+  const highlights = useChefeStore((s) => s.highlights) ?? [];
   const uploadStory = useChefeStore((s) => s.uploadStory);
   const deleteStory = useChefeStore((s) => s.deleteStory);
   const createHighlight = useChefeStore((s) => s.createHighlight);
@@ -74,35 +74,41 @@ export function StoriesManager() {
           </p>
         ) : (
           <div className="grid grid-cols-3 gap-1.5">
-            {stories.map((s) => (
-              <div key={s.id} className="group relative aspect-[9/16] overflow-hidden rounded-lg">
-                {s.mediaType === "video" ? (
-                  <video
-                    src={s.mediaUrl}
-                    muted
-                    playsInline
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <img src={s.mediaUrl} alt="" className="h-full w-full object-cover" />
-                )}
-                {s.mediaType === "video" && (
-                  <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-white">
-                    <Film className="inline h-3 w-3" />
-                  </span>
-                )}
-                <button
-                  onClick={async () => {
-                    if (!confirm("Excluir story?")) return;
-                    await deleteStory(s.id, s.storagePath);
-                    toast("Story excluído");
-                  }}
-                  className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-rose-500/90 py-1 text-[10px] font-bold text-white opacity-0 transition-opacity group-active:opacity-100"
-                >
-                  <Trash2 className="h-3 w-3" /> Excluir
-                </button>
-              </div>
-            ))}
+            {(stories ?? [])
+              .filter((s) => Boolean(s?.id))
+              .map((s) => (
+                <div key={s.id} className="group relative aspect-[9/16] overflow-hidden rounded-lg">
+                  {s.mediaType === "video" ? (
+                    <video
+                      src={s.mediaUrl}
+                      muted
+                      playsInline
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={s.mediaUrl || "/placeholder.svg"}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                  {s.mediaType === "video" && (
+                    <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-white">
+                      <Film className="inline h-3 w-3" />
+                    </span>
+                  )}
+                  <button
+                    onClick={async () => {
+                      if (!confirm("Excluir story?")) return;
+                      await deleteStory(s.id, s.storagePath);
+                      toast("Story excluído");
+                    }}
+                    className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-rose-500/90 py-1 text-[10px] font-bold text-white opacity-0 transition-opacity group-active:opacity-100"
+                  >
+                    <Trash2 className="h-3 w-3" /> Excluir
+                  </button>
+                </div>
+              ))}
           </div>
         )}
       </section>
@@ -125,17 +131,19 @@ export function StoriesManager() {
           <Plus className="h-4 w-4" /> Novo destaque
         </motion.button>
         <div className="space-y-3">
-          {highlights.map((h) => (
-            <HighlightEditor
-              key={h.id}
-              highlight={h}
-              onDelete={async () => {
-                if (!confirm("Excluir destaque?")) return;
-                await deleteHighlight(h.id);
-                toast("Destaque excluído");
-              }}
-            />
-          ))}
+          {(highlights ?? [])
+            .filter((h): h is Highlight => Boolean(h?.id))
+            .map((h) => (
+              <HighlightEditor
+                key={h.id}
+                highlight={h}
+                onDelete={async () => {
+                  if (!confirm("Excluir destaque?")) return;
+                  await deleteHighlight(h.id);
+                  toast("Destaque excluído");
+                }}
+              />
+            ))}
           {highlights.length === 0 && (
             <p className="rounded-2xl bg-white/[0.03] px-4 py-6 text-center text-xs text-muted-foreground">
               Nenhum destaque criado.
@@ -147,16 +155,10 @@ export function StoriesManager() {
   );
 }
 
-function HighlightEditor({
-  highlight,
-  onDelete,
-}: {
-  highlight: Highlight;
-  onDelete: () => void;
-}) {
+function HighlightEditor({ highlight, onDelete }: { highlight: Highlight; onDelete: () => void }) {
   const saveHighlight = useChefeStore((s) => s.saveHighlight);
   const media = useChefeStore((s) =>
-    s.highlightMedia.filter((m) => m.highlightId === highlight.id),
+    (s.highlightMedia ?? []).filter((m) => m?.highlightId === highlight?.id),
   );
   const uploadHighlightMedia = useChefeStore((s) => s.uploadHighlightMedia);
   const deleteHighlightMedia = useChefeStore((s) => s.deleteHighlightMedia);
@@ -222,26 +224,32 @@ function HighlightEditor({
         </button>
       </div>
 
-      {media.length > 0 && (
+      {(media ?? []).length > 0 && (
         <div className="mb-2 grid grid-cols-4 gap-1.5">
-          {media.map((m) => (
-            <div key={m.id} className="group relative aspect-square overflow-hidden rounded-lg">
-              {m.mediaType === "video" ? (
-                <video src={m.url} muted playsInline className="h-full w-full object-cover" />
-              ) : (
-                <img src={m.url} alt="" className="h-full w-full object-cover" />
-              )}
-              <button
-                onClick={async () => {
-                  if (!confirm("Remover mídia?")) return;
-                  await deleteHighlightMedia(m.id, m.storagePath);
-                }}
-                className="absolute inset-x-0 bottom-0 bg-rose-500/90 py-0.5 text-[9px] font-bold text-white opacity-0 transition-opacity group-active:opacity-100"
-              >
-                Excluir
-              </button>
-            </div>
-          ))}
+          {(media ?? [])
+            .filter((m) => Boolean(m?.id))
+            .map((m) => (
+              <div key={m.id} className="group relative aspect-square overflow-hidden rounded-lg">
+                {m.mediaType === "video" ? (
+                  <video src={m.url} muted playsInline className="h-full w-full object-cover" />
+                ) : (
+                  <img
+                    src={m.url || "/placeholder.svg"}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                )}
+                <button
+                  onClick={async () => {
+                    if (!confirm("Remover mídia?")) return;
+                    await deleteHighlightMedia(m.id, m.storagePath);
+                  }}
+                  className="absolute inset-x-0 bottom-0 bg-rose-500/90 py-0.5 text-[9px] font-bold text-white opacity-0 transition-opacity group-active:opacity-100"
+                >
+                  Excluir
+                </button>
+              </div>
+            ))}
         </div>
       )}
 

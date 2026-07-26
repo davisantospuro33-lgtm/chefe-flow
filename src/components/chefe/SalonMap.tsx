@@ -3,6 +3,10 @@ import { MapPin, Navigation2 } from "lucide-react";
 import { useChefeStore } from "@/lib/chefe-store";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureLeaflet } from "@/lib/leaflet-loader";
+import { useIsDark } from "@/hooks/use-is-dark";
+
+const TILE_DARK = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+const TILE_LIGHT = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const toRad = (v: number) => (v * Math.PI) / 180;
@@ -25,6 +29,8 @@ export function SalonMap() {
   const salonMarkerRef = useRef<any>(null);
   const clientMarkerRef = useRef<any>(null);
   const polylineRef = useRef<any>(null);
+  const tileLayerRef = useRef<any>(null);
+  const isDark = useIsDark();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const clientIdRef = useRef<string>("");
   const [geoStatus, setGeoStatus] = useState<"idle" | "asking" | "ok" | "denied">("idle");
@@ -58,8 +64,8 @@ export function SalonMap() {
         zoomControl: false,
         attributionControl: false,
       });
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      tileLayerRef.current = L.tileLayer(
+        document.documentElement.classList.contains("dark") ? TILE_DARK : TILE_LIGHT,
         { maxZoom: 19, subdomains: "abcd" },
       ).addTo(map);
       const salonIcon = L.divIcon({
@@ -87,6 +93,13 @@ export function SalonMap() {
       salonMarkerRef.current.setLatLng([salonLat, salonLon]);
     }
   }, [salonLat, salonLon]);
+
+  // Troca os tiles do mapa conforme o tema (claro/escuro)
+  useEffect(() => {
+    if (tileLayerRef.current) {
+      tileLayerRef.current.setUrl(isDark ? TILE_DARK : TILE_LIGHT);
+    }
+  }, [isDark]);
 
   // Canal realtime para publicar a posição
   useEffect(() => {
@@ -170,30 +183,24 @@ export function SalonMap() {
   }, [clientPos, salonLat, salonLon]);
 
   return (
-    <div
-      className="overflow-hidden rounded-3xl"
-      style={{
-        border: "1px solid rgba(14,165,233,0.35)",
-        boxShadow: "0 0 24px rgba(14,165,233,0.2)",
-        background: "rgba(10,15,25,0.7)",
-      }}
-    >
+    <div className="overflow-hidden rounded-3xl border border-sky-200 bg-white shadow-[0_0_24px_rgba(14,165,233,0.12)] dark:border-sky-400/35 dark:bg-[rgba(10,15,25,0.7)] dark:shadow-[0_0_24px_rgba(14,165,233,0.2)]">
       <div className="flex items-center gap-2 px-4 pt-4">
-        <MapPin className="h-4 w-4 text-sky-400" />
-        <p className="text-[11px] font-black uppercase tracking-widest text-sky-300">
+        <MapPin className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+        <p className="text-[11px] font-black uppercase tracking-widest text-sky-700 dark:text-sky-300">
           Mapa ao Vivo · Rota até o Salão
         </p>
       </div>
-      <p className="px-4 pt-1 text-xs leading-snug text-muted-foreground">
-        {endereco || "Rua Renato Russo, 100 - Bloco 7, AP 16 - CDHU / Jardim Santo André, Santo André - SP"}
+      <p className="px-4 pt-1 text-xs leading-snug text-slate-600 dark:text-muted-foreground">
+        {endereco ||
+          "Rua Renato Russo, 100 - Bloco 7, AP 16 - CDHU / Jardim Santo André, Santo André - SP"}
       </p>
       <div
         ref={containerRef}
-        className="mt-3 w-full"
-        style={{ height: 260, background: "#0a0f19" }}
+        className="mt-3 w-full bg-slate-200 dark:bg-[#0a0f19]"
+        style={{ height: 260 }}
       />
       {geoStatus !== "ok" && (
-        <p className="px-4 pt-2 text-[10px] text-muted-foreground">
+        <p className="px-4 pt-2 text-[10px] text-slate-500 dark:text-muted-foreground">
           {geoStatus === "asking" && "Solicitando sua localização para traçar a rota..."}
           {geoStatus === "denied" && "Ative o GPS para ver o traçado até o salão."}
           {geoStatus === "idle" && "Ative o GPS para rastreamento em tempo real."}
