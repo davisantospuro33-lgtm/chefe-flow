@@ -149,15 +149,21 @@ export function ChefeAI() {
               {msg.sender === "user" ? <User className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
             </div>
 
-            <div
-              className={`max-w-[85%] rounded-2xl px-3 py-2 text-xs leading-relaxed whitespace-pre-line ${
-                msg.sender === "user"
-                  ? "bg-amber-500 text-black font-semibold rounded-tr-none"
-                  : "bg-white/[0.07] text-white border border-white/10 rounded-tl-none"
-              }`}
-            >
-              <p>{msg.text}</p>
-              <span 
+ <div className={`max-w-[85%] rounded-2xl p-3 ${
+                    msg.sender === "user"
+                      ? "bg-amber-500 text-black font-medium"
+                      : "bg-white/[0.07] text-white border border-white/10"
+                  }`}>
+                    <p>{msg.text}</p>
+                    <span 
+                      suppressHydrationWarning
+                      className={`mt-1 block text-[8px] text-right ${
+                        msg.sender === "user" ? "text-black/70" : "text-white/70"
+                      }`}
+                    >
+                      {msg.time}
+                    </span>
+                  </div>
   suppressHydrationWarning
   className={`mt-1 block text-[8px] text-right ${
     msg.sender === "user" ? "text-black/70" : "text-white/70"
