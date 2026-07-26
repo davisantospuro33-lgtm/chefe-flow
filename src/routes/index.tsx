@@ -4,7 +4,6 @@ import { LayoutGrid, Calendar } from 'lucide-react'
 import { GradientAvatar } from '@/components/chefe/GradientAvatar'
 import { StatusAvatar } from '@/components/chefe/StatusAvatar'
 import { Highlights } from '@/components/chefe/Highlights'
-import { FrequencyPortal } from '@/components/chefe/FrequencyPortal'
 import { StoriesViewer } from '@/components/chefe/StoriesViewer'
 import { ServiceCard } from '@/components/chefe/ServiceCard'
 import { ProgressTracker } from '@/components/chefe/ProgressTracker'
@@ -17,6 +16,7 @@ import { Manifesto } from '@/components/chefe/Manifesto'
 import { Feed } from '@/components/chefe/Feed'
 import { InstallBanner } from '@/components/chefe/InstallBanner'
 import { ShareButton } from '@/components/chefe/ShareButton'
+import { ThemeToggle } from '@/components/chefe/ThemeToggle'
 import { ChefeAI } from '@/components/chefe/ChefeAI'
 import { Reviews } from '@/components/chefe/Reviews'
 import { useChefeStore } from '@/lib/chefe-store'
@@ -36,15 +36,12 @@ export const Route = createFileRoute('/')({
 })
 
 function Index() {
-  const profile = useChefeStore((s) => s.profile)
   const stories = useChefeStore((s) => s.stories)
+  const profile = useChefeStore((s) => s.profile)
   const [storiesOpen, setStoriesOpen] = useState(false)
 
   return (
     <main className="relative mx-auto min-h-screen w-full max-w-md bg-background pb-20 text-foreground overflow-hidden">
-      {/* PORTAL DE FREQUÊNCIA — tela cheia, fundido no fundo via mask radial */}
-      <FrequencyPortal />
-
       <InstallBanner />
 
       {/* Top bar */}
@@ -56,6 +53,7 @@ function Index() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <ShareButton />
         </div>
       </header>
@@ -71,8 +69,8 @@ function Index() {
     />
   </div>
 
-  <h2 className="mt-3 text-2xl font-black tracking-tight">{profile.name}</h2>
-  <p className="text-sm text-muted-foreground">{profile.subtitle}</p>
+  <h2 className="mt-3 text-2xl font-black tracking-tight">Ch3fgs</h2>
+  <p className="mt-1 text-base tracking-[0.35em]">🧿 🪬 👁️</p>
 </section>
 
       {/* Carrossel de destaques estilo Instagram — direto abaixo do perfil */}
