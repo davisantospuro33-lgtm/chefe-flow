@@ -71,6 +71,14 @@ export interface HighlightMedia {
   position: number;
 }
 
+export interface StoryInteraction {
+  id: string;
+  storyId: string;
+  type: "like" | "rating" | "comment";
+  value: string | number | boolean;
+  timestamp: number;
+}
+
 export interface Profile {
   username: string;
   bio: string;
@@ -126,6 +134,7 @@ interface ChefeState {
   stories: Story[];
   highlights: Highlight[];
   highlightMedia: HighlightMedia[];
+  storyInteractions: StoryInteraction[];
 
   // Setters / actions
   setStatus: (s: ChefeStatus) => Promise<void>;
@@ -171,6 +180,8 @@ interface ChefeState {
   uploadHighlightMedia: (highlightId: string, file: File) => Promise<void>;
   deleteHighlightMedia: (id: string, storagePath: string | null) => Promise<void>;
   uploadHighlightCover: (highlightId: string, file: File) => Promise<void>;
+
+  recordStoryInteraction: (storyId: string, type: "like" | "rating" | "comment", value: string | number | boolean) => void;
 
   hydrate: () => Promise<void>;
   subscribe: () => () => void;
@@ -277,6 +288,7 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
   stories: [],
   highlights: [],
   highlightMedia: [],
+  storyInteractions: [],
 
   setStatus: async (s) => {
     set({ status: s });
@@ -564,6 +576,20 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
       .update({ cover_image: signed?.signedUrl ?? null })
       .eq("id", highlightId);
     await get().hydrate();
+  },
+
+  // Registra interações com stories (likes, ratings, comments)
+  recordStoryInteraction: (storyId, type, value) => {
+    const interaction: StoryInteraction = {
+      id: crypto.randomUUID(),
+      storyId,
+      type,
+      value,
+      timestamp: Date.now(),
+    };
+    set((state) => ({
+      storyInteractions: [...state.storyInteractions, interaction],
+    }));
   },
 
   hydrate: async () => {
