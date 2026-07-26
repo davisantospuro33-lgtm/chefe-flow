@@ -5,24 +5,23 @@ export const ThemeToggle = () => {
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
-    // Mantém estado com base no HTML/Dark mode do Tailwind
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    const root = document.documentElement;
+    root.classList.toggle('dark', isDark);
+    root.classList.toggle('light', !isDark);
+    root.style.colorScheme = isDark ? 'dark' : 'light';
   }, [isDark]);
 
   return (
     <button
       onClick={() => setIsDark(!isDark)}
-      className="p-2 rounded-full border border-slate-700/50 dark:border-slate-800 bg-slate-900/40 dark:bg-slate-950 text-slate-200 hover:scale-105 active:scale-95 transition-all shadow-sm"
-      title={isDark ? "Mudar para Tema Dia" : "Mudar para Tema Noite"}
+      className="p-2 rounded-full border border-border bg-card hover:scale-105 active:scale-95 transition-all shadow-sm"
+      title={isDark ? 'Mudar para Tema Dia' : 'Mudar para Tema Noite'}
+      aria-label={isDark ? 'Ativar tema claro' : 'Ativar tema escuro'}
     >
       {isDark ? (
-        <Sun className="w-4 h-4 text-amber-400" />
+        <Sun className="w-4 h-4 text-amber-200 drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]" />
       ) : (
-        <Moon className="w-4 h-4 text-slate-800" />
+        <Moon className="w-4 h-4 text-cyan-400 drop-shadow-[0_0_8px_rgba(0,229,255,0.8)]" />
       )}
     </button>
   );
