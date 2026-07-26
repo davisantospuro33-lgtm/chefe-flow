@@ -58,29 +58,8 @@ function Index() {
         </div>
       </header>
 
- {/* Header de perfil (Limpo e Elegante) */}
-<section className="relative z-10 flex flex-col items-center text-center pt-2">
-  <div className="relative flex items-center justify-center">
-    <GradientAvatar
-      size={128}
-      src={profile.avatarUrl}
-      hasStories={stories.length > 0}
-      onClick={stories.length > 0 ? () => setStoriesOpen(true) : undefined}
-    />
-  </div>
-
-  <h2 className="mt-3 text-2xl font-black tracking-tight text-foreground">
-    {profile.username || 'Ch3fgs'}
-  </h2>
-  <div className="mt-2 flex items-center justify-center gap-3 text-lg leading-none whitespace-pre-wrap">
-    {profile.bio || '🧿 🪬 👁️'}
-  </div>
-</section>
-
-      {/* Carrossel de destaques estilo Instagram — direto abaixo do perfil */}
-      <div className="relative z-10 mt-5 px-4">
-        <Highlights />
-      </div>
+ {/* 🟢 TELA 1 COMPLETA E REESTRUTURADA */}
+<TelaPerfilFeed />
 
       {/* Avatar de status dinâmico (Personagem Chefe Vivo) */}
       <div className="relative z-10 mt-4 px-4">
