@@ -247,6 +247,30 @@
   color: oklch(0.18 0.01 260);
 }
 
+/* Inline-styled dark surfaces need explicit light-mode overrides */
+.light .chefe-ai-card {
+  background: oklch(1 0 0 / 0.95) !important;
+  border-color: oklch(0.75 0.15 70 / 0.5);
+}
+
+.light [class*="bg-black/"] {
+  background-color: oklch(0.2 0.01 260 / 0.06) !important;
+}
+
+.light [style*="rgba(15,23,42,0.9)"],
+.light [style*="rgba(10,15,25,0.7)"] {
+  background: oklch(1 0 0 / 0.95) !important;
+  color: oklch(0.18 0.01 260) !important;
+}
+
+.light [style*="#e0f2fe"] {
+  color: oklch(0.32 0.08 245) !important;
+}
+
+.light [style*="#38bdf8"] {
+  color: oklch(0.5 0.14 240) !important;
+}
+
 @utility glass-strong {
   background: color-mix(in oklab, var(--surface) 75%, transparent);
   backdrop-filter: blur(28px) saturate(180%);
