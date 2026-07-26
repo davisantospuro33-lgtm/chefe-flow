@@ -164,9 +164,7 @@ function HighlightEditor({
   const [busy, setBusy] = useState(false);
   const mediaInput = useRef<HTMLInputElement>(null);
   const coverInput = useRef<HTMLInputElement>(null);
-
-  const cover = highlight.coverImage ?? media.find((m) => m.mediaType === "image")?.url;
-
+  const cover = highlight.coverImage ?? media?.find((m) => m.mediaType === "image")?.url;
   return (
     <div className="rounded-2xl bg-white/[0.03] p-3 ring-1 ring-white/5">
       <div className="mb-3 flex items-center gap-3">
