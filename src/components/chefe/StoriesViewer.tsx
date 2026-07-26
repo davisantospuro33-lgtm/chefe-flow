@@ -180,62 +180,42 @@ export function StoriesViewer({ stories, open, onClose, initialIndex = 0 }: Prop
           </motion.div>
         )}
 
-        {/* Rodapé de Interações */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute bottom-0 inset-x-0 z-20 p-3 bg-gradient-to-t from-black via-black/90 to-transparent space-y-2"
-        >
-          {/* Avaliação com 5 Estrelas */}
-          <div className="flex justify-center items-center gap-2">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <motion.button
-                key={`star-${star}`}
-                type="button"
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.85 }}
-                onClick={() => handleRating(star)}
-                className="transition-transform"
-              >
-                <Star
-                  className={`h-5 w-5 ${
-                    star <= rating ? "fill-amber-400 text-amber-400" : "text-white/40"
-                  }`}
-                />
-              </motion.button>
-            ))}
-          </div>
+        {/* Rodapé de Interações Estilo Instagram */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="absolute bottom-0 inset-x-0 p-4 pb-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-center gap-3 z-20"
+      >
+        <form onSubmit={handleSendComment} className="flex-1">
+          <input
+            type="text"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Enviar mensagem..."
+            className="w-full bg-transparent border border-white/40 rounded-full px-4 py-2.5 text-sm text-white placeholder-white/70 focus:outline-none focus:border-white transition"
+          />
+        </form>
 
-          {/* Campo de Resposta e Curtida */}
-          <form onSubmit={handleSendComment} className="flex items-center gap-2">
-            <motion.input
-              type="text"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Enviar mensagem..."
-              className="flex-1 rounded-full bg-white/10 border border-white/20 px-4 py-2 text-xs text-white placeholder:text-zinc-400 focus:outline-none focus:border-blue-500 backdrop-blur-md transition-colors"
-              whileFocus={{ backgroundColor: "rgba(255, 255, 255, 0.15)" }}
-            />
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.85 }}
-              onClick={handleLike}
-              className="p-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-md transition-all hover:border-rose-400/50"
-            >
-              <Heart className={`h-5 w-5 ${liked ? "fill-rose-500 text-rose-500" : "text-white"}`} />
-            </motion.button>
-            <motion.button
-              type="submit"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.85 }}
-              disabled={!comment.trim()}
-              className="p-2 rounded-full bg-blue-600 text-white font-bold transition-opacity disabled:opacity-40"
-            >
-              <Send className="h-4 w-4" />
-            </motion.button>
-          </form>
-        </motion.div>
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.85 }}
+          onClick={handleLike}
+          className="p-1 text-white hover:text-red-500 transition"
+        >
+          <Heart className={`h-7 w-7 ${liked ? "fill-red-500 text-red-500" : ""}`} />
+        </motion.button>
+
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.85 }}
+          onClick={handleSendComment}
+          disabled={!comment.trim()}
+          className="p-1 text-white disabled:opacity-50 transition"
+        >
+          <Send className="h-6 w-6" />
+        </motion.button>
       </motion.div>
     </AnimatePresence>
   );
