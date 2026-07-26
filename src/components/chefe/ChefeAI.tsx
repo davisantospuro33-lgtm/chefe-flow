@@ -111,7 +111,7 @@ export function ChefeAI() {
   };
 
   return (
-    <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-b from-neutral-900/95 to-black p-4 shadow-2xl backdrop-blur-md">
+    <div className="chefe-ai-card rounded-3xl border border-amber-500/30 bg-gradient-to-b from-neutral-900/95 to-black p-4 shadow-2xl backdrop-blur-md">
       {/* Header do Cérebro */}
       <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-2.5">
         <div className="flex items-center gap-2">
