@@ -59,6 +59,47 @@ export type Database = {
         }
         Relationships: []
       }
+      chefe_highlight_media: {
+        Row: {
+          created_at: string
+          highlight_id: string
+          id: string
+          media_type: string
+          position: number
+          storage_path: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          highlight_id: string
+          id?: string
+          media_type?: string
+          position?: number
+          storage_path?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          highlight_id?: string
+          id?: string
+          media_type?: string
+          position?: number
+          storage_path?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chefe_highlight_media_highlight_id_fkey"
+            columns: ["highlight_id"]
+            isOneToOne: false
+            referencedRelation: "chefe_highlights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chefe_highlights: {
         Row: {
           cover_image: string | null
@@ -66,7 +107,7 @@ export type Database = {
           id: string
           order_index: number
           story_ids: string[]
-          title: string
+          title: string | null
           updated_at: string
         }
         Insert: {
@@ -75,7 +116,7 @@ export type Database = {
           id?: string
           order_index?: number
           story_ids?: string[]
-          title: string
+          title?: string | null
           updated_at?: string
         }
         Update: {
@@ -84,7 +125,7 @@ export type Database = {
           id?: string
           order_index?: number
           story_ids?: string[]
-          title?: string
+          title?: string | null
           updated_at?: string
         }
         Relationships: []
