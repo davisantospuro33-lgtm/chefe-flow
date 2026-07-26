@@ -20,7 +20,7 @@ import { ThemeToggle } from '@/components/chefe/ThemeToggle'
 import { ChefeAI } from '@/components/chefe/ChefeAI'
 import { Reviews } from '@/components/chefe/Reviews'
 import { useChefeStore } from '@/lib/chefe-store'
-
+import { TelaPerfilFeed } from '@/components/TelaPerfilFeed';
 export const Route = createFileRoute('/')({
   component: Index,
   head: () => ({
