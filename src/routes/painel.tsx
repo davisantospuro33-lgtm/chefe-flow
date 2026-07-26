@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, Star, ImagePlus, Trash2, Upload, Cpu, Film, Radar, Sparkles } from "lucide-react";
+import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, ImagePlus, Trash2, Upload, Cpu, Film, Radar, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { useChefeStore, type ChefeStatus, type Review } from "@/lib/chefe-store";
+import { useChefeStore, type ChefeStatus } from "@/lib/chefe-store";
 import { GradientAvatar } from "@/components/chefe/GradientAvatar";
 import { ShareButton } from "@/components/chefe/ShareButton";
 import { PinLock } from "@/components/chefe/PinLock";
@@ -427,10 +427,6 @@ function Painel() {
 function EditorPerfil() {
   const profile = useChefeStore((s) => s.profile);
   const updateProfile = useChefeStore((s) => s.updateProfile);
-  const reviews = useChefeStore((s) => s.reviews);
-  const saveReview = useChefeStore((s) => s.saveReview);
-  const deleteReview = useChefeStore((s) => s.deleteReview);
-  const uploadPortfolio = useChefeStore((s) => s.uploadPortfolio);
 
   const [form, setForm] = useState(profile);
   useEffect(() => setForm(profile), [profile]);
@@ -462,7 +458,6 @@ function EditorPerfil() {
     }
     e.target.value = "";
   };
-  void uploadPortfolio;
 
   return (
     <div className="space-y-4">
