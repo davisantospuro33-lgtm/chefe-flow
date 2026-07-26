@@ -69,8 +69,13 @@ function Index() {
     />
   </div>
 
-  <h2 className="mt-3 text-2xl font-black tracking-tight">Ch3fgs</h2>
-  <p className="mt-1 text-base tracking-[0.35em]">🧿 🪬 👁️</p>
+  <h2 className="mt-3 text-2xl font-black tracking-tight text-foreground">Ch3fgs</h2>
+  <div className="mt-2 flex items-center justify-center gap-3 text-lg leading-none">
+    <span aria-hidden>🧿</span>
+    <span aria-hidden>🪬</span>
+    <span aria-hidden>👁️</span>
+    <span className="sr-only">Perfil místico do Chefe</span>
+  </div>
 </section>
 
       {/* Carrossel de destaques estilo Instagram — direto abaixo do perfil */}
