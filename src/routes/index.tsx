@@ -42,27 +42,17 @@ function Index() {
     <main className="relative mx-auto min-h-screen w-full max-w-md bg-background pb-20 text-foreground overflow-hidden">
       <InstallBanner />
 
-      {/* Top bar */}
-      <header className="relative z-10 mb-6 flex items-center justify-between px-4 pt-4">
-        <div className="flex items-center gap-2">
-          <LayoutGrid className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-xl font-black tracking-wider uppercase text-foreground">
-            <span className="text-gradient-ig">CHEFE</span>
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <ShareButton />
-        </div>
-      </header>
-
- {/* 🟢 TELA 1 COMPLETA E REESTRUTURADA */}
-<TelaPerfilFeed 
-  onOpenChatIA={() => {
-    const el = document.getElementById('chefe-ai-chat');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-  }}
-/>
+      {/* 🟢 TELA 1 COMPLETA E REESTRUTURADA */}
+      <TelaPerfilFeed
+        headerActions={
+          <>
+            <ThemeToggle />
+            <ShareButton />
+          </>
+        }
+        onOpenChatCentral={scrollToAI}
+        onOpenCEOCHEFE={scrollToAI}
+      />
       {/* Avatar de status dinâmico (Personagem Chefe Vivo) */}
       <div className="relative z-10 mt-4 px-4">
         <StatusAvatar status="disponivel" />
