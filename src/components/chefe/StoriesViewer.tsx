@@ -75,7 +75,7 @@ export function StoriesViewer({ stories, open, onClose, initialIndex = 0 }: Prop
   const handleLike = () => {
     const newLiked = !liked;
     setLiked(newLiked);
-    recordStoryInteraction(current.id, "like");
+    recordStoryInteraction(current.id, "like", newLiked);
     toast.success(newLiked ? "❤️ Você curtiu!" : "Descurtiu o story");
   };
 
