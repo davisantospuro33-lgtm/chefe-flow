@@ -38,9 +38,6 @@ function Index() {
   const profile = useChefeStore((s) => s.profile)
   const [storiesOpen, setStoriesOpen] = useState(false)
 
-  const scrollToAI = () => {
-    document.getElementById('chefe-ai-chat')?.scrollIntoView({ behavior: 'smooth' })
-  }
 
   return (
     <main className="relative mx-auto min-h-screen w-full max-w-md bg-background pb-20 text-foreground overflow-hidden">
