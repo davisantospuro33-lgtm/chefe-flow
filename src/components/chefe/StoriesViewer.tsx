@@ -21,7 +21,6 @@ export function StoriesViewer({ stories, open, onClose, initialIndex = 0 }: Prop
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const recordStoryInteraction = useChefeStore((s) => s.recordStoryInteraction);
-  const startChatFromStory = useChefeStore((s) => s.startChatFromStory);
 
   useEffect(() => {
     if (open) {
@@ -85,7 +84,6 @@ export function StoriesViewer({ stories, open, onClose, initialIndex = 0 }: Prop
     if (!comment.trim()) return;
 
     recordStoryInteraction(current.id, "comment", comment);
-    startChatFromStory(current.id, comment);
     toast.success("💬 Mensagem enviada ao Chefe!");
     setComment("");
   };
