@@ -54,8 +54,6 @@ function Index() {
             <ShareButton />
           </>
         }
-        onOpenChatCentral={scrollToAI}
-        onOpenCEOCHEFE={scrollToAI}
       />
       {/* Avatar de status dinâmico (Personagem Chefe Vivo) */}
       <div className="relative z-10 mt-4 px-4">
