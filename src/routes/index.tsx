@@ -38,9 +38,6 @@ function Index() {
   const profile = useChefeStore((s) => s.profile)
   const [storiesOpen, setStoriesOpen] = useState(false)
 
-  const scrollToAI = () => {
-    document.getElementById('chefe-ai-chat')?.scrollIntoView({ behavior: 'smooth' })
-  }
 
   return (
     <main className="relative mx-auto min-h-screen w-full max-w-md bg-background pb-20 text-foreground overflow-hidden">
@@ -54,8 +51,6 @@ function Index() {
             <ShareButton />
           </>
         }
-        onOpenChatCentral={scrollToAI}
-        onOpenCEOCHEFE={scrollToAI}
       />
       {/* Avatar de status dinâmico (Personagem Chefe Vivo) */}
       <div className="relative z-10 mt-4 px-4">

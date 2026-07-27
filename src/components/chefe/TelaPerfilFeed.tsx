@@ -1,5 +1,8 @@
-import React, { useState, type ReactNode } from 'react';
-import { MessageCircle, Video, Grid, Sparkles, Send } from 'lucide-react';
+import React, { useMemo, useState, type ReactNode } from 'react';
+import { MessageCircle, Video, Grid, Sparkles, Send, Play } from 'lucide-react';
+import { StoriesViewer } from './StoriesViewer';
+import { CEOChefeChat } from './CEOChefeChat';
+import type { Story } from '@/lib/chefe-store';
 
 export interface MediaItem {
   id: string;
@@ -24,15 +27,69 @@ export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({
   onOpenCEOCHEFE,
 }) => {
   const [activeTab, setActiveTab] = useState<'reels' | 'posts'>('reels');
+  const [chatOpen, setChatOpen] = useState(false);
+  const [destaqueId, setDestaqueId] = useState<number | null>(null);
 
   const hasContent = reels.length > 0 || posts.length > 0;
 
-  const destaques = [
-    { id: 1, title: 'Cortes', img: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=150' },
-    { id: 2, title: 'Navalha', img: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=150' },
-    { id: 3, title: 'Produtos', img: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=150' },
-    { id: 4, title: 'Resenha', img: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=150' },
-  ];
+  const destaques = useMemo(
+    () => [
+      {
+        id: 1,
+        title: 'Cortes',
+        img: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=150',
+        album: [
+          'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=900',
+          'https://images.unsplash.com/photo-1622287162716-f311baa1a2b8?w=900',
+        ],
+      },
+      {
+        id: 2,
+        title: 'Navalha',
+        img: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=150',
+        album: [
+          'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=900',
+          'https://images.unsplash.com/photo-1517832606299-7ae9b720a186?w=900',
+        ],
+      },
+      {
+        id: 3,
+        title: 'Produtos',
+        img: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=150',
+        album: ['https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=900'],
+      },
+      {
+        id: 4,
+        title: 'Resenha',
+        img: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=150',
+        album: ['https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=900'],
+      },
+    ],
+    [],
+  );
+
+  const viewerStories = useMemo<Story[]>(() => {
+    const d = destaques.find((x) => x.id === destaqueId);
+    if (!d) return [];
+    return d.album.map((url, i) => ({
+      id: `${d.id}-${i}`,
+      mediaUrl: url,
+      mediaType: 'image' as const,
+      storagePath: null,
+      caption: d.title,
+      createdAt: 0,
+      expiresAt: 0,
+    }));
+  }, [destaqueId, destaques]);
+
+  const openChat = () => {
+    setChatOpen(true);
+    onOpenChatCentral?.();
+  };
+  const openCopiloto = () => {
+    setChatOpen(true);
+    onOpenCEOCHEFE?.();
+  };
 
   return (
     <div className="relative w-full font-sans text-foreground">
@@ -44,7 +101,7 @@ export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({
         <div className="flex items-center gap-2">
           {headerActions}
           <button
-            onClick={onOpenChatCentral}
+            onClick={openChat}
             className="relative rounded-full bg-muted/60 p-2 text-emerald-400 transition-all hover:bg-muted"
             title="Abrir Chat & Resenha com CEOCHEFE"
             aria-label="Abrir chat com o CEOCHEFE"
@@ -105,9 +162,10 @@ export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({
           {destaques.map((item) => (
             <button
               key={item.id}
-              className="flex flex-shrink-0 cursor-pointer flex-col items-center gap-1"
+              onClick={() => setDestaqueId(item.id)}
+              className="flex flex-shrink-0 cursor-pointer flex-col items-center gap-1 transition-transform active:scale-95"
             >
-              <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-emerald-500 to-cyan-500 p-[2px]">
+              <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-emerald-500 to-cyan-500 p-[2px] transition-transform hover:scale-105">
                 <img
                   src={item.img}
                   alt={item.title}
@@ -120,63 +178,7 @@ export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({
         </div>
       </section>
 
-      {/* 3. MÍDIAS DINÂMICAS: APENAS ÍCONES */}
-      {hasContent && (
-        <section className="mt-2 px-4">
-          <div className="mb-3 flex border-b border-border/60">
-            <button
-              onClick={() => setActiveTab('reels')}
-              className={`flex flex-1 items-center justify-center border-b-2 py-2.5 transition-all ${
-                activeTab === 'reels'
-                  ? 'border-emerald-400 text-emerald-400'
-                  : 'border-transparent text-muted-foreground'
-              }`}
-              title="Reels"
-              aria-label="Reels"
-            >
-              <Video size={22} />
-            </button>
-            <button
-              onClick={() => setActiveTab('posts')}
-              className={`flex flex-1 items-center justify-center border-b-2 py-2.5 transition-all ${
-                activeTab === 'posts'
-                  ? 'border-emerald-400 text-emerald-400'
-                  : 'border-transparent text-muted-foreground'
-              }`}
-              title="Posts"
-              aria-label="Posts"
-            >
-              <Grid size={22} />
-            </button>
-          </div>
-
-          {activeTab === 'reels' ? (
-            <div className="grid grid-cols-2 gap-2">
-              {reels.map((reel) => (
-                <div
-                  key={reel.id}
-                  className="relative aspect-[9/16] overflow-hidden rounded-xl border border-border/60 bg-muted/40"
-                >
-                  <img src={reel.url} alt="Reel do CHEFE" className="h-full w-full object-cover" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-1">
-              {posts.map((post) => (
-                <div
-                  key={post.id}
-                  className="aspect-square overflow-hidden rounded-lg border border-border/60 bg-muted/40"
-                >
-                  <img src={post.url} alt="Post do CHEFE" className="h-full w-full object-cover" />
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* 4. CARD INSTITUCIONAL */}
+      {/* 3. CARD INSTITUCIONAL */}
       <section className="mt-2 p-4">
         <div className="glass-strong rounded-2xl border border-white/10 p-5 shadow-xl">
           <div className="mb-2 flex items-center gap-2">
@@ -207,10 +209,86 @@ export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({
         </div>
       </section>
 
+      {/* 4. MÍDIAS DINÂMICAS: APENAS ÍCONES */}
+      {hasContent && (
+        <section className="mt-2 px-4">
+          <div className="mb-3 flex border-b border-border/60">
+            <button
+              onClick={() => setActiveTab('posts')}
+              className={`flex flex-1 items-center justify-center border-b-2 py-2.5 transition-all ${
+                activeTab === 'posts'
+                  ? 'border-emerald-400 text-emerald-400'
+                  : 'border-transparent text-muted-foreground'
+              }`}
+              title="Posts"
+              aria-label="Posts"
+            >
+              <Grid size={22} />
+            </button>
+            <button
+              onClick={() => setActiveTab('reels')}
+              className={`flex flex-1 items-center justify-center border-b-2 py-2.5 transition-all ${
+                activeTab === 'reels'
+                  ? 'border-emerald-400 text-emerald-400'
+                  : 'border-transparent text-muted-foreground'
+              }`}
+              title="Reels"
+              aria-label="Reels"
+            >
+              <Video size={22} />
+            </button>
+          </div>
+
+          {activeTab === 'reels' ? (
+            <div className="grid grid-cols-2 gap-2">
+              {reels.map((reel) => (
+                <button
+                  key={reel.id}
+                  className="group relative aspect-[9/16] overflow-hidden rounded-xl border border-border/60 bg-muted/40 transition-transform active:scale-[0.97]"
+                >
+                  <img
+                    src={reel.url}
+                    alt="Reel do CHEFE"
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                  <Play
+                    size={18}
+                    className="absolute right-2 top-2 fill-white text-white drop-shadow"
+                  />
+                  {reel.views && (
+                    <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white drop-shadow">
+                      {reel.views}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-1">
+              {posts.map((post) => (
+                <button
+                  key={post.id}
+                  className="group aspect-square overflow-hidden rounded-lg border border-border/60 bg-muted/40 transition-transform active:scale-[0.97]"
+                >
+                  <img
+                    src={post.url}
+                    alt="Post do CHEFE"
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* 5. BOTÃO FLUTUANTE — COPILOTO CEOCHEFE */}
       <div className="fixed bottom-6 right-4 z-50">
         <button
-          onClick={onOpenCEOCHEFE}
+          onClick={openCopiloto}
           className="relative flex items-center justify-center rounded-full border border-emerald-300/40 bg-emerald-500 p-3.5 text-black shadow-2xl transition-transform active:scale-95 hover:bg-emerald-400"
           title="CEOCHEFE - Atendimento & Copiloto IA"
           aria-label="Abrir CEOCHEFE"
@@ -219,6 +297,13 @@ export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({
           <span className="absolute -right-1 -top-1 h-3.5 w-3.5 animate-pulse rounded-full border-2 border-background bg-cyan-400" />
         </button>
       </div>
+
+      <StoriesViewer
+        stories={viewerStories}
+        open={destaqueId !== null && viewerStories.length > 0}
+        onClose={() => setDestaqueId(null)}
+      />
+      <CEOChefeChat open={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
 };
