@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { LayoutGrid, Calendar } from 'lucide-react'
 import { GradientAvatar } from '@/components/chefe/GradientAvatar'
 import { StatusAvatar } from '@/components/chefe/StatusAvatar'
-import { Highlights } from '@/components/chefe/Highlights'
 import { StoriesViewer } from '@/components/chefe/StoriesViewer'
 import { ServiceCard } from '@/components/chefe/ServiceCard'
 import { ProgressTracker } from '@/components/chefe/ProgressTracker'
@@ -13,7 +12,6 @@ import { SalonInfo } from '@/components/chefe/SalonInfo'
 import { QueueList } from '@/components/chefe/QueueList'
 import { LeaveNotifier } from '@/components/chefe/LeaveNotifier'
 import { Manifesto } from '@/components/chefe/Manifesto'
-import { Feed } from '@/components/chefe/Feed'
 import { InstallBanner } from '@/components/chefe/InstallBanner'
 import { ShareButton } from '@/components/chefe/ShareButton'
 import { ThemeToggle } from '@/components/chefe/ThemeToggle'
@@ -59,8 +57,12 @@ function Index() {
       </header>
 
  {/* 🟢 TELA 1 COMPLETA E REESTRUTURADA */}
-<TelaPerfilFeed />
-
+<TelaPerfilFeed 
+  onOpenChatIA={() => {
+    const el = document.getElementById('chefe-ai-chat');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }}
+/>
       {/* Avatar de status dinâmico (Personagem Chefe Vivo) */}
       <div className="relative z-10 mt-4 px-4">
         <StatusAvatar status="disponivel" />
@@ -116,9 +118,7 @@ function Index() {
         <Manifesto />
       </div>
 
-      <div className="relative z-10 mt-6 px-4">
-        <Feed />
-      </div>
+    
 
       <div className="relative z-10 mt-6 px-4">
         <Reviews />
