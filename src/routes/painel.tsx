@@ -1,4 +1,3 @@
-import { CEOChefeChat } from'./CeoChefeChat';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowLeft, Play, Scissors, Plus, Minus, Clock, RotateCcw, Users, Inbox, Check, X, MessageCircle, User, ImagePlus, Trash2, Upload, Cpu, Film, Radar, Sparkles } from "lucide-react";
