@@ -13,10 +13,12 @@ interface Props {
 type Msg = { id: string; role: "user" | "assistant"; text: string; time: string };
 
 const SUGESTOES = [
-  "Como funciona a fila?",
+  "Como está o salão agora?",
+  "Quero entrar no encaixe",
   "Ver horários disponíveis",
+  "Quanto tempo de espera?",
   "Valores dos cortes",
-  "Quero entrar na fila",
+  "Falar direto com o CHEFE",
 ];
 
 const EMOJIS = ["😀", "😎", "🔥", "💈", "✂️", "👍", "🙏", "❤️", "🤝", "⏰"];
@@ -30,7 +32,7 @@ export function CEOChefeChat({ open, onClose }: Props) {
     {
       id: "welcome",
       role: "assistant",
-      text: "Salve! Aqui é o CEOCHEFE 🤝 Posso te colocar na fila, mostrar horários, valores e tirar qualquer dúvida sobre cortes. Como posso te ajudar?",
+      text: "Salve! Aqui é o CEOCHEFE 🤝 Consulto o salão em tempo real: status da casa, encaixe virtual, horários da agenda e tempo de espera. O que você precisa?",
       time: now(),
     },
   ]);
