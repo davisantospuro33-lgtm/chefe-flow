@@ -1,3 +1,4 @@
+import { CEOChefeChat } from './components/chefe/CEOChefechat
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Calendar } from 'lucide-react'
