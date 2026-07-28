@@ -1,309 +1,256 @@
-import React, { useMemo, useState, type ReactNode } from 'react';
-import { MessageCircle, Video, Grid, Sparkles, Send, Play } from 'lucide-react';
-import { StoriesViewer } from './StoriesViewer';
-import { CEOChefeChat } from './CEOChefeChat';
-import type { Story } from '@/lib/chefe-store';
-
-export interface MediaItem {
-  id: string;
-  type: 'reel' | 'post';
-  url: string;
-  views?: string;
-}
+import React, { useState, useEffect } from 'react';
+import { 
+  ShieldCheck, 
+  Grid, 
+  Video, 
+  Send, 
+  MessageSquare, 
+  Sparkles, 
+  Clock, 
+  MapPin, 
+  Calendar,
+  X,
+  CheckCircle2,
+  ChevronRight,
+  Flame
+} from 'lucide-react';
 
 interface TelaPerfilFeedProps {
-  reels?: MediaItem[];
-  posts?: MediaItem[];
-  headerActions?: ReactNode;
-  onOpenChatCentral?: () => void;
-  onOpenCEOCHEFE?: () => void;
+  onOpenChat?: () => void;
+  onOpenStories?: (id: string) => void;
 }
 
-export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({
-  reels = [],
-  posts = [],
-  headerActions,
-  onOpenChatCentral,
-  onOpenCEOCHEFE,
-}) => {
-  const [activeTab, setActiveTab] = useState<'reels' | 'posts'>('reels');
-  const [chatOpen, setChatOpen] = useState(false);
-  const [destaqueId, setDestaqueId] = useState<number | null>(null);
+export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({ onOpenChat, onOpenStories }) => {
+  // Estados sincronizados com o Painel Administrativo (Supabase / Mock seguro)
+  const [activeTab, setActiveTab] = useState<'posts' | 'reels'>('posts');
+  const [profileData, setProfileData] = useState({
+    name: 'Ch3fg8',
+    username: 'chefe_oficial',
+    verified: true,
+    postsCount: 128,
+    clientsCount: '3.4K',
+    rating: '4.9',
+    bio: 'Especialista em cortes de alta precisão e visagismo.',
+    status: 'Disponível', // Disponível, Atendendo, Pausa, Encerrado
+    statusColor: 'bg-emerald-500',
+    serviceName: 'Corte CHEFE',
+    servicePrice: 'R$ 25,00',
+    serviceDuration: '40 min',
+    salonStatus: 'Salão tranquilo.',
+    queueCount: 0
+  });
 
-  const hasContent = reels.length > 0 || posts.length > 0;
+  // Destaques (Renderizados apenas se houver itens)
+  const [highlights, setHighlights] = useState([
+    { id: '1', title: 'Cortes', image: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=150' },
+    { id: '2', title: 'Navalha', image: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=150' },
+    { id: '3', title: 'Produtos', image: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=150' },
+    { id: '4', title: 'Resenha', image: 'https://images.unsplash.com/photo-1517832606293-7ae2a7620a27?w=150' },
+  ]);
 
-  const destaques = useMemo(
-    () => [
-      {
-        id: 1,
-        title: 'Cortes',
-        img: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=150',
-        album: [
-          'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=900',
-          'https://images.unsplash.com/photo-1622287162716-f311baa1a2b8?w=900',
-        ],
-      },
-      {
-        id: 2,
-        title: 'Navalha',
-        img: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=150',
-        album: [
-          'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=900',
-          'https://images.unsplash.com/photo-1517832606299-7ae9b720a186?w=900',
-        ],
-      },
-      {
-        id: 3,
-        title: 'Produtos',
-        img: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=150',
-        album: ['https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=900'],
-      },
-      {
-        id: 4,
-        title: 'Resenha',
-        img: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=150',
-        album: ['https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=900'],
-      },
-    ],
-    [],
-  );
+  // Mídias (Posts e Reels)
+  const [posts, setPosts] = useState([
+    { id: 'p1', type: 'image', url: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=500' },
+    { id: 'p2', type: 'image', url: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=500' },
+  ]);
 
-  const viewerStories = useMemo<Story[]>(() => {
-    const d = destaques.find((x) => x.id === destaqueId);
-    if (!d) return [];
-    return d.album.map((url, i) => ({
-      id: `${d.id}-${i}`,
-      mediaUrl: url,
-      mediaType: 'image' as const,
-      storagePath: null,
-      caption: d.title,
-      createdAt: 0,
-      expiresAt: 0,
-    }));
-  }, [destaqueId, destaques]);
-
-  const openChat = () => {
-    setChatOpen(true);
-    onOpenChatCentral?.();
-  };
-  const openCopiloto = () => {
-    setChatOpen(true);
-    onOpenCEOCHEFE?.();
-  };
+  const [reels, setReels] = useState([
+    { id: 'r1', type: 'video', url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500' }
+  ]);
 
   return (
-    <div className="relative w-full font-sans text-foreground">
-      {/* 1. HEADER TOPO COM ÍCONE DE MENSAGEM (CHAT DIRETO & CEOCHEFE) */}
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border/60 bg-background/85 px-4 py-3 backdrop-blur-md">
-        <h1 className="text-xl font-black tracking-wider">
-          <span className="text-gradient-ig">CHEFE</span>
-        </h1>
+    <div className="min-h-screen bg-[#0b0f19] text-white pb-24 font-sans antialiased selection:bg-emerald-500 selection:text-black">
+      
+      {/* 1. HEADER DO PERFIL */}
+      <header className="px-4 pt-6 pb-4 flex items-center justify-between border-b border-white/5 bg-[#0b0f19]/80 backdrop-blur-md sticky top-0 z-30">
         <div className="flex items-center gap-2">
-          {headerActions}
-          <button
-            onClick={openChat}
-            className="relative rounded-full bg-muted/60 p-2 text-emerald-400 transition-all hover:bg-muted"
-            title="Abrir Chat & Resenha com CEOCHEFE"
-            aria-label="Abrir chat com o CEOCHEFE"
+          <span className="font-black text-xl tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-emerald-400 bg-clip-text text-transparent">
+            CHEFE
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={onOpenChat}
+            className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/10 transition-all shadow-lg active:scale-95"
+            title="Chat CEOCHEFE"
           >
-            <Send size={20} />
-            <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
+            <Send className="w-4 h-4 -ml-0.5" />
           </button>
         </div>
       </header>
 
-      {/* 2. HEADER PERFIL (IDENTIDADE E BIO) */}
-      <section className="px-4 pt-4">
-        <div className="flex items-center gap-4">
+      {/* PERFIL INFO */}
+      <div className="px-4 pt-6">
+        <div className="flex items-center justify-between">
           <div className="relative">
-            <div className="h-20 w-20 rounded-full bg-gradient-to-tr from-fuchsia-500 via-rose-500 to-amber-400 p-[2px]">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300"
-                alt="Foto de perfil do Ch3fg8"
-                className="h-full w-full rounded-full border-2 border-background object-cover"
+            <div className="w-24 h-24 rounded-full p-[2px] bg-gradient-to-tr from-emerald-400 via-amber-400 to-indigo-600 animate-pulse">
+              <img 
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300" 
+                alt="Perfil" 
+                className="w-full h-full rounded-full object-cover border-2 border-[#0b0f19]"
               />
             </div>
+            <span className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-[#0b0f19] rounded-full"></span>
           </div>
 
-          <div className="flex-1">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-lg font-bold">Ch3fg8</h2>
-              <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">
-                VERIFICADO
-              </span>
-            </div>
-
-            <div className="mt-2 flex gap-4 text-center text-xs">
-              <div>
-                <strong className="block text-sm font-bold">128</strong>
-                <span className="text-muted-foreground">Posts</span>
-              </div>
-              <div>
-                <strong className="block text-sm font-bold">3.4K</strong>
-                <span className="text-muted-foreground">Clientes</span>
-              </div>
-              <div>
-                <strong className="block text-sm font-bold">4.9 ★</strong>
-                <span className="text-muted-foreground">Avaliação</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-3">
-          <h3 className="text-xs font-bold">CHEFE | Barbearia &amp; Estilo</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            🧿 🪬 👁️ Especialista em cortes de alta precisão e visagismo.
-          </p>
-        </div>
-
-        {/* CARROSSEL DE DESTAQUES */}
-        <div className="no-scrollbar flex gap-4 overflow-x-auto border-b border-border/60 py-4">
-          {destaques.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setDestaqueId(item.id)}
-              className="flex flex-shrink-0 cursor-pointer flex-col items-center gap-1 transition-transform active:scale-95"
-            >
-              <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-emerald-500 to-cyan-500 p-[2px] transition-transform hover:scale-105">
-                <img
-                  src={item.img}
-                  alt={item.title}
-                  className="h-full w-full rounded-full border-2 border-background object-cover"
-                />
-              </div>
-              <span className="text-[10px] text-muted-foreground">{item.title}</span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* 3. CARD INSTITUCIONAL */}
-      <section className="mt-2 p-4">
-        <div className="glass-strong rounded-2xl border border-white/10 p-5 shadow-xl">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="text-xl">👋</span>
-            <h3 className="text-lg font-bold">
-              Bem-vindo ao <span className="text-emerald-400">CHEFE</span>.
-            </h3>
-          </div>
-          <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-            Criamos este espaço para deixar nosso atendimento mais{' '}
-            <strong className="text-foreground">organizado, transparente e inteligente</strong>. Aqui
-            você acompanha tudo em tempo real, sem precisar perguntar nada pelo WhatsApp.
-          </p>
-          <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-background/60 p-3.5">
-            <div className="mt-0.5 rounded-lg bg-emerald-500/10 p-2 text-emerald-400">
-              <Sparkles size={16} />
+          <div className="flex justify-around flex-1 ml-6 text-center">
+            <div>
+              <div className="font-bold text-lg">{profileData.postsCount}</div>
+              <div className="text-xs text-gray-400">Posts</div>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-                O CHEFE pensa por você
-              </h4>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
-                O sistema avisa a hora exata de sair de casa, calcula a fila e atualiza seu celular
-                automaticamente com total visão de status.
+              <div className="font-bold text-lg">{profileData.clientsCount}</div>
+              <div className="text-xs text-gray-400">Clientes</div>
+            </div>
+            <div>
+              <div className="font-bold text-lg flex items-center justify-center gap-1">
+                {profileData.rating} <span className="text-amber-400 text-xs">★</span>
+              </div>
+              <div className="text-xs text-gray-400">Avaliação</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="flex items-center gap-1.5">
+            <h1 className="font-bold text-lg">{profileData.name}</h1>
+            {profileData.verified && (
+              <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-semibold border border-emerald-500/30 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" /> VERIFICADO
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-300 mt-1">
+            <span className="text-emerald-400 font-medium">CHEFE | Barbearia & Estilo</span> • {profileData.bio}
+          </p>
+        </div>
+
+        {/* 4. DESTAQUES (Renderiza APENAS se houver itens) */}
+        {highlights.length > 0 && (
+          <div className="mt-5 flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+            {highlights.map((item) => (
+              <button 
+                key={item.id} 
+                onClick={() => onOpenStories && onOpenStories(item.id)}
+                className="flex flex-col items-center gap-1.5 shrink-0 group"
+              >
+                <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-emerald-500 to-amber-400 group-hover:scale-105 transition-transform">
+                  <img src={item.image} alt={item.title} className="w-full h-full rounded-full object-cover border-2 border-[#0b0f19]" />
+                </div>
+                <span className="text-[11px] text-gray-300 font-medium">{item.title}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 2. CARD DE APRESENTAÇÃO: BEM-VINDO AO CHEFE */}
+      <div className="px-4 mt-6">
+        <div className="bg-gradient-to-br from-white/[0.07] to-white/[0.02] border border-white/10 rounded-2xl p-5 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xl">👋</span>
+            <h2 className="font-bold text-base text-white">Bem-vindo ao <span className="text-emerald-400">CHEFE</span>.</h2>
+          </div>
+          
+          <p className="text-xs text-gray-300 leading-relaxed mb-4">
+            Criamos este espaço para deixar nosso atendimento mais <strong className="text-white">organizado, transparente e inteligente</strong>. Aqui você acompanha tudo em tempo real, sem precisar perguntar nada pelo WhatsApp.
+          </p>
+
+          <div className="bg-black/40 border border-emerald-500/20 rounded-xl p-3.5 flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 text-emerald-400 border border-emerald-500/20 mt-0.5">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-emerald-400 mb-0.5">O CHEFE PENSA POR VOCÊ</div>
+              <p className="text-[11px] text-gray-400 leading-normal">
+                O sistema avisa a hora exata de sair de casa, calcula a fila e atualiza seu celular automaticamente com total visão de status.
               </p>
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* 4. MÍDIAS DINÂMICAS: APENAS ÍCONES */}
-      {hasContent && (
-        <section className="mt-2 px-4">
-          <div className="mb-3 flex border-b border-border/60">
-            <button
-              onClick={() => setActiveTab('posts')}
-              className={`flex flex-1 items-center justify-center border-b-2 py-2.5 transition-all ${
-                activeTab === 'posts'
-                  ? 'border-emerald-400 text-emerald-400'
-                  : 'border-transparent text-muted-foreground'
-              }`}
-              title="Posts"
-              aria-label="Posts"
-            >
-              <Grid size={22} />
-            </button>
-            <button
-              onClick={() => setActiveTab('reels')}
-              className={`flex flex-1 items-center justify-center border-b-2 py-2.5 transition-all ${
-                activeTab === 'reels'
-                  ? 'border-emerald-400 text-emerald-400'
-                  : 'border-transparent text-muted-foreground'
-              }`}
-              title="Reels"
-              aria-label="Reels"
-            >
-              <Video size={22} />
-            </button>
-          </div>
-
-          {activeTab === 'reels' ? (
-            <div className="grid grid-cols-2 gap-2">
-              {reels.map((reel) => (
-                <button
-                  key={reel.id}
-                  className="group relative aspect-[9/16] overflow-hidden rounded-xl border border-border/60 bg-muted/40 transition-transform active:scale-[0.97]"
-                >
-                  <img
-                    src={reel.url}
-                    alt="Reel do CHEFE"
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <span className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                  <Play
-                    size={18}
-                    className="absolute right-2 top-2 fill-white text-white drop-shadow"
-                  />
-                  {reel.views && (
-                    <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white drop-shadow">
-                      {reel.views}
-                    </span>
-                  )}
-                </button>
-              ))}
+      {/* 3. SERVIÇO PRINCIPAL */}
+      <div className="px-4 mt-4">
+        <div className="bg-gradient-to-r from-purple-900/20 via-slate-900/40 to-emerald-950/20 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
+          <div>
+            <div className="text-[10px] tracking-wider text-amber-400 font-bold uppercase mb-0.5">Serviço Principal</div>
+            <div className="font-bold text-sm text-white">{profileData.serviceName}</div>
+            <div className="text-xs text-gray-400 mt-0.5 flex items-center gap-2">
+              <span>{profileData.serviceDuration}</span>
+              <span>•</span>
+              <span className="text-emerald-400 font-semibold">{profileData.servicePrice}</span>
             </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-1">
+          </div>
+          <button 
+            onClick={onOpenChat}
+            className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-1 active:scale-95"
+          >
+            Pedir Encaixe <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* 5. ABAS DE CONTEÚDO (POSTS E REELS - LOGO ABAIXO DO CARD DE BEM-VINDO) */}
+      <div className="mt-6 border-t border-white/5">
+        <div className="flex border-b border-white/10">
+          <button
+            onClick={() => setActiveTab('posts')}
+            className={`flex-1 py-3 flex items-center justify-center gap-2 transition-all relative ${
+              activeTab === 'posts' ? 'text-white font-bold' : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            <Grid className="w-4 h-4" />
+            {activeTab === 'posts' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-400 shadow-[0_0_10px_#34d399]"></div>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('reels')}
+            className={`flex-1 py-3 flex items-center justify-center gap-2 transition-all relative ${
+              activeTab === 'reels' ? 'text-white font-bold' : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            <Video className="w-4 h-4" />
+            {activeTab === 'reels' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-400 shadow-[0_0_10px_#34d399]"></div>
+            )}
+          </button>
+        </div>
+
+        {/* CONTAINER DE MÍDIAS (Oculta automaticamente se vazio) */}
+        <div className="p-2">
+          {activeTab === 'posts' && posts.length > 0 && (
+            <div className="grid grid-cols-3 gap-1.5">
               {posts.map((post) => (
-                <button
-                  key={post.id}
-                  className="group aspect-square overflow-hidden rounded-lg border border-border/60 bg-muted/40 transition-transform active:scale-[0.97]"
-                >
-                  <img
-                    src={post.url}
-                    alt="Post do CHEFE"
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                </button>
+                <div key={post.id} className="aspect-square bg-white/5 rounded-lg overflow-hidden group relative cursor-pointer">
+                  <img src={post.url} alt="Post" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                </div>
               ))}
             </div>
           )}
-        </section>
-      )}
 
-      {/* 5. BOTÃO FLUTUANTE — COPILOTO CEOCHEFE */}
-      <div className="fixed bottom-6 right-4 z-50">
-        <button
-          onClick={openCopiloto}
-          className="relative flex items-center justify-center rounded-full border border-emerald-300/40 bg-emerald-500 p-3.5 text-black shadow-2xl transition-transform active:scale-95 hover:bg-emerald-400"
-          title="CEOCHEFE - Atendimento & Copiloto IA"
-          aria-label="Abrir CEOCHEFE"
-        >
-          <MessageCircle className="fill-black" size={24} />
-          <span className="absolute -right-1 -top-1 h-3.5 w-3.5 animate-pulse rounded-full border-2 border-background bg-cyan-400" />
-        </button>
+          {activeTab === 'reels' && reels.length > 0 && (
+            <div className="grid grid-cols-3 gap-1.5">
+              {reels.map((reel) => (
+                <div key={reel.id} className="aspect-[9/16] bg-white/5 rounded-lg overflow-hidden group relative cursor-pointer">
+                  <img src={reel.url} alt="Reel" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {((activeTab === 'posts' && posts.length === 0) || (activeTab === 'reels' && reels.length === 0)) && (
+            <div className="py-12 text-center text-gray-500 text-xs">
+              Nenhuma publicação encontrada no painel.
+            </div>
+          )}
+        </div>
       </div>
 
-      <StoriesViewer
-        stories={viewerStories}
-        open={destaqueId !== null && viewerStories.length > 0}
-        onClose={() => setDestaqueId(null)}
-      />
-      <CEOChefeChat open={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
 };
