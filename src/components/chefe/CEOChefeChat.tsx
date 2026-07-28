@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, BadgeCheck, Smile } from "lucide-react";
+import { X, Send, BadgeCheck, Smile, Bot, User } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { atendentePublicaChat } from "@/lib/atendente-publica.functions";
+import { supabase } from "@/integrations/supabase/client";
 import profileImg from "@/assets/chefe-profile.jpg";
 
 interface Props {
@@ -10,15 +11,23 @@ interface Props {
   onClose: () => void;
 }
 
+type Mode = "chefe" | "ceochefe";
 type Msg = { id: string; role: "user" | "assistant"; text: string; time: string };
 
-const SUGESTOES = [
+const SUGESTOES_IA = [
   "Como está o salão agora?",
   "Quero entrar no encaixe",
   "Ver horários disponíveis",
   "Quanto tempo de espera?",
   "Valores dos cortes",
   "Falar direto com o CHEFE",
+];
+
+const SUGESTOES_CHEFE = [
+  "Salve CHEFE! 🤝",
+  "Tá on agora?",
+  "Consegue me encaixar hoje?",
+  "Vou chegar em 10 min",
 ];
 
 const EMOJIS = ["😀", "😎", "🔥", "💈", "✂️", "👍", "🙏", "❤️", "🤝", "⏰"];
@@ -28,11 +37,20 @@ const now = () =>
 
 export function CEOChefeChat({ open, onClose }: Props) {
   const chat = useServerFn(atendentePublicaChat);
-  const [messages, setMessages] = useState<Msg[]>([
+  const [mode, setMode] = useState<Mode>("chefe");
+  const [iaMessages, setIaMessages] = useState<Msg[]>([
     {
       id: "welcome",
       role: "assistant",
       text: "Salve! Aqui é o CEOCHEFE 🤝 Consulto o salão em tempo real: status da casa, encaixe virtual, horários da agenda e tempo de espera. O que você precisa?",
+      time: now(),
+    },
+  ]);
+  const [dmMessages, setDmMessages] = useState<Msg[]>([
+    {
+      id: "dm-welcome",
+      role: "assistant",
+      text: "Fala! Aqui é o CHEFE em pessoa 💈 Manda a real: resenha, dúvida ou horário. Se eu estiver na tesoura, o CEOCHEFE te responde na hora — é só trocar de aba aqui embaixo.",
       time: now(),
     },
   ]);
@@ -41,10 +59,37 @@ export function CEOChefeChat({ open, onClose }: Props) {
   const [showEmoji, setShowEmoji] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  const messages = mode === "chefe" ? dmMessages : iaMessages;
+  const sugestoes = useMemo(
+    () => (mode === "chefe" ? SUGESTOES_CHEFE : SUGESTOES_IA),
+    [mode],
+  );
+
+  // Canal em tempo real com o painel do CHEFE (mensagens diretas)
+  useEffect(() => {
+    if (!open) return;
+    const ch = supabase.channel("painel_operacao");
+    ch.on("broadcast", { event: "dm-chefe" }, (msg) => {
+      const p = msg.payload as { text?: string };
+      if (!p?.text) return;
+      setDmMessages((prev) => [
+        ...prev,
+        { id: `dm-${Date.now()}`, role: "assistant", text: p.text as string, time: now() },
+      ]);
+    });
+    ch.subscribe();
+    channelRef.current = ch;
+    return () => {
+      channelRef.current = null;
+      supabase.removeChannel(ch);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 250);
-  }, [open]);
+  }, [open, mode]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,8 +101,34 @@ export function CEOChefeChat({ open, onClose }: Props) {
     setShowEmoji(false);
     setInput("");
     const userMsg: Msg = { id: `u-${Date.now()}`, role: "user", text, time: now() };
-    const history = [...messages, userMsg];
-    setMessages(history);
+
+    // ── Canal 1: conversa direta com o CHEFE (estilo WhatsApp) ──
+    if (mode === "chefe") {
+      setDmMessages((prev) => [...prev, userMsg]);
+      try {
+        await channelRef.current?.send({
+          type: "broadcast",
+          event: "dm-cliente",
+          payload: { text, ts: Date.now() },
+        });
+      } catch {
+        setDmMessages((prev) => [
+          ...prev,
+          {
+            id: `e-${Date.now()}`,
+            role: "assistant",
+            text: "Não consegui entregar agora ⚠️ Tenta de novo ou fala com o CEOCHEFE na outra aba.",
+            time: now(),
+          },
+        ]);
+      }
+      inputRef.current?.focus();
+      return;
+    }
+
+    // ── Canal 2: copiloto CEOCHEFE (IA em nuvem) ──
+    const history = [...iaMessages, userMsg];
+    setIaMessages(history);
     setTyping(true);
     try {
       const res = await chat({
@@ -67,7 +138,7 @@ export function CEOChefeChat({ open, onClose }: Props) {
             .map((m) => ({ role: m.role, content: m.text })),
         },
       });
-      setMessages((prev) => [
+      setIaMessages((prev) => [
         ...prev,
         {
           id: `a-${Date.now()}`,
@@ -77,7 +148,7 @@ export function CEOChefeChat({ open, onClose }: Props) {
         },
       ]);
     } catch {
-      setMessages((prev) => [
+      setIaMessages((prev) => [
         ...prev,
         {
           id: `e-${Date.now()}`,
@@ -120,19 +191,42 @@ export function CEOChefeChat({ open, onClose }: Props) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
-                <h2 className="truncate text-sm font-bold">CEOCHEFE</h2>
+                <h2 className="truncate text-sm font-bold">
+                  {mode === "chefe" ? "CHEFE · Ch3fg8" : "CEOCHEFE · Copiloto IA"}
+                </h2>
                 <BadgeCheck size={14} className="text-emerald-400" />
               </div>
               <p className="flex items-center gap-1.5 text-[11px] text-emerald-400">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                {typing ? "digitando..." : "Online"}
+                {typing ? "digitando..." : mode === "chefe" ? "Online · resposta direta" : "Online · dados ao vivo"}
               </p>
             </div>
           </header>
 
+          {/* Alternador de canal (2 em 1) */}
+          <div className="flex gap-1 border-b border-border/40 bg-background/60 px-3 py-2">
+            {([
+              { id: "chefe" as const, label: "CHEFE", Icon: User },
+              { id: "ceochefe" as const, label: "CEOCHEFE", Icon: Bot },
+            ]).map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                onClick={() => setMode(id)}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition ${
+                  mode === id
+                    ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-400/40"
+                    : "text-muted-foreground hover:bg-muted/60"
+                }`}
+              >
+                <Icon size={13} />
+                {label}
+              </button>
+            ))}
+          </div>
+
           {/* Sugestões */}
           <div className="no-scrollbar flex gap-2 overflow-x-auto border-b border-border/40 px-3 py-2">
-            {SUGESTOES.map((s) => (
+            {sugestoes.map((s) => (
               <button
                 key={s}
                 onClick={() => send(s)}
@@ -224,7 +318,9 @@ export function CEOChefeChat({ open, onClose }: Props) {
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Mensagem para o CEOCHEFE..."
+              placeholder={
+                mode === "chefe" ? "Mensagem direta para o CHEFE..." : "Perguntar ao CEOCHEFE (IA)..."
+              }
               className="flex-1 rounded-full border border-border/60 bg-muted/40 px-4 py-2.5 text-[13px] outline-none transition focus:border-emerald-400/60"
             />
             <button
