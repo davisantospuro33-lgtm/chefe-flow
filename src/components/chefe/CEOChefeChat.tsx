@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Send, X, Sparkles, Mic, Image as ImageIcon, Smile, Bot, CheckCircle } from 'lucide-react';
+import { Send, X, Sparkles, Image as ImageIcon } from 'lucide-react';
 
-interface ChatCeochefeProps {
+interface CEOChefeChatProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const ChatCeochefe: React.FC<ChatCeochefeProps> = ({ isOpen, onClose }) => {
+export const CEOChefeChat: React.FC<CEOChefeChatProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -59,7 +59,7 @@ export const ChatCeochefe: React.FC<ChatCeochefeProps> = ({ isOpen, onClose }) =
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end sm:items-center sm:justify-center p-0 sm:p-4 animate-fadeIn">
       <div className="w-full sm:max-w-md h-[90vh] sm:h-[600px] bg-[#0b0f19] border border-white/10 rounded-t-3xl sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden">
         
-        {/* HEADER DO CHAT HÍBRIDO (RECEPCIONISTA DE ELITE) */}
+        {/* HEADER DO CHAT HÍBRIDO */}
         <div className="p-4 bg-white/[0.03] border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -106,7 +106,7 @@ export const ChatCeochefe: React.FC<ChatCeochefeProps> = ({ isOpen, onClose }) =
           </button>
         </div>
 
-        {/* CORPO DE MENSAGENS (ESTILO WHATSAPP/TELEGRAM) */}
+        {/* CORPO DE MENSAGENS */}
         <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-[#070a12]">
           {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
