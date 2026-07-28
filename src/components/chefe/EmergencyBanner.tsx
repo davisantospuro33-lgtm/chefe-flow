@@ -51,7 +51,7 @@ export function EmergencyBanner() {
     ch.on("broadcast", { event: "dm-cliente" }, (msg) => {
       const p = msg.payload as { text?: string; ts?: number };
       if (!p?.text) return;
-      setDms((d) => [...d, { from: "cliente", text: p.text as string, ts: p.ts ?? Date.now() }].slice(-30));
+      setDms((d) => [...d, { from: "cliente" as const, text: p.text as string, ts: p.ts ?? Date.now() }].slice(-30));
     });
     ch.subscribe();
     channelRef.current = ch;
@@ -65,7 +65,7 @@ export function EmergencyBanner() {
     const text = dmInput.trim();
     if (!text) return;
     setDmInput("");
-    setDms((d) => [...d, { from: "chefe", text, ts: Date.now() }].slice(-30));
+    setDms((d) => [...d, { from: "chefe" as const, text, ts: Date.now() }].slice(-30));
     try {
       await channelRef.current?.send({
         type: "broadcast",
