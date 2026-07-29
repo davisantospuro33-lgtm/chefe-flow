@@ -73,43 +73,43 @@
 
 :root {
   --radius: 0.625rem;
-  /* Instagram-inspired premium dark palette */
-  --background: oklch(0.14 0.005 260);
-  --foreground: oklch(0.98 0.005 260);
-  --surface: oklch(0.18 0.008 260);
-  --surface-2: oklch(0.22 0.01 260);
-  --card: oklch(0.18 0.008 260 / 0.6);
-  --card-foreground: oklch(0.98 0.005 260);
-  --popover: oklch(0.18 0.008 260);
-  --popover-foreground: oklch(0.98 0.005 260);
-  --primary: oklch(0.72 0.22 340);
-  --primary-foreground: oklch(0.14 0.005 260);
-  --secondary: oklch(0.24 0.01 260);
-  --secondary-foreground: oklch(0.98 0.005 260);
-  --muted: oklch(0.22 0.01 260);
-  --muted-foreground: oklch(0.72 0.015 260);
-  --accent: oklch(0.24 0.01 260);
-  --accent-foreground: oklch(0.98 0.005 260);
-  --destructive: oklch(0.68 0.24 25);
-  --destructive-foreground: oklch(0.98 0.005 260);
+  /* Monocromático premium — preto & branco puro */
+  --background: oklch(0.06 0 0);
+  --foreground: oklch(0.99 0 0);
+  --surface: oklch(0.12 0 0);
+  --surface-2: oklch(0.17 0 0);
+  --card: oklch(0.12 0 0 / 0.7);
+  --card-foreground: oklch(0.99 0 0);
+  --popover: oklch(0.12 0 0);
+  --popover-foreground: oklch(0.99 0 0);
+  --primary: oklch(0.99 0 0);
+  --primary-foreground: oklch(0.06 0 0);
+  --secondary: oklch(0.18 0 0);
+  --secondary-foreground: oklch(0.99 0 0);
+  --muted: oklch(0.18 0 0);
+  --muted-foreground: oklch(0.72 0 0);
+  --accent: oklch(0.22 0 0);
+  --accent-foreground: oklch(0.99 0 0);
+  --destructive: oklch(0.55 0 0);
+  --destructive-foreground: oklch(0.99 0 0);
   --border: oklch(1 0 0 / 0.08);
   --input: oklch(1 0 0 / 0.1);
-  --ring: oklch(0.72 0.22 340);
+  --ring: oklch(0.99 0 0);
 
-  /* Neon status green */
-  --neon: oklch(0.86 0.28 145);
-  --neon-glow: oklch(0.86 0.28 145 / 0.55);
+  /* Status (monocromático) */
+  --neon: oklch(0.99 0 0);
+  --neon-glow: oklch(1 0 0 / 0.45);
 
-  /* Instagram gradient stops */
-  --ig-yellow: #fbe14f;
-  --ig-orange: #fd8d32;
-  --ig-pink: #e94179;
-  --ig-purple: #883fdb;
+  /* Gradiente monocromático */
+  --ig-yellow: #ffffff;
+  --ig-orange: #d4d4d4;
+  --ig-pink: #8a8a8a;
+  --ig-purple: #ffffff;
 
-  --gradient-ig: linear-gradient(135deg, #fbe14f 0%, #fd8d32 25%, #e94179 55%, #d024a6 75%, #883fdb 100%);
-  --gradient-ig-soft: linear-gradient(135deg, rgba(251,225,79,0.15), rgba(233,65,121,0.15), rgba(136,63,219,0.15));
+  --gradient-ig: linear-gradient(135deg, #ffffff 0%, #b5b5b5 35%, #6e6e6e 60%, #e6e6e6 100%);
+  --gradient-ig-soft: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06), rgba(255,255,255,0.12));
   --shadow-glass: 0 8px 32px 0 rgba(0,0,0,0.4), inset 0 1px 0 0 rgba(255,255,255,0.05);
-  --shadow-neon: 0 0 24px var(--neon-glow), 0 0 60px oklch(0.86 0.28 145 / 0.25);
+  --shadow-neon: 0 0 24px var(--neon-glow), 0 0 60px oklch(1 0 0 / 0.18);
 
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -128,25 +128,28 @@
 
 /* Light / Day theme */
 .light {
-  --background: oklch(0.985 0.002 260);
-  --foreground: oklch(0.18 0.01 260);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.1 0 0);
   --surface: oklch(1 0 0);
-  --surface-2: oklch(0.96 0.004 260);
+  --surface-2: oklch(0.96 0 0);
   --card: oklch(1 0 0 / 0.75);
-  --card-foreground: oklch(0.18 0.01 260);
+  --card-foreground: oklch(0.1 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.01 260);
-  --primary: oklch(0.58 0.22 340);
+  --popover-foreground: oklch(0.1 0 0);
+  --primary: oklch(0.1 0 0);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.94 0.005 260);
-  --secondary-foreground: oklch(0.2 0.01 260);
-  --muted: oklch(0.94 0.005 260);
-  --muted-foreground: oklch(0.45 0.015 260);
-  --accent: oklch(0.94 0.005 260);
-  --accent-foreground: oklch(0.2 0.01 260);
-  --border: oklch(0.2 0.01 260 / 0.12);
-  --input: oklch(0.2 0.01 260 / 0.15);
-  --ring: oklch(0.58 0.22 340);
+  --secondary: oklch(0.94 0 0);
+  --secondary-foreground: oklch(0.12 0 0);
+  --muted: oklch(0.94 0 0);
+  --muted-foreground: oklch(0.42 0 0);
+  --accent: oklch(0.94 0 0);
+  --accent-foreground: oklch(0.12 0 0);
+  --border: oklch(0 0 0 / 0.14);
+  --input: oklch(0 0 0 / 0.16);
+  --ring: oklch(0.1 0 0);
+  --neon: oklch(0.1 0 0);
+  --neon-glow: oklch(0 0 0 / 0.25);
+  --gradient-ig: linear-gradient(135deg, #111111 0%, #4a4a4a 45%, #111111 100%);
   --shadow-glass: 0 8px 32px 0 rgba(15,23,42,0.08), inset 0 1px 0 0 rgba(255,255,255,0.6);
 }
 
@@ -195,11 +198,13 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
-    background-image:
-      radial-gradient(ellipse at 20% -10%, rgba(233, 65, 121, 0.12), transparent 55%),
-      radial-gradient(ellipse at 90% 10%, rgba(136, 63, 219, 0.12), transparent 55%),
-      radial-gradient(ellipse at 50% 100%, rgba(253, 141, 50, 0.08), transparent 60%);
+    background-image: none;
     background-attachment: fixed;
+  }
+
+  /* Identidade 100% monocromática: neutraliza qualquer cor residual */
+  html {
+    filter: grayscale(1);
   }
 }
 
