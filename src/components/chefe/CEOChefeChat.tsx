@@ -4,6 +4,7 @@ import { X, Send, BadgeCheck, Smile } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { atendentePublicaChat } from "@/lib/atendente-publica.functions";
 import profileImg from "@/assets/chefe-profile.jpg";
+import { useChefeStore } from "@/lib/chefe-store";
 
 interface Props {
   open: boolean;
@@ -26,6 +27,8 @@ const now = () =>
 
 export function CEOChefeChat({ open, onClose }: Props) {
   const chat = useServerFn(atendentePublicaChat);
+  const profile = useChefeStore((s) => s.profile);
+  const status = useChefeStore((s) => s.status);
   const [messages, setMessages] = useState<Msg[]>([
     {
       id: "welcome",
@@ -43,6 +46,16 @@ export function CEOChefeChat({ open, onClose }: Props) {
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 250);
   }, [open]);
+
+  // Mensagem de recepção definida pelo CHEFE no Painel de Controle
+  useEffect(() => {
+    if (!profile.aiGreeting) return;
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === "welcome" ? { ...m, text: profile.aiGreeting } : m,
+      ),
+    );
+  }, [profile.aiGreeting]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -119,11 +132,15 @@ export function CEOChefeChat({ open, onClose }: Props) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
                 <h2 className="truncate text-sm font-bold">CEOCHEFE</h2>
-                <BadgeCheck size={14} className="text-emerald-400" />
+              <BadgeCheck size={14} className="text-foreground" />
               </div>
-              <p className="flex items-center gap-1.5 text-[11px] text-emerald-400">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                {typing ? "digitando..." : "Online"}
+              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-foreground" />
+                {typing
+                  ? "digitando..."
+                  : status === "available"
+                    ? "Online · CHEFE disponível"
+                    : "Online"}
               </p>
             </div>
           </header>
@@ -134,7 +151,7 @@ export function CEOChefeChat({ open, onClose }: Props) {
               <button
                 key={s}
                 onClick={() => send(s)}
-                className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-400 transition active:scale-95"
+                className="shrink-0 rounded-full border border-border bg-muted px-3 py-1.5 text-[11px] font-semibold text-foreground transition active:scale-95"
               >
                 {s}
               </button>
@@ -169,7 +186,7 @@ export function CEOChefeChat({ open, onClose }: Props) {
                   {[0, 1, 2].map((i) => (
                     <motion.span
                       key={i}
-                      className="h-1.5 w-1.5 rounded-full bg-emerald-400"
+                      className="h-1.5 w-1.5 rounded-full bg-foreground"
                       animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }}
                       transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }}
                     />
@@ -223,12 +240,12 @@ export function CEOChefeChat({ open, onClose }: Props) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Mensagem para o CEOCHEFE..."
-              className="flex-1 rounded-full border border-border/60 bg-muted/40 px-4 py-2.5 text-[13px] outline-none transition focus:border-emerald-400/60"
+              className="flex-1 rounded-full border border-border bg-muted/60 px-4 py-2.5 text-[13px] outline-none transition focus:border-foreground/60"
             />
             <button
               type="submit"
               disabled={!input.trim() || typing}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-500 text-black transition active:scale-95 disabled:opacity-40"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-foreground text-background transition active:scale-95 disabled:opacity-40"
               aria-label="Enviar mensagem"
             >
               <Send size={18} />
