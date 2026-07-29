@@ -14,10 +14,9 @@ import { LeaveNotifier } from '@/components/chefe/LeaveNotifier'
 import { Manifesto } from '@/components/chefe/Manifesto'
 import { InstallBanner } from '@/components/chefe/InstallBanner'
 import { ShareButton } from '@/components/chefe/ShareButton'
-import { ThemeToggle } from '@/components/chefe/ThemeToggle'
-import { ChefeAI } from '@/components/chefe/ChefeAI'
 import { Reviews } from '@/components/chefe/Reviews'
 import { useChefeStore } from '@/lib/chefe-store'
+import { PostsReelsCarousel } from '@/components/chefe/PostsReelsCarousel'
 import { TelaPerfilFeed } from '@/components/chefe/TelaPerfilFeed';
 export const Route = createFileRoute('/')({
   component: Index,
@@ -45,12 +44,8 @@ function Index() {
 
       {/* 🟢 TELA 1 COMPLETA E REESTRUTURADA */}
       <TelaPerfilFeed
-        headerActions={
-          <>
-            <ThemeToggle />
-            <ShareButton />
-          </>
-        }
+        headerActions={<ShareButton />}
+        mediaSlot={<PostsReelsCarousel />}
       />
       {/* Avatar de status dinâmico (Personagem Chefe Vivo) */}
       <div className="relative z-10 mt-4 px-4">
@@ -85,10 +80,6 @@ function Index() {
         </button>
       </div>
 
-      <div className="relative z-10 mt-4 px-4">
-        <ChefeAI />
-      </div>
-
       <div className="relative z-10 mt-3 px-4">
         <AIAlertBox />
       </div>
@@ -114,7 +105,7 @@ function Index() {
       </div>
 
       <footer className="relative z-10 mt-10 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-        Powered by <span className="text-gradient-ig">CHEFE AI</span>
+        Powered by <span className="font-black text-foreground">CHEFE AI</span>
       </footer>
 
       <StoriesViewer
