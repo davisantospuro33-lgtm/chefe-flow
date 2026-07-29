@@ -1,5 +1,3 @@
-import { CEOChefeChat } from '@/components/chefe/CEOChefeChat'
-import { PostsReelsCarousel } from '@/components/chefe/PostsReelsCarousel'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Calendar } from 'lucide-react'
@@ -17,18 +15,18 @@ import { Manifesto } from '@/components/chefe/Manifesto'
 import { InstallBanner } from '@/components/chefe/InstallBanner'
 import { ShareButton } from '@/components/chefe/ShareButton'
 import { ThemeToggle } from '@/components/chefe/ThemeToggle'
+import { ChefeAI } from '@/components/chefe/ChefeAI'
 import { Reviews } from '@/components/chefe/Reviews'
 import { useChefeStore } from '@/lib/chefe-store'
-import { TelaPerfilFeed } from '@/components/chefe/TelaPerfilFeed'
-
+import { TelaPerfilFeed } from '@/components/chefe/TelaPerfilFeed';
 export const Route = createFileRoute('/')({
   component: Index,
   head: () => ({
     meta: [
-      { title: 'CHEFE - Barbearia Inteligente' },
-      { name: 'description', content: 'Acompanhe seu corte em tempo real.' },
-      { property: 'og:title', content: 'CHEFE - Barbearia Inteligente' },
-      { property: 'og:description', content: 'Acompanhe seu corte em tempo real.' },
+      { title: 'CHEFE · Barbearia inteligente em tempo real' },
+      { name: 'description', content: 'Acompanhe a fila, status e agenda do CHEFE ao vivo. Corte CHEFE por R$ 25 em 40 min.' },
+      { property: 'og:title', content: 'CHEFE · Barbearia inteligente em tempo real' },
+      { property: 'og:description', content: 'Fila ao vivo, status do barbeiro e agendamento inteligente.' },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
     ],
@@ -39,74 +37,63 @@ function Index() {
   const stories = useChefeStore((s) => s.stories)
   const profile = useChefeStore((s) => s.profile)
   const [storiesOpen, setStoriesOpen] = useState(false)
-  const [chatOpen, setChatOpen] = useState(false)
+
 
   return (
-    <main className="relative mx-auto min-h-screen max-w-md bg-background pb-20 text-foreground shadow-2xl">
+    <main className="relative mx-auto min-h-screen w-full max-w-md bg-background pb-20 text-foreground overflow-hidden">
       <InstallBanner />
 
-      {/* TELA 1 COMPLETA E REESTRUTURADA */}
+      {/* 🟢 TELA 1 COMPLETA E REESTRUTURADA */}
       <TelaPerfilFeed
-        onOpenChat={() => setChatOpen(true)}
-        onOpenStories={() => setStoriesOpen(true)}
+        headerActions={
+          <>
+            <ThemeToggle />
+            <ShareButton />
+          </>
+        }
       />
-
-      <div className="absolute right-4 top-3 z-30 flex items-center gap-2">
-        <ThemeToggle />
-        <ShareButton />
-      </div>
-
-      {/* Avatar de status dinâmico */}
-      <div className="relative z-10 -mt-4 px-4">
+      {/* Avatar de status dinâmico (Personagem Chefe Vivo) */}
+      <div className="relative z-10 mt-4 px-4">
         <StatusAvatar status="disponivel" />
       </div>
-
+      
       <div className="relative z-10 mt-4 px-4">
         <ServiceCard />
       </div>
 
-      {/* CARROSSEL DE POSTS E REELS - VINCULADO AO PAINEL DO CHEFE */}
-      <div className="relative z-10 mt-4 px-4">
-        <PostsReelsCarousel />
-      </div>
-
-      <div className="relative z-10 mt-4 px-4">
+      <div className="relative z-10 mt-4 px-4 grid grid-cols-3 gap-2">
         <SalonInfo />
-      </div>
-
-      <div className="relative z-10 mt-4 px-4">
         <QueueList compact />
-      </div>
-
-      <div className="relative z-10 mt-4 px-4">
         <button
-          onClick={() => alert('Selecione o serviço primeiro')}
-          className="flex flex-col justify-between rounded-2xl bg-card p-4 border border-border w-full text-left"
+          onClick={() => alert('Selecione o dia e horário desejado no atendimento com a IA!')}
+          className="flex flex-col justify-between rounded-3xl glass-strong p-3 text-left transition-transform active:scale-95 border border-white/10"
         >
-          <div className="flex items-center gap-2">
-            <div className="grid h-6 w-6 place-items-center rounded-lg bg-primary/10 text-primary">
-              <Calendar className="h-3 w-3" />
+          <div>
+            <div className="flex items-center gap-1">
+              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600">
+                <Calendar className="h-3 w-3 text-white" />
+              </div>
+              <p className="text-[9px] font-black uppercase tracking-wider text-muted-foreground leading-tight">
+                📅 Agenda
+              </p>
             </div>
-            <p className="text-[9px] font-bold tracking-wider text-muted-foreground uppercase">
-              Agenda
-            </p>
+            <p className="mt-1 text-[10px] font-bold text-white leading-tight">Marcar Horário</p>
           </div>
-          <p className="mt-1 text-[10px] font-medium text-foreground">
-            Marcar Horário
-          </p>
-          <span className="mt-2 w-full text-center text-xs font-bold bg-primary text-primary-foreground py-1.5 rounded-xl">
-            Garantir →
+          <span className="mt-2 w-full text-center rounded-xl bg-white/10 py-1 text-[9px] font-bold text-neon">
+            Garantir ➔
           </span>
         </button>
       </div>
 
       <div className="relative z-10 mt-4 px-4">
-        <AIAlertBox />
+        <ChefeAI />
       </div>
 
       <div className="relative z-10 mt-3 px-4">
-        <LeaveNotifier />
+        <AIAlertBox />
       </div>
+
+      <LeaveNotifier />
 
       <div className="relative z-10 mt-3 px-4">
         <ProgressTracker />
@@ -120,15 +107,14 @@ function Index() {
         <Manifesto />
       </div>
 
+    
+
       <div className="relative z-10 mt-6 px-4">
         <Reviews />
       </div>
 
-      {/* CHAT FLUTUANTE CEOCHEFE / PAINEL DE ATENDIMENTO */}
-      <CEOChefeChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />
-
-      <footer className="relative z-10 mt-10 pb-6 text-center text-xs text-muted-foreground">
-        Powered by <span className="text-gradient font-bold">CHEFE AI</span>
+      <footer className="relative z-10 mt-10 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+        Powered by <span className="text-gradient-ig">CHEFE AI</span>
       </footer>
 
       <StoriesViewer

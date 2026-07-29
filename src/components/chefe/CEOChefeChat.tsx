@@ -1,254 +1,339 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { Send, X, Bot, User, Check } from 'lucide-react'
-import { useServerFn } from '@tanstack/react-start'
-import { supabase } from '@/integrations/supabase/client'
-import { useChefeStore } from '@/lib/chefe-store'
-import { atendentePublicaChat } from '@/lib/atendente-publica.functions'
+import { useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Send, BadgeCheck, Smile, Bot, User } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { atendentePublicaChat } from "@/lib/atendente-publica.functions";
+import { supabase } from "@/integrations/supabase/client";
+import profileImg from "@/assets/chefe-profile.jpg";
 
-type Tab = 'chefe' | 'ceochefe'
-type Msg = { id: string; from: 'me' | 'them'; text: string; time: string }
-
-const hora = () =>
-  new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-
-interface CEOChefeChatProps {
-  isOpen: boolean
-  onClose: () => void
+interface Props {
+  open: boolean;
+  onClose: () => void;
 }
 
-export const CEOChefeChat: React.FC<CEOChefeChatProps> = ({ isOpen, onClose }) => {
-  const profile = useChefeStore((s) => s.profile)
-  const status = useChefeStore((s) => s.status)
-  const distanceKm = useChefeStore((s) => s.distanceKm)
-  const chatAI = useServerFn(atendentePublicaChat)
+type Mode = "chefe" | "ceochefe";
+type Msg = { id: string; role: "user" | "assistant"; text: string; time: string };
 
-  const [tab, setTab] = useState<Tab>('chefe')
-  const [input, setInput] = useState('')
-  const [sending, setSending] = useState(false)
-  const [chefeMsgs, setChefeMsgs] = useState<Msg[]>([])
-  const [aiMsgs, setAiMsgs] = useState<Msg[]>([
+const SUGESTOES_IA = [
+  "Como está o salão agora?",
+  "Quero entrar no encaixe",
+  "Ver horários disponíveis",
+  "Quanto tempo de espera?",
+  "Valores dos cortes",
+  "Falar direto com o CHEFE",
+];
+
+const SUGESTOES_CHEFE = [
+  "Salve CHEFE! 🤝",
+  "Tá on agora?",
+  "Consegue me encaixar hoje?",
+  "Vou chegar em 10 min",
+];
+
+const EMOJIS = ["😀", "😎", "🔥", "💈", "✂️", "👍", "🙏", "❤️", "🤝", "⏰"];
+
+const now = () =>
+  new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+export function CEOChefeChat({ open, onClose }: Props) {
+  const chat = useServerFn(atendentePublicaChat);
+  const [mode, setMode] = useState<Mode>("chefe");
+  const [iaMessages, setIaMessages] = useState<Msg[]>([
     {
-      id: 'greet',
-      from: 'them',
-      text:
-        profile?.aiGreeting ||
-        'Salve! Aqui é o CEOCHEFE 🤝 Consulto o salão em tempo real: fila, encaixe, horários e tempo de espera. O que você precisa?',
-      time: hora(),
+      id: "welcome",
+      role: "assistant",
+      text: "Salve! Aqui é o CEOCHEFE 🤝 Consulto o salão em tempo real: status da casa, encaixe virtual, horários da agenda e tempo de espera. O que você precisa?",
+      time: now(),
     },
-  ])
+  ]);
+  const [dmMessages, setDmMessages] = useState<Msg[]>([
+    {
+      id: "dm-welcome",
+      role: "assistant",
+      text: "Fala! Aqui é o CHEFE em pessoa 💈 Manda a real: resenha, dúvida ou horário. Se eu estiver na tesoura, o CEOCHEFE te responde na hora — é só trocar de aba aqui embaixo.",
+      time: now(),
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
-  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const messages = mode === "chefe" ? dmMessages : iaMessages;
+  const sugestoes = useMemo(
+    () => (mode === "chefe" ? SUGESTOES_CHEFE : SUGESTOES_IA),
+    [mode],
+  );
 
-  // Canal em tempo real com o Painel de Controle
+  // Canal em tempo real com o painel do CHEFE (mensagens diretas)
   useEffect(() => {
-    if (!isOpen) return
-    const ch = supabase.channel('painel_operacao')
-    ch.on('broadcast', { event: 'dm-chefe' }, (msg) => {
-      const text = (msg.payload as { text?: string })?.text
-      if (!text) return
-      setChefeMsgs((prev) => [
+    if (!open) return;
+    const ch = supabase.channel("painel_operacao");
+    ch.on("broadcast", { event: "dm-chefe" }, (msg) => {
+      const p = msg.payload as { text?: string };
+      if (!p?.text) return;
+      setDmMessages((prev) => [
         ...prev,
-        { id: crypto.randomUUID(), from: 'them', text, time: hora() },
-      ])
-    })
-    ch.subscribe()
-    channelRef.current = ch
+        { id: `dm-${Date.now()}`, role: "assistant", text: p.text as string, time: now() },
+      ]);
+    });
+    ch.subscribe();
+    channelRef.current = ch;
     return () => {
-      supabase.removeChannel(ch)
-      channelRef.current = null
-    }
-  }, [isOpen])
-
-  const messages = tab === 'chefe' ? chefeMsgs : aiMsgs
+      channelRef.current = null;
+      supabase.removeChannel(ch);
+    };
+  }, [open]);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages.length, tab])
+    if (open) setTimeout(() => inputRef.current?.focus(), 250);
+  }, [open, mode]);
 
-  if (!isOpen) return null
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, typing]);
 
-  const send = async (preset?: string) => {
-    const text = (preset ?? input).trim()
-    if (!text || sending) return
-    if (!preset) setInput('')
+  const send = async (raw?: string) => {
+    const text = (raw ?? input).trim();
+    if (!text || typing) return;
+    setShowEmoji(false);
+    setInput("");
+    const userMsg: Msg = { id: `u-${Date.now()}`, role: "user", text, time: now() };
 
-    const mine: Msg = { id: crypto.randomUUID(), from: 'me', text, time: hora() }
-
-    if (tab === 'chefe') {
-      setChefeMsgs((prev) => [...prev, mine])
-      await channelRef.current?.send({
-        type: 'broadcast',
-        event: 'dm-cliente',
-        payload: { text, at: Date.now() },
-      })
-      return
+    // ── Canal 1: conversa direta com o CHEFE (estilo WhatsApp) ──
+    if (mode === "chefe") {
+      setDmMessages((prev) => [...prev, userMsg]);
+      try {
+        await channelRef.current?.send({
+          type: "broadcast",
+          event: "dm-cliente",
+          payload: { text, ts: Date.now() },
+        });
+      } catch {
+        setDmMessages((prev) => [
+          ...prev,
+          {
+            id: `e-${Date.now()}`,
+            role: "assistant",
+            text: "Não consegui entregar agora ⚠️ Tenta de novo ou fala com o CEOCHEFE na outra aba.",
+            time: now(),
+          },
+        ]);
+      }
+      inputRef.current?.focus();
+      return;
     }
 
-    const history = [...aiMsgs, mine]
-    setAiMsgs(history)
-    setSending(true)
+    // ── Canal 2: copiloto CEOCHEFE (IA em nuvem) ──
+    const history = [...iaMessages, userMsg];
+    setIaMessages(history);
+    setTyping(true);
     try {
-      const res = (await chatAI({
+      const res = await chat({
         data: {
-          messages: history.map((m) => ({
-            role: m.from === 'me' ? ('user' as const) : ('assistant' as const),
-            content: m.text,
-          })),
-          distanceKm,
-          durationMin: profile?.serviceDurationMin ?? null,
+          messages: history
+            .filter((m) => m.id !== "welcome")
+            .map((m) => ({ role: m.role, content: m.text })),
         },
-      })) as { text?: string } | string
-      const reply = typeof res === 'string' ? res : (res?.text ?? 'Não consegui responder agora.')
-      setAiMsgs((prev) => [
-        ...prev,
-        { id: crypto.randomUUID(), from: 'them', text: reply, time: hora() },
-      ])
-    } catch {
-      setAiMsgs((prev) => [
+      });
+      setIaMessages((prev) => [
         ...prev,
         {
-          id: crypto.randomUUID(),
-          from: 'them',
-          text: 'Falha ao consultar o painel agora. Tenta de novo em instantes.',
-          time: hora(),
+          id: `a-${Date.now()}`,
+          role: "assistant",
+          text: res?.text?.trim() || "Recebi sua mensagem! Já te retorno com os detalhes.",
+          time: now(),
         },
-      ])
+      ]);
+    } catch {
+      setIaMessages((prev) => [
+        ...prev,
+        {
+          id: `e-${Date.now()}`,
+          role: "assistant",
+          text: "Tive uma instabilidade agora ⚠️ Tenta mandar de novo em instantes.",
+          time: now(),
+        },
+      ]);
     } finally {
-      setSending(false)
+      setTyping(false);
+      inputRef.current?.focus();
     }
-  }
-
-  const sugestoes =
-    tab === 'ceochefe'
-      ? ['Como está o salão agora?', 'Quero entrar no encaixe', 'Ver horários disponíveis']
-      : ['Salve CHEFE, tem vaga agora?', 'Quanto tempo de espera?', 'Quero marcar um horário']
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4">
-      <div className="flex h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:h-[620px] sm:max-w-md sm:rounded-3xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border bg-muted/40 p-3">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              {profile?.avatarUrl ? (
-                <img
-                  src={profile.avatarUrl}
-                  alt={profile.username}
-                  className="h-10 w-10 rounded-full border border-primary/40 object-cover"
-                />
-              ) : (
-                <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary">
-                  {tab === 'chefe' ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
-                </div>
-              )}
-              <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card bg-emerald-500" />
-            </div>
-            <div>
-              <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
-                {tab === 'chefe' ? profile?.username || 'CHEFE' : 'CEOCHEFE'}
-                <Check className="h-3 w-3 text-primary" />
-              </p>
-              <p className="text-[11px] font-medium text-emerald-500">
-                {tab === 'chefe'
-                  ? `Online • ${status}`
-                  : 'Copiloto IA • Sincronizado ao Painel'}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Fechar chat"
-            className="grid h-8 w-8 place-items-center rounded-full bg-muted text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Tabs de contexto */}
-        <div className="flex gap-1 border-b border-border bg-background/60 p-1.5">
-          {(['chefe', 'ceochefe'] as Tab[]).map((t) => (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 24 }}
+          transition={{ type: "spring", stiffness: 320, damping: 32 }}
+          className="fixed inset-0 z-[120] mx-auto flex w-full max-w-md flex-col bg-background text-foreground"
+        >
+          {/* Header */}
+          <header className="flex items-center gap-3 border-b border-border/60 bg-background/90 px-3 py-3 backdrop-blur-xl">
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-[11px] font-bold uppercase tracking-wide transition-all ${
-                tab === t
-                  ? 'bg-primary text-primary-foreground shadow'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+              onClick={onClose}
+              className="rounded-full p-1.5 text-muted-foreground transition hover:bg-muted"
+              aria-label="Fechar chat"
             >
-              {t === 'chefe' ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
-              {t === 'chefe' ? 'CHEFE' : 'CEOCHEFE'}
+              <X size={20} />
             </button>
-          ))}
-        </div>
+            <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-ig p-[2px]">
+              <img
+                src={profileImg}
+                alt="CEOCHEFE"
+                className="h-full w-full rounded-full border-2 border-background object-cover"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <h2 className="truncate text-sm font-bold">
+                  {mode === "chefe" ? "CHEFE · Ch3fg8" : "CEOCHEFE · Copiloto IA"}
+                </h2>
+                <BadgeCheck size={14} className="text-emerald-400" />
+              </div>
+              <p className="flex items-center gap-1.5 text-[11px] text-emerald-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                {typing ? "digitando..." : mode === "chefe" ? "Online · resposta direta" : "Online · dados ao vivo"}
+              </p>
+            </div>
+          </header>
 
-        {/* Sugestões rápidas */}
-        <div className="no-scrollbar flex gap-2 overflow-x-auto border-b border-border bg-muted/20 px-3 py-2">
-          {sugestoes.map((s) => (
-            <button
-              key={s}
-              onClick={() => send(s)}
-              className="whitespace-nowrap rounded-full border border-border px-3 py-1.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-
-        {/* Mensagens */}
-        <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-background p-4">
-          {messages.length === 0 && (
-            <p className="mt-8 text-center text-[11px] text-muted-foreground">
-              Manda sua mensagem — o CHEFE responde direto pelo painel.
-            </p>
-          )}
-          {messages.map((m) => (
-            <div key={m.id} className={`flex ${m.from === 'me' ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs leading-relaxed ${
-                  m.from === 'me'
-                    ? 'rounded-br-none bg-primary text-primary-foreground'
-                    : 'rounded-bl-none border border-border bg-card text-foreground'
+          {/* Alternador de canal (2 em 1) */}
+          <div className="flex gap-1 border-b border-border/40 bg-background/60 px-3 py-2">
+            {([
+              { id: "chefe" as const, label: "CHEFE", Icon: User },
+              { id: "ceochefe" as const, label: "CEOCHEFE", Icon: Bot },
+            ]).map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                onClick={() => setMode(id)}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition ${
+                  mode === id
+                    ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-400/40"
+                    : "text-muted-foreground hover:bg-muted/60"
                 }`}
               >
-                <p className="whitespace-pre-wrap">{m.text}</p>
-                <span className="mt-1 block text-right text-[9px] opacity-60">{m.time}</span>
-              </div>
-            </div>
-          ))}
-          {sending && tab === 'ceochefe' && (
-            <div className="flex justify-start">
-              <div className="rounded-2xl rounded-bl-none border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
-                digitando…
-              </div>
-            </div>
-          )}
-        </div>
+                <Icon size={13} />
+                {label}
+              </button>
+            ))}
+          </div>
 
-        {/* Input contextual */}
-        <div className="flex items-center gap-2 border-t border-border bg-card p-3">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && send()}
-            placeholder={
-              tab === 'chefe'
-                ? `Mensagem direta para ${profile?.username || 'o CHEFE'}...`
-                : 'Pergunte ao CEOCHEFE (fila, horários, encaixe)...'
-            }
-            className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-xs text-foreground outline-none transition-colors focus:border-primary"
-          />
-          <button
-            onClick={() => send()}
-            disabled={!input.trim() || sending}
-            aria-label="Enviar"
-            className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-primary-foreground transition-all active:scale-95 disabled:opacity-40"
+          {/* Sugestões */}
+          <div className="no-scrollbar flex gap-2 overflow-x-auto border-b border-border/40 px-3 py-2">
+            {sugestoes.map((s) => (
+              <button
+                key={s}
+                onClick={() => send(s)}
+                className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-400 transition active:scale-95"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+
+          {/* Mensagens */}
+          <div className="flex-1 space-y-2.5 overflow-y-auto px-3 py-4">
+            {messages.map((m) => (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed shadow-sm ${
+                    m.role === "user"
+                      ? "rounded-br-sm bg-primary text-primary-foreground"
+                      : "rounded-bl-sm border border-border/60 bg-muted/60 text-foreground"
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap break-words">{m.text}</p>
+                  <span className="mt-1 block text-right text-[9px] opacity-60">{m.time}</span>
+                </div>
+              </motion.div>
+            ))}
+
+            {typing && (
+              <div className="flex justify-start">
+                <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-border/60 bg-muted/60 px-4 py-3">
+                  {[0, 1, 2].map((i) => (
+                    <motion.span
+                      key={i}
+                      className="h-1.5 w-1.5 rounded-full bg-emerald-400"
+                      animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }}
+                      transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div ref={endRef} />
+          </div>
+
+          {/* Emojis */}
+          <AnimatePresence>
+            {showEmoji && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex flex-wrap gap-1 overflow-hidden border-t border-border/40 px-3 py-2"
+              >
+                {EMOJIS.map((e) => (
+                  <button
+                    key={e}
+                    onClick={() => setInput((v) => v + e)}
+                    className="rounded-lg px-2 py-1 text-xl transition active:scale-90 hover:bg-muted"
+                  >
+                    {e}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Composer */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void send();
+            }}
+            className="flex items-center gap-2 border-t border-border/60 bg-background/90 px-3 py-3 backdrop-blur-xl"
           >
-            <Send className="-ml-0.5 h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+            <button
+              type="button"
+              onClick={() => setShowEmoji((v) => !v)}
+              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted"
+              aria-label="Emojis"
+            >
+              <Smile size={20} />
+            </button>
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={
+                mode === "chefe" ? "Mensagem direta para o CHEFE..." : "Perguntar ao CEOCHEFE (IA)..."
+              }
+              className="flex-1 rounded-full border border-border/60 bg-muted/40 px-4 py-2.5 text-[13px] outline-none transition focus:border-emerald-400/60"
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || typing}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-500 text-black transition active:scale-95 disabled:opacity-40"
+              aria-label="Enviar mensagem"
+            >
+              <Send size={18} />
+            </button>
+          </form>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 }
