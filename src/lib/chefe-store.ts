@@ -82,7 +82,9 @@ export interface StoryInteraction {
 export interface Profile {
   username: string;
   bio: string;
+  headline: string;
   avatarUrl: string | null;
+  postsCount: string;
   cutsCount: string;
   rating: string;
   phoneOfficial: string | null;
@@ -118,8 +120,10 @@ export interface Conversation {
 const DEFAULT_PROFILE: Profile = {
   username: "Comando CHEFE",
   bio: "Barbearia de Alto Padrão · Atendimento Direto",
+  headline: "CHEFE | Barbearia & Estilo",
   avatarUrl:
     "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&auto=format&fit=crop&q=80",
+  postsCount: "128",
   cutsCount: "1.2k+",
   rating: "4.9",
   phoneOfficial: null,
@@ -256,7 +260,9 @@ function mapProfile(row: Record<string, unknown> | null): Profile {
   return {
     username: (row.username as string) ?? DEFAULT_PROFILE.username,
     bio: (row.bio as string) ?? DEFAULT_PROFILE.bio,
+    headline: (row.headline as string) ?? DEFAULT_PROFILE.headline,
     avatarUrl: (row.avatar_url as string | null) ?? DEFAULT_PROFILE.avatarUrl,
+    postsCount: (row.posts_count as string) ?? DEFAULT_PROFILE.postsCount,
     cutsCount: (row.cuts_count as string) ?? DEFAULT_PROFILE.cutsCount,
     rating: (row.rating as string) ?? DEFAULT_PROFILE.rating,
     phoneOfficial: (row.phone_official as string | null) ?? null,
@@ -273,7 +279,9 @@ function profilePatchToRow(p: Partial<Profile>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (p.username !== undefined) out.username = p.username;
   if (p.bio !== undefined) out.bio = p.bio;
+  if (p.headline !== undefined) out.headline = p.headline;
   if (p.avatarUrl !== undefined) out.avatar_url = p.avatarUrl;
+  if (p.postsCount !== undefined) out.posts_count = p.postsCount;
   if (p.cutsCount !== undefined) out.cuts_count = p.cutsCount;
   if (p.rating !== undefined) out.rating = p.rating;
   if (p.phoneOfficial !== undefined) out.phone_official = p.phoneOfficial;

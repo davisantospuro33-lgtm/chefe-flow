@@ -194,10 +194,12 @@ export type Database = {
           bio: string
           cuts_count: string
           endereco: string
+          headline: string
           id: number
           latitude: number | null
           longitude: number | null
           phone_official: string | null
+          posts_count: string
           rating: string
           service_duration_min: number
           service_price: string
@@ -210,10 +212,12 @@ export type Database = {
           bio?: string
           cuts_count?: string
           endereco?: string
+          headline?: string
           id?: number
           latitude?: number | null
           longitude?: number | null
           phone_official?: string | null
+          posts_count?: string
           rating?: string
           service_duration_min?: number
           service_price?: string
@@ -226,10 +230,12 @@ export type Database = {
           bio?: string
           cuts_count?: string
           endereco?: string
+          headline?: string
           id?: number
           latitude?: number | null
           longitude?: number | null
           phone_official?: string | null
+          posts_count?: string
           rating?: string
           service_duration_min?: number
           service_price?: string

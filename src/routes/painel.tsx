@@ -12,6 +12,7 @@ import { SortableQueue } from "@/components/chefe/SortableQueue";
 import { AgendaAdmin } from "@/components/chefe/AgendaAdmin";
 import { EmergencyBanner } from "@/components/chefe/EmergencyBanner";
 import { StoriesManager } from "@/components/chefe/StoriesManager";
+import { ThemeToggle } from "@/components/chefe/ThemeToggle";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/painel")({
@@ -70,6 +71,8 @@ function Painel() {
         <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Link>
+        <div className="flex items-center gap-2">
+        <ThemeToggle />
         <button
           onClick={() => {
             resetDemo();
@@ -79,6 +82,7 @@ function Painel() {
         >
           <RotateCcw className="h-3 w-3" /> Reset
         </button>
+        </div>
       </header>
 
       <div className="mb-6 flex items-center gap-3">
@@ -490,6 +494,13 @@ function EditorPerfil() {
             className={inputCls}
           />
         </Field>
+        <Field label="Título do perfil (headline)">
+          <input
+            value={form.headline}
+            onChange={(e) => setForm({ ...form, headline: e.target.value })}
+            className={inputCls}
+          />
+        </Field>
         <Field label="Bio">
           <textarea
             value={form.bio}
@@ -498,8 +509,15 @@ function EditorPerfil() {
             className={inputCls}
           />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Cortes realizados">
+        <div className="grid grid-cols-3 gap-3">
+          <Field label="Posts">
+            <input
+              value={form.postsCount}
+              onChange={(e) => setForm({ ...form, postsCount: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Clientes">
             <input
               value={form.cutsCount}
               onChange={(e) => setForm({ ...form, cutsCount: e.target.value })}
