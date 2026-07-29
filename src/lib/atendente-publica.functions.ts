@@ -54,40 +54,6 @@ export const atendentePublicaChat = createServerFn({ method: "POST" })
         return `${h} ${a.name} (${a.status})`;
       })
       .join(" | ") || "sem horários marcados nas próximas horas";
-
-    // ── TELA 2: leitura em tempo real ───────────────────────────────
-    const extraMinutes = (state as unknown as { extra_minutes?: number })?.extra_minutes ?? 0;
-    const duracao = profile?.service_duration_min ?? 30;
-    const aguardando = (queue?.length ?? 0) + pessoasNoSalao;
-    const esperaMin = aguardando * duracao + extraMinutes;
-    const salaoLabel =
-      pessoasNoSalao === 0 ? "TRANQUILO" : pessoasNoSalao <= 2 ? "MOVIMENTADO" : "CHEIO";
-    const proximaPosicao = (queue?.length ?? 0) + 1;
-    const filaDetalhe =
-      (queue ?? []).map((q, i) => `${i + 1}º ${q.name}`).join(", ") || "fila virtual vazia";
-
-    // Horários livres (hoje e amanhã), grade 09:00–20:00 no passo da duração
-    const ocupados = new Set(
-      (agenda ?? [])
-        .filter((a) => a.status !== "cancelado")
-        .map((a) => new Date(a.scheduled_at).getTime()),
-    );
-    const slotsLivres: string[] = [];
-    for (let d = 0; d < 2 && slotsLivres.length < 12; d++) {
-      const base = new Date();
-      base.setDate(base.getDate() + d);
-      for (let min = 9 * 60; min <= 20 * 60; min += duracao) {
-        const slot = new Date(base);
-        slot.setHours(Math.floor(min / 60), min % 60, 0, 0);
-        if (slot.getTime() < Date.now() + 30 * 60_000) continue;
-        if (ocupados.has(slot.getTime())) continue;
-        slotsLivres.push(
-          `${d === 0 ? "hoje" : "amanhã"} ${slot.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`,
-        );
-        if (slotsLivres.length >= 12) break;
-      }
-    }
-    const slotsStr = slotsLivres.join(" | ") || "sem vagas livres na grade das próximas 48h";
     const distStr =
       typeof data.distanceKm === "number" && Number.isFinite(data.distanceKm)
         ? data.distanceKm.toFixed(1)
@@ -169,7 +135,7 @@ export const atendentePublicaChat = createServerFn({ method: "POST" })
       }),
     };
 
-    const system = `Você é o CEOCHEFE — RECEPCIONISTA DE ELITE da barbearia CHEFE. Direto, objetivo, prestativo e cirúrgico. Fale sempre em português brasileiro, 2-4 frases por resposta, emojis com moderação. Você NÃO envia avisos por conta própria: só responde com precisão quando consultado.
+    const system = `Você é a ATENDENTE VIRTUAL ESPECIALISTA da barbearia CHEFE — assessora simpática, humana, com lábia refinada, postura profissional e autonomia para consultar em tempo real o movimento da casa. Fale sempre em português brasileiro. Seja curta e direta (2-4 frases por resposta, use emojis com moderação).
 
 ━━━ DIRETRIZES DA OPERAÇÃO ENVIADAS PELO CHEFE AO VIVO ━━━
 Instrução atual do CHEFE: ${instrucoes || "(nenhuma ordem específica no momento — atenda com o padrão de excelência)"}
@@ -182,19 +148,6 @@ FRENTE 3 (Fila Presencial no Salão — chefe_status_salao): ${pessoasNoSalao} p
 Total geral aguardando (virtual + presencial + no salão): ${filaTotal + pessoasNoSalao}.
 Preço do corte: ${profile?.service_price ?? "R$ 25,00"}
 Duração média: ${profile?.service_duration_min ?? 30} min
-
-━━━ TELA 2 AO VIVO (use estes números, nunca invente) ━━━
-NO SALÃO AGORA: ${salaoLabel} — ${pessoasNoSalao} cliente(s) na fila presencial.
-ENCAIXE VIRTUAL: ${filaDetalhe}. Quem entrar agora fica na posição ${proximaPosicao}º.
-TEMPO ESTIMADO DE ESPERA: ~${esperaMin} min (${aguardando} aguardando × ${duracao} min + ${extraMinutes} min de ajuste lançado pelo CHEFE no painel).
-AGENDA — HORÁRIOS DISPONÍVEIS: ${slotsStr}.
-
-REGRAS DE ATENDIMENTO:
-• "Como está o salão?" → responda o status (${salaoLabel}), quantas pessoas e o tempo estimado.
-• "Quero entrar na fila / encaixe" → faça a triagem e, ao completar os dados, chame realizarCheckin e confirme a posição ${proximaPosicao}º e o tempo estimado.
-• "Garantir vaga / horários" → liste no máximo 4 opções da AGENDA acima e peça a escolha antes de seguir com a triagem.
-• O tempo estimado sempre deriva dos comandos do CHEFE no painel (corte iniciado/finalizado e ajuste de +10 min). Nunca chute outro número.
-• Se o cliente quiser papo/resenha direta com o profissional, ofereça claramente falar direto com o CHEFE e chame alertarChefeEmergencia com o resumo.
 
 ━━━ SENSORES DE LOCALIZAÇÃO DO CLIENTE ━━━
 Distância do cliente até o salão: ${distStr} km.

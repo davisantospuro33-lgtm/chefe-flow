@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, X, Send } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type Alerta = {
@@ -11,14 +11,10 @@ type Alerta = {
 };
 
 type QuickReply = { action: string; tag: string | null; ts: number };
-type DM = { from: "cliente" | "chefe"; text: string; ts: number };
 
 export function EmergencyBanner() {
   const [alertas, setAlertas] = useState<Alerta[]>([]);
   const [replies, setReplies] = useState<QuickReply[]>([]);
-  const [dms, setDms] = useState<DM[]>([]);
-  const [dmInput, setDmInput] = useState("");
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
     const ch = supabase.channel("painel_operacao");
@@ -48,36 +44,13 @@ export function EmergencyBanner() {
       const p = msg.payload as QuickReply;
       setReplies((r) => [p, ...r].slice(0, 6));
     });
-    ch.on("broadcast", { event: "dm-cliente" }, (msg) => {
-      const p = msg.payload as { text?: string; ts?: number };
-      if (!p?.text) return;
-      setDms((d) => [...d, { from: "cliente" as const, text: p.text as string, ts: p.ts ?? Date.now() }].slice(-30));
-    });
     ch.subscribe();
-    channelRef.current = ch;
     return () => {
-      channelRef.current = null;
       supabase.removeChannel(ch);
     };
   }, []);
 
-  const enviarDm = async () => {
-    const text = dmInput.trim();
-    if (!text) return;
-    setDmInput("");
-    setDms((d) => [...d, { from: "chefe" as const, text, ts: Date.now() }].slice(-30));
-    try {
-      await channelRef.current?.send({
-        type: "broadcast",
-        event: "dm-chefe",
-        payload: { text, ts: Date.now() },
-      });
-    } catch {
-      /* ignore */
-    }
-  };
-
-  if (alertas.length === 0 && replies.length === 0 && dms.length === 0) return null;
+  if (alertas.length === 0 && replies.length === 0) return null;
 
   return (
     <section className="mb-4 space-y-2">
@@ -140,53 +113,6 @@ export function EmergencyBanner() {
               </li>
             ))}
           </ul>
-        </div>
-      )}
-      {dms.length > 0 && (
-        <div className="rounded-2xl glass p-3">
-          <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-emerald-300">
-            💬 Conversa direta com cliente (chat da Tela 1)
-          </p>
-          <div className="max-h-48 space-y-1.5 overflow-y-auto">
-            {dms.map((d, i) => (
-              <div
-                key={d.ts + "-" + i}
-                className={`flex ${d.from === "chefe" ? "justify-end" : "justify-start"}`}
-              >
-                <span
-                  className={`max-w-[80%] rounded-xl px-2.5 py-1.5 text-[11px] ${
-                    d.from === "chefe"
-                      ? "bg-emerald-500 text-black"
-                      : "bg-white/[0.06] text-foreground"
-                  }`}
-                >
-                  {d.text}
-                </span>
-              </div>
-            ))}
-          </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void enviarDm();
-            }}
-            className="mt-2 flex items-center gap-2"
-          >
-            <input
-              value={dmInput}
-              onChange={(e) => setDmInput(e.target.value)}
-              placeholder="Responder o cliente..."
-              className="flex-1 rounded-full border border-border/60 bg-background/60 px-3 py-2 text-[11px] outline-none focus:border-emerald-400/60"
-            />
-            <button
-              type="submit"
-              disabled={!dmInput.trim()}
-              className="grid h-8 w-8 place-items-center rounded-full bg-emerald-500 text-black disabled:opacity-40"
-              aria-label="Enviar resposta"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          </form>
         </div>
       )}
     </section>
