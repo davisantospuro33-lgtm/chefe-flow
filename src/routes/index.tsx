@@ -17,7 +17,6 @@ import { Manifesto } from '@/components/chefe/Manifesto'
 import { InstallBanner } from '@/components/chefe/InstallBanner'
 import { ShareButton } from '@/components/chefe/ShareButton'
 import { ThemeToggle } from '@/components/chefe/ThemeToggle'
-import { CheeefAI } from '@/components/chefe/CheeefAI'
 import { Reviews } from '@/components/chefe/Reviews'
 import { useChefeStore } from '@/lib/chefe-store'
 import { TelaPerfilFeed } from '@/components/chefe/TelaPerfilFeed'
@@ -40,6 +39,7 @@ function Index() {
   const stories = useChefeStore((s) => s.stories)
   const profile = useChefeStore((s) => s.profile)
   const [storiesOpen, setStoriesOpen] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
 
   return (
     <main className="relative mx-auto min-h-screen max-w-md bg-background pb-20 text-foreground shadow-2xl">
@@ -47,13 +47,14 @@ function Index() {
 
       {/* TELA 1 COMPLETA E REESTRUTURADA */}
       <TelaPerfilFeed
-        headerActions={
-          <>
-            <ThemeToggle />
-            <ShareButton />
-          </>
-        }
+        onOpenChat={() => setChatOpen(true)}
+        onOpenStories={() => setStoriesOpen(true)}
       />
+
+      <div className="absolute right-4 top-3 z-30 flex items-center gap-2">
+        <ThemeToggle />
+        <ShareButton />
+      </div>
 
       {/* Avatar de status dinâmico */}
       <div className="relative z-10 -mt-4 px-4">
@@ -64,13 +65,13 @@ function Index() {
         <ServiceCard />
       </div>
 
-      <div className="relative z-10 mt-4 px-4">
-        <SalonInfo />
-      </div>
-
       {/* CARROSSEL DE POSTS E REELS - VINCULADO AO PAINEL DO CHEFE */}
       <div className="relative z-10 mt-4 px-4">
         <PostsReelsCarousel />
+      </div>
+
+      <div className="relative z-10 mt-4 px-4">
+        <SalonInfo />
       </div>
 
       <div className="relative z-10 mt-4 px-4">
@@ -124,7 +125,7 @@ function Index() {
       </div>
 
       {/* CHAT FLUTUANTE CEOCHEFE / PAINEL DE ATENDIMENTO */}
-      <CEOChefeChat />
+      <CEOChefeChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />
 
       <footer className="relative z-10 mt-10 pb-6 text-center text-xs text-muted-foreground">
         Powered by <span className="text-gradient font-bold">CHEFE AI</span>

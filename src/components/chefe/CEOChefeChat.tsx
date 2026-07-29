@@ -1,149 +1,254 @@
-import React, { useState } from 'react';
-import { Send, X, Sparkles, Image as ImageIcon } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react'
+import { Send, X, Bot, User, Check } from 'lucide-react'
+import { useServerFn } from '@tanstack/react-start'
+import { supabase } from '@/integrations/supabase/client'
+import { useChefeStore } from '@/lib/chefe-store'
+import { atendentePublicaChat } from '@/lib/atendente-publica.functions'
+
+type Tab = 'chefe' | 'ceochefe'
+type Msg = { id: string; from: 'me' | 'them'; text: string; time: string }
+
+const hora = () =>
+  new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 
 interface CEOChefeChatProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
 export const CEOChefeChat: React.FC<CEOChefeChatProps> = ({ isOpen, onClose }) => {
-  const [messages, setMessages] = useState([
+  const profile = useChefeStore((s) => s.profile)
+  const status = useChefeStore((s) => s.status)
+  const distanceKm = useChefeStore((s) => s.distanceKm)
+  const chatAI = useServerFn(atendentePublicaChat)
+
+  const [tab, setTab] = useState<Tab>('chefe')
+  const [input, setInput] = useState('')
+  const [sending, setSending] = useState(false)
+  const [chefeMsgs, setChefeMsgs] = useState<Msg[]>([])
+  const [aiMsgs, setAiMsgs] = useState<Msg[]>([
     {
-      id: 1,
-      sender: 'ceochefe',
-      text: 'Salve! Aqui é o CEOCHEFE 🤝 Consulto o salão em tempo real: status da casa, encaixe virtual, horários da agenda e tempo de espera. O que você precisa?',
-      time: '13:45'
+      id: 'greet',
+      from: 'them',
+      text:
+        profile?.aiGreeting ||
+        'Salve! Aqui é o CEOCHEFE 🤝 Consulto o salão em tempo real: fila, encaixe, horários e tempo de espera. O que você precisa?',
+      time: hora(),
+    },
+  ])
+
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+
+  // Canal em tempo real com o Painel de Controle
+  useEffect(() => {
+    if (!isOpen) return
+    const ch = supabase.channel('painel_operacao')
+    ch.on('broadcast', { event: 'dm-chefe' }, (msg) => {
+      const text = (msg.payload as { text?: string })?.text
+      if (!text) return
+      setChefeMsgs((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), from: 'them', text, time: hora() },
+      ])
+    })
+    ch.subscribe()
+    channelRef.current = ch
+    return () => {
+      supabase.removeChannel(ch)
+      channelRef.current = null
     }
-  ]);
-  const [inputText, setInputText] = useState('');
+  }, [isOpen])
 
-  if (!isOpen) return null;
+  const messages = tab === 'chefe' ? chefeMsgs : aiMsgs
 
-  const handleSend = (textToSend?: string) => {
-    const text = textToSend || inputText;
-    if (!text.trim()) return;
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages.length, tab])
 
-    const userMsg = {
-      id: Date.now(),
-      sender: 'user',
-      text: text,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+  if (!isOpen) return null
 
-    setMessages(prev => [...prev, userMsg]);
-    if (!textToSend) setInputText('');
+  const send = async (preset?: string) => {
+    const text = (preset ?? input).trim()
+    if (!text || sending) return
+    if (!preset) setInput('')
 
-    // Resposta inteligente do CEOCHEFE integrada ao painel
-    setTimeout(() => {
-      let botResponse = "Entendido! Puxando dados do painel do salão...";
-      
-      const lower = text.toLowerCase();
-      if (lower.includes('como está o salão') || lower.includes('fila')) {
-        botResponse = "🟢 Status atualizado do Painel: Salão tranquilo. 0 pessoas na fila presencial. Pode colar!";
-      } else if (lower.includes('encaixe') || lower.includes('fila de encaixe')) {
-        botResponse = "⚡ Encaixe Virtual liberado! Zero espera. Clique no botão de encaixe na tela principal para garantir sua senha.";
-      } else if (lower.includes('horário') || lower.includes('agenda')) {
-        botResponse = "📅 A agenda de hoje possui vagas abertas nos horários das 14:30, 16:00 e 18:30.";
-      }
+    const mine: Msg = { id: crypto.randomUUID(), from: 'me', text, time: hora() }
 
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        sender: 'ceochefe',
-        text: botResponse,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
-    }, 800);
-  };
+    if (tab === 'chefe') {
+      setChefeMsgs((prev) => [...prev, mine])
+      await channelRef.current?.send({
+        type: 'broadcast',
+        event: 'dm-cliente',
+        payload: { text, at: Date.now() },
+      })
+      return
+    }
+
+    const history = [...aiMsgs, mine]
+    setAiMsgs(history)
+    setSending(true)
+    try {
+      const res = (await chatAI({
+        data: {
+          messages: history.map((m) => ({
+            role: m.from === 'me' ? ('user' as const) : ('assistant' as const),
+            content: m.text,
+          })),
+          distanceKm,
+          durationMin: profile?.serviceDurationMin ?? null,
+        },
+      })) as { text?: string } | string
+      const reply = typeof res === 'string' ? res : (res?.text ?? 'Não consegui responder agora.')
+      setAiMsgs((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), from: 'them', text: reply, time: hora() },
+      ])
+    } catch {
+      setAiMsgs((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          from: 'them',
+          text: 'Falha ao consultar o painel agora. Tenta de novo em instantes.',
+          time: hora(),
+        },
+      ])
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const sugestoes =
+    tab === 'ceochefe'
+      ? ['Como está o salão agora?', 'Quero entrar no encaixe', 'Ver horários disponíveis']
+      : ['Salve CHEFE, tem vaga agora?', 'Quanto tempo de espera?', 'Quero marcar um horário']
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end sm:items-center sm:justify-center p-0 sm:p-4 animate-fadeIn">
-      <div className="w-full sm:max-w-md h-[90vh] sm:h-[600px] bg-[#0b0f19] border border-white/10 rounded-t-3xl sm:rounded-3xl flex flex-col shadow-2xl overflow-hidden">
-        
-        {/* HEADER DO CHAT HÍBRIDO */}
-        <div className="p-4 bg-white/[0.03] border-b border-white/10 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4">
+      <div className="flex h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:h-[620px] sm:max-w-md sm:rounded-3xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border bg-muted/40 p-3">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <img 
-                src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=100" 
-                alt="CEOCHEFE" 
-                className="w-10 h-10 rounded-full object-cover border border-emerald-500/40"
-              />
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0b0f19] rounded-full"></span>
+              {profile?.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl}
+                  alt={profile.username}
+                  className="h-10 w-10 rounded-full border border-primary/40 object-cover"
+                />
+              ) : (
+                <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary">
+                  {tab === 'chefe' ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
+                </div>
+              )}
+              <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card bg-emerald-500" />
             </div>
             <div>
-              <div className="font-bold text-sm text-white flex items-center gap-1.5">
-                CEOCHEFE <span className="bg-emerald-500/20 text-emerald-400 text-[9px] px-1.5 py-0.2 rounded font-mono">IA ELITE</span>
-              </div>
-              <div className="text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Online • Sincronizado ao Painel
-              </div>
+              <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+                {tab === 'chefe' ? profile?.username || 'CHEFE' : 'CEOCHEFE'}
+                <Check className="h-3 w-3 text-primary" />
+              </p>
+              <p className="text-[11px] font-medium text-emerald-500">
+                {tab === 'chefe'
+                  ? `Online • ${status}`
+                  : 'Copiloto IA • Sincronizado ao Painel'}
+              </p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
-            <X className="w-4 h-4" />
+          <button
+            onClick={onClose}
+            aria-label="Fechar chat"
+            className="grid h-8 w-8 place-items-center rounded-full bg-muted text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* SUGESTÕES RÁPIDAS DE ATENDIMENTO */}
-        <div className="px-4 py-2.5 bg-black/30 border-b border-white/5 flex gap-2 overflow-x-auto scrollbar-none">
-          <button 
-            onClick={() => handleSend("Como está o salão agora?")}
-            className="text-[11px] bg-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/30 border border-white/10 px-3 py-1.5 rounded-full text-gray-300 whitespace-nowrap transition-all"
-          >
-            📊 Como está o salão agora?
-          </button>
-          <button 
-            onClick={() => handleSend("Quero entrar no encaixe")}
-            className="text-[11px] bg-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/30 border border-white/10 px-3 py-1.5 rounded-full text-gray-300 whitespace-nowrap transition-all"
-          >
-            ⚡ Quero entrar no encaixe
-          </button>
-          <button 
-            onClick={() => handleSend("Ver horários disponíveis")}
-            className="text-[11px] bg-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/30 border border-white/10 px-3 py-1.5 rounded-full text-gray-300 whitespace-nowrap transition-all"
-          >
-            📅 Ver horários disponíveis
-          </button>
-        </div>
-
-        {/* CORPO DE MENSAGENS */}
-        <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-[#070a12]">
-          {messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] p-3 rounded-2xl text-xs leading-relaxed ${
-                msg.sender === 'user' 
-                  ? 'bg-emerald-600 text-white rounded-br-none shadow-md shadow-emerald-600/10' 
-                  : 'bg-white/10 text-gray-200 rounded-bl-none border border-white/5'
-              }`}>
-                <p>{msg.text}</p>
-                <span className="text-[9px] opacity-60 block text-right mt-1 font-mono">{msg.time}</span>
-              </div>
-            </div>
+        {/* Tabs de contexto */}
+        <div className="flex gap-1 border-b border-border bg-background/60 p-1.5">
+          {(['chefe', 'ceochefe'] as Tab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-[11px] font-bold uppercase tracking-wide transition-all ${
+                tab === t
+                  ? 'bg-primary text-primary-foreground shadow'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {t === 'chefe' ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+              {t === 'chefe' ? 'CHEFE' : 'CEOCHEFE'}
+            </button>
           ))}
         </div>
 
-        {/* INPUT DE MENSAGEM */}
-        <div className="p-3 bg-white/[0.02] border-t border-white/10 flex items-center gap-2">
-          <button className="text-gray-400 hover:text-white p-2 transition-colors">
-            <ImageIcon className="w-5 h-5" />
-          </button>
-          <input 
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Mensagem para o CEOCHEFE ou o Barbeiro..."
-            className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-          />
-          <button 
-            onClick={() => handleSend()}
-            className="w-10 h-10 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black flex items-center justify-center transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
-          >
-            <Send className="w-4 h-4 -ml-0.5" />
-          </button>
+        {/* Sugestões rápidas */}
+        <div className="no-scrollbar flex gap-2 overflow-x-auto border-b border-border bg-muted/20 px-3 py-2">
+          {sugestoes.map((s) => (
+            <button
+              key={s}
+              onClick={() => send(s)}
+              className="whitespace-nowrap rounded-full border border-border px-3 py-1.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+            >
+              {s}
+            </button>
+          ))}
         </div>
 
+        {/* Mensagens */}
+        <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-background p-4">
+          {messages.length === 0 && (
+            <p className="mt-8 text-center text-[11px] text-muted-foreground">
+              Manda sua mensagem — o CHEFE responde direto pelo painel.
+            </p>
+          )}
+          {messages.map((m) => (
+            <div key={m.id} className={`flex ${m.from === 'me' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs leading-relaxed ${
+                  m.from === 'me'
+                    ? 'rounded-br-none bg-primary text-primary-foreground'
+                    : 'rounded-bl-none border border-border bg-card text-foreground'
+                }`}
+              >
+                <p className="whitespace-pre-wrap">{m.text}</p>
+                <span className="mt-1 block text-right text-[9px] opacity-60">{m.time}</span>
+              </div>
+            </div>
+          ))}
+          {sending && tab === 'ceochefe' && (
+            <div className="flex justify-start">
+              <div className="rounded-2xl rounded-bl-none border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
+                digitando…
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Input contextual */}
+        <div className="flex items-center gap-2 border-t border-border bg-card p-3">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && send()}
+            placeholder={
+              tab === 'chefe'
+                ? `Mensagem direta para ${profile?.username || 'o CHEFE'}...`
+                : 'Pergunte ao CEOCHEFE (fila, horários, encaixe)...'
+            }
+            className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-xs text-foreground outline-none transition-colors focus:border-primary"
+          />
+          <button
+            onClick={() => send()}
+            disabled={!input.trim() || sending}
+            aria-label="Enviar"
+            className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-primary-foreground transition-all active:scale-95 disabled:opacity-40"
+          >
+            <Send className="-ml-0.5 h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
-  );
-};
+  )
+}
