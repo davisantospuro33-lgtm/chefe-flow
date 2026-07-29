@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { useChefeStore, Type Story } from "@/lib/chefeStore"; // Mantendo seu import original
+import { useChefeStore } from "@/lib/chefe-store";
 import { StoriesViewer } from "./StoriesViewer";
 
 export function Highlights() {
