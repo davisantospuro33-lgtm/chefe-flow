@@ -10,7 +10,7 @@ interface ChefeHeaderProps {
 export const ChefeHeader: React.FC<ChefeHeaderProps> = ({ onOpenChat }) => {
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur border-b border-border transition-colors duration-200">
-      <h1 className="text-xl font-black tracking-wider uppercase bg-gradient-to-r from-zinc-900 via-zinc-500 to-black dark:from-white dark:via-zinc-400 dark:to-zinc-100 bg-clip-text text-transparent drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] dark:drop-shadow-[0_1px_2px_rgba(255,255,255,0.2)]">
+      <h1 className="text-xl font-black tracking-wider uppercase text-black dark:text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)] dark:drop-shadow-[0_1px_3px_rgba(255,255,255,0.3)]">
         CHEFE
       </h1>
       <div className="flex items-center gap-2">
