@@ -5,6 +5,12 @@ export const ThemeToggle = () => {
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
+    if (typeof document !== 'undefined') {
+      setIsDark(!document.documentElement.classList.contains('light'));
+    }
+  }, []);
+
+  useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle('dark', isDark);
     root.classList.toggle('light', !isDark);

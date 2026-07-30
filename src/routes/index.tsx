@@ -14,6 +14,7 @@ import { LeaveNotifier } from '@/components/chefe/LeaveNotifier'
 import { Manifesto } from '@/components/chefe/Manifesto'
 import { InstallBanner } from '@/components/chefe/InstallBanner'
 import { ShareButton } from '@/components/chefe/ShareButton'
+import { ThemeToggle } from '@/components/chefe/ThemeToggle'
 import { Reviews } from '@/components/chefe/Reviews'
 import { useChefeStore } from '@/lib/chefe-store'
 import { PostsReelsCarousel } from '@/components/chefe/PostsReelsCarousel'
@@ -44,7 +45,12 @@ function Index() {
 
       {/* 🟢 TELA 1 COMPLETA E REESTRUTURADA */}
       <TelaPerfilFeed
-        headerActions={<ShareButton />}
+        headerActions={
+          <>
+            <ThemeToggle />
+            <ShareButton />
+          </>
+        }
         mediaSlot={<PostsReelsCarousel />}
       />
       {/* Avatar de status dinâmico (Personagem Chefe Vivo) */}

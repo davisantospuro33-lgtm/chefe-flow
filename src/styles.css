@@ -202,10 +202,9 @@
     background-attachment: fixed;
   }
 
-  /* Identidade 100% monocromática: neutraliza qualquer cor residual */
-  html {
-    filter: grayscale(1);
-  }
+  /* Monocromia aplica-se apenas a fundos e textos.
+     Mídias (fotos, vídeos, avatares) e elementos funcionais
+     mantêm suas cores naturais — nenhum filtro global. */
 }
 
 @utility glass {
