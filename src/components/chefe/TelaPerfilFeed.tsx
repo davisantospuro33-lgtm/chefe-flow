@@ -1,5 +1,5 @@
 import React, { useState, type ReactNode } from 'react';
-import { MessageCircle, Sparkles, CheckCircle2 } from 'lucide-react';
+import { MessageCircle, Sparkles, BadgeCheck } from 'lucide-react';
 import { CEOChefeChat } from './CEOChefeChat';
 import { ChefeHeader } from './ChefeHeader';
 import { Highlights } from './Highlights';
