@@ -14,6 +14,8 @@ import { LeaveNotifier } from '@/components/chefe/LeaveNotifier'
 import { InstallBanner } from '@/components/chefe/InstallBanner'
 import { ShareButton } from '@/components/chefe/ShareButton'
 import { ThemeToggle } from '@/components/chefe/ThemeToggle'
+import { ChefeHeader } from '@/components/chefe/ChefeHeader'
+import { CEOChefeChat } from '@/components/chefe/CEOChefeChat'
 import { Reviews } from '@/components/chefe/Reviews'
 import { useChefeStore } from '@/lib/chefe-store'
 import { PostsReelsCarousel } from '@/components/chefe/PostsReelsCarousel'
@@ -37,34 +39,19 @@ function Index() {
   const profile = useChefeStore((s) => s.profile)
   const [storiesOpen, setStoriesOpen] = useState(false)
   const [tab, setTab] = useState<'home' | 'copiloto' | 'mapa'>('home')
+  const [chatOpen, setChatOpen] = useState(false)
 
   return (
     <main className="relative mx-auto min-h-screen w-full max-w-md bg-background pb-28 text-foreground overflow-hidden">
       <InstallBanner />
 
       {/* 🏠 TELA 1 — PERFIL & FEED */}
-      {tab === 'home' && (
-        <TelaPerfilFeed
-          headerActions={
-            <>
-              <ThemeToggle />
-              <ShareButton />
-            </>
-          }
-          mediaSlot={<PostsReelsCarousel />}
-        />
-      )}
+      {tab === 'home' && <TelaPerfilFeed mediaSlot={<PostsReelsCarousel />} />}
 
       {/* 👨‍✈️ TELA 2 — CO-PILOTO (STATUS, FILA, AGENDA, MAPA) */}
       {tab === 'copiloto' && (
         <>
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur-md">
-        <h1 className="text-xl font-black tracking-wider text-foreground">CO-PILOTO</h1>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <ShareButton />
-        </div>
-      </header>
+      <ChefeHeader onOpenChat={() => setChatOpen(true)} />
       <div className="relative z-10 mt-4 px-4">
         <StatusAvatar status="disponivel" />
       </div>
@@ -110,13 +97,7 @@ function Index() {
       {/* 📍 TELA 3 — MAPA & RASTREAMENTO */}
       {tab === 'mapa' && (
         <>
-          <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur-md">
-            <h1 className="text-xl font-black tracking-wider text-foreground">TRAJETO</h1>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <ShareButton />
-            </div>
-          </header>
+          <ChefeHeader onOpenChat={() => setChatOpen(true)} />
 
           <div className="relative z-10 mt-4 px-4">
             <AIAlertBox />
@@ -169,6 +150,8 @@ function Index() {
         open={storiesOpen}
         onClose={() => setStoriesOpen(false)}
       />
+
+      <CEOChefeChat open={chatOpen} onClose={() => setChatOpen(false)} />
     </main>
   )
 }
