@@ -34,7 +34,6 @@ export const Route = createFileRoute('/')({
 
 function Index() {
   const stories = useChefeStore((s) => s.stories)
-  const profile = useChefeStore((s) => s.profile)
   const [storiesOpen, setStoriesOpen] = useState(false)
   const [tab, setTab] = useState<'home' | 'copiloto' | 'mapa'>('home')
   const [chatOpen, setChatOpen] = useState(false)
