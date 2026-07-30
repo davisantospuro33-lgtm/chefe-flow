@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Calendar, Home, UserRoundCog } from 'lucide-react'
+import { Calendar, Home, UserRoundCog, MapPin } from 'lucide-react'
 import { GradientAvatar } from '@/components/chefe/GradientAvatar'
 import { StatusAvatar } from '@/components/chefe/StatusAvatar'
 import { StoriesViewer } from '@/components/chefe/StoriesViewer'
@@ -37,7 +37,7 @@ function Index() {
   const stories = useChefeStore((s) => s.stories)
   const profile = useChefeStore((s) => s.profile)
   const [storiesOpen, setStoriesOpen] = useState(false)
-  const [tab, setTab] = useState<'home' | 'copiloto'>('home')
+  const [tab, setTab] = useState<'home' | 'copiloto' | 'mapa'>('home')
 
   return (
     <main className="relative mx-auto min-h-screen w-full max-w-md bg-background pb-28 text-foreground overflow-hidden">
@@ -98,26 +98,6 @@ function Index() {
         </button>
       </div>
 
-      <div className="relative z-10 mt-3 px-4">
-        <AIAlertBox />
-      </div>
-
-      <LeaveNotifier />
-
-      <div className="relative z-10 mt-3 px-4">
-        <ProgressTracker />
-      </div>
-
-      <div className="relative z-10 mt-4 px-4">
-        <SalonMap />
-      </div>
-
-      <div className="relative z-10 mt-6 px-4">
-        <Manifesto />
-      </div>
-
-    
-
       <div className="relative z-10 mt-6 px-4">
         <Reviews />
       </div>
@@ -128,26 +108,59 @@ function Index() {
         </>
       )}
 
+      {/* 📍 TELA 3 — MAPA & RASTREAMENTO */}
+      {tab === 'mapa' && (
+        <>
+          <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur-md">
+            <h1 className="text-xl font-black tracking-wider text-foreground">TRAJETO</h1>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <ShareButton />
+            </div>
+          </header>
+
+          <div className="relative z-10 mt-4 px-4">
+            <AIAlertBox />
+          </div>
+
+          <LeaveNotifier />
+
+          <div className="relative z-10 mt-3 px-4">
+            <ProgressTracker />
+          </div>
+
+          <div className="relative z-10 mt-4 px-4">
+            <SalonMap />
+          </div>
+        </>
+      )}
+
       {/* BARRA DE NAVEGAÇÃO ESTILO INSTAGRAM */}
       <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-md -translate-x-1/2 border-t border-border bg-background/95 backdrop-blur-md">
-        <div className="grid grid-cols-2">
+        <div className="grid grid-cols-3">
           <button
             onClick={() => setTab('home')}
             aria-label="Perfil e Feed"
             aria-current={tab === 'home'}
-            className={`flex flex-col items-center gap-0.5 py-3 transition-opacity ${tab === 'home' ? 'text-foreground' : 'text-muted-foreground opacity-60'}`}
+            className={`flex items-center justify-center py-4 transition-opacity ${tab === 'home' ? 'text-foreground' : 'text-muted-foreground opacity-60'}`}
           >
-            <Home size={22} strokeWidth={tab === 'home' ? 2.6 : 2} />
-            <span className="text-[9px] font-bold uppercase tracking-widest">Home</span>
+            <Home size={24} strokeWidth={tab === 'home' ? 2.6 : 2} />
           </button>
           <button
             onClick={() => setTab('copiloto')}
             aria-label="Co-piloto, status e fila"
             aria-current={tab === 'copiloto'}
-            className={`flex flex-col items-center gap-0.5 py-3 transition-opacity ${tab === 'copiloto' ? 'text-foreground' : 'text-muted-foreground opacity-60'}`}
+            className={`flex items-center justify-center py-4 transition-opacity ${tab === 'copiloto' ? 'text-foreground' : 'text-muted-foreground opacity-60'}`}
           >
-            <UserRoundCog size={22} strokeWidth={tab === 'copiloto' ? 2.6 : 2} />
-            <span className="text-[9px] font-bold uppercase tracking-widest">Co-piloto</span>
+            <UserRoundCog size={24} strokeWidth={tab === 'copiloto' ? 2.6 : 2} />
+          </button>
+          <button
+            onClick={() => setTab('mapa')}
+            aria-label="Mapa e trajeto ao vivo"
+            aria-current={tab === 'mapa'}
+            className={`flex items-center justify-center py-4 transition-opacity ${tab === 'mapa' ? 'text-foreground' : 'text-muted-foreground opacity-60'}`}
+          >
+            <MapPin size={24} strokeWidth={tab === 'mapa' ? 2.6 : 2} />
           </button>
         </div>
       </nav>
