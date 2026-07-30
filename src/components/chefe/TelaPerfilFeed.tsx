@@ -39,7 +39,7 @@ export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({ mediaSlot }) => 
           <div className="flex-1">
             <div className="flex items-center gap-1.5">
               <h2 className="text-lg font-bold">{profile.username}</h2>
-              <CheckCircle2 className="w-4 h-4 fill-sky-500 text-white stroke-[2.5]" title="Perfil Verificado" />
+              <BadgeCheck className="w-5 h-5 fill-[#0095F6] text-white stroke-[1.5]" title="Perfil Verificado" />
             </div>
 
             <div className="mt-2 flex gap-4 text-center text-xs">
