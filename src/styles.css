@@ -293,6 +293,20 @@
   background: var(--gradient-ig);
 }
 
+@utility logo-chefe {
+  background: linear-gradient(
+    100deg,
+    color-mix(in oklab, var(--color-foreground) 35%, var(--color-background)) 0%,
+    var(--color-foreground) 45%,
+    var(--color-foreground) 55%,
+    color-mix(in oklab, var(--color-foreground) 35%, var(--color-background)) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 1px 10px color-mix(in oklab, var(--color-foreground) 22%, transparent);
+}
+
 @utility ring-ig {
   background: var(--gradient-ig);
 }
