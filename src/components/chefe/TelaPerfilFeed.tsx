@@ -127,7 +127,7 @@ export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({
       {mediaSlot}
 
       {/* 5. BOTÃO FLUTUANTE — COPILOTO CEOCHEFE */}
-      <div className="fixed bottom-6 right-4 z-50">
+      <div className="fixed bottom-24 right-4 z-50">
         <button
           onClick={openChat}
           className="relative flex items-center justify-center rounded-full border border-border bg-foreground p-3.5 text-background shadow-2xl transition-transform active:scale-95 hover:opacity-90"
