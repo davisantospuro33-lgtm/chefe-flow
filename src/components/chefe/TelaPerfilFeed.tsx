@@ -1,6 +1,7 @@
 import React, { useState, type ReactNode } from 'react';
-import { MessageCircle, Sparkles, Send } from 'lucide-react';
+import { MessageCircle, Sparkles } from 'lucide-react';
 import { CEOChefeChat } from './CEOChefeChat';
+import { ChefeHeader } from './ChefeHeader';
 import { Highlights } from './Highlights';
 import { useChefeStore } from '@/lib/chefe-store';
 
@@ -10,10 +11,7 @@ interface TelaPerfilFeedProps {
   mediaSlot?: ReactNode;
 }
 
-export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({
-  headerActions,
-  mediaSlot,
-}) => {
+export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({ mediaSlot }) => {
   const [chatOpen, setChatOpen] = useState(false);
   const profile = useChefeStore((s) => s.profile);
   const portfolio = useChefeStore((s) => s.portfolio);
@@ -22,24 +20,8 @@ export const TelaPerfilFeed: React.FC<TelaPerfilFeedProps> = ({
 
   return (
     <div className="relative w-full font-sans text-foreground">
-      {/* 1. HEADER TOPO COM ÍCONE DE MENSAGEM (CHAT DIRETO & CEOCHEFE) */}
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur-md">
-        <h1 className="text-xl font-black tracking-wider">
-          <span className="text-foreground">CHEFE</span>
-        </h1>
-        <div className="flex items-center gap-2">
-          {headerActions}
-          <button
-            onClick={openChat}
-            className="relative rounded-full bg-muted p-2 text-foreground transition-all hover:opacity-80"
-            title="Abrir Chat & Resenha com CEOCHEFE"
-            aria-label="Abrir chat com o CEOCHEFE"
-          >
-            <Send size={20} />
-            <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-foreground ring-2 ring-background" />
-          </button>
-        </div>
-      </header>
+      {/* 1. HEADER GLOBAL */}
+      <ChefeHeader onOpenChat={openChat} />
 
       {/* 2. HEADER PERFIL (IDENTIDADE E BIO) */}
       <section className="px-4 pt-4">
