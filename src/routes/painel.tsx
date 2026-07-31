@@ -517,6 +517,32 @@ function EditorPerfil() {
             className={inputCls}
           />
         </Field>
+        <Field label="Foto da bancada / ambiente (banner da Tela 2)">
+          <div className="flex items-center gap-3">
+            <div className="h-16 w-28 shrink-0 overflow-hidden rounded-xl border border-border bg-muted/20">
+              {profile.workspacePhotoUrl && (
+                <img
+                  src={profile.workspacePhotoUrl}
+                  alt="Prévia da bancada"
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
+            <input
+              ref={workspaceInput}
+              type="file"
+              accept="image/*"
+              onChange={onWorkspaceChange}
+              className="hidden"
+            />
+            <button
+              onClick={() => workspaceInput.current?.click()}
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-ig px-3 py-1.5 text-[11px] font-bold text-white"
+            >
+              <Upload className="h-3 w-3" /> Enviar foto
+            </button>
+          </div>
+        </Field>
         <Field label="Título do perfil (headline)">
           <input
             value={form.headline}
