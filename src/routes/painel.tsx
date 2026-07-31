@@ -435,6 +435,7 @@ function EditorPerfil() {
   const [form, setForm] = useState(profile);
   useEffect(() => setForm(profile), [profile]);
   const avatarInput = useRef<HTMLInputElement>(null);
+  const workspaceInput = useRef<HTMLInputElement>(null);
 
   const onSaveProfile = async () => {
     await updateProfile(form);
@@ -458,6 +459,28 @@ function EditorPerfil() {
       toast.success("Foto atualizada");
     } catch (err) {
       toast.error("Erro ao enviar foto");
+      console.error(err);
+    }
+    e.target.value = "";
+  };
+
+  const onWorkspaceChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const path = `bancada/${crypto.randomUUID()}.${file.name.split(".").pop() || "jpg"}`;
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.storage
+        .from("chefe-media")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (error) throw error;
+      const { data: signed } = await supabase.storage
+        .from("chefe-media")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+      await updateProfile({ workspacePhotoUrl: signed?.signedUrl ?? null });
+      toast.success("Foto da bancada atualizada");
+    } catch (err) {
+      toast.error("Erro ao enviar foto da bancada");
       console.error(err);
     }
     e.target.value = "";
@@ -493,6 +516,32 @@ function EditorPerfil() {
             onChange={(e) => setForm({ ...form, username: e.target.value })}
             className={inputCls}
           />
+        </Field>
+        <Field label="Foto da bancada / ambiente (banner da Tela 2)">
+          <div className="flex items-center gap-3">
+            <div className="h-16 w-28 shrink-0 overflow-hidden rounded-xl border border-border bg-muted/20">
+              {profile.workspacePhotoUrl && (
+                <img
+                  src={profile.workspacePhotoUrl}
+                  alt="Prévia da bancada"
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
+            <input
+              ref={workspaceInput}
+              type="file"
+              accept="image/*"
+              onChange={onWorkspaceChange}
+              className="hidden"
+            />
+            <button
+              onClick={() => workspaceInput.current?.click()}
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-ig px-3 py-1.5 text-[11px] font-bold text-white"
+            >
+              <Upload className="h-3 w-3" /> Enviar foto
+            </button>
+          </div>
         </Field>
         <Field label="Título do perfil (headline)">
           <input

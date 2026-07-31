@@ -84,6 +84,7 @@ export interface Profile {
   bio: string;
   headline: string;
   avatarUrl: string | null;
+  workspacePhotoUrl: string | null;
   postsCount: string;
   cutsCount: string;
   rating: string;
@@ -93,6 +94,13 @@ export interface Profile {
   servicePrice: string;
   serviceDurationMin: number;
   aiGreeting: string;
+}
+
+export interface MainService {
+  name: string;
+  price: string;
+  duration: string;
+  hours: string;
 }
 // --- TIPOS DE CHAT E MENSAGENS ---
 export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'story_reply' | 'call_log';
@@ -123,6 +131,7 @@ const DEFAULT_PROFILE: Profile = {
   headline: "CHEFE | Barbearia & Estilo",
   avatarUrl:
     "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&auto=format&fit=crop&q=80",
+  workspacePhotoUrl: null,
   postsCount: "128",
   cutsCount: "1.2k+",
   rating: "4.9",
@@ -153,6 +162,7 @@ interface ChefeState {
   // Dados
   profile: Profile;
   queue: QueueClient[];
+  mainService: MainService;
   agenda: AgendaItem[];
   pendentes: Pendente[];
   portfolio: PortfolioItem[];
@@ -190,6 +200,7 @@ interface ChefeState {
   markAgendaNotified: (id: string) => Promise<void>;
 
   updateProfile: (patch: Partial<Profile>) => Promise<void>;
+  updateMainService: (patch: Partial<MainService>) => void;
 
   saveReview: (r: Omit<Review, "id"> & { id?: string }) => Promise<void>;
   deleteReview: (id: string) => Promise<void>;
@@ -262,6 +273,7 @@ function mapProfile(row: Record<string, unknown> | null): Profile {
     bio: (row.bio as string) ?? DEFAULT_PROFILE.bio,
     headline: (row.headline as string) ?? DEFAULT_PROFILE.headline,
     avatarUrl: (row.avatar_url as string | null) ?? DEFAULT_PROFILE.avatarUrl,
+    workspacePhotoUrl: (row.workspace_photo_url as string | null) ?? null,
     postsCount: (row.posts_count as string) ?? DEFAULT_PROFILE.postsCount,
     cutsCount: (row.cuts_count as string) ?? DEFAULT_PROFILE.cutsCount,
     rating: (row.rating as string) ?? DEFAULT_PROFILE.rating,
@@ -281,6 +293,8 @@ function profilePatchToRow(p: Partial<Profile>): Record<string, unknown> {
   if (p.bio !== undefined) out.bio = p.bio;
   if (p.headline !== undefined) out.headline = p.headline;
   if (p.avatarUrl !== undefined) out.avatar_url = p.avatarUrl;
+  if (p.workspacePhotoUrl !== undefined)
+    out.workspace_photo_url = p.workspacePhotoUrl;
   if (p.postsCount !== undefined) out.posts_count = p.postsCount;
   if (p.cutsCount !== undefined) out.cuts_count = p.cutsCount;
   if (p.rating !== undefined) out.rating = p.rating;
@@ -295,6 +309,14 @@ function profilePatchToRow(p: Partial<Profile>): Record<string, unknown> {
 }
 
 export const useChefeStore = create<ChefeState>((set, get) => ({
+  mainService: {
+    name: "Corte CHEFE",
+    price: "25,00",
+    duration: "40 min",
+    hours: "9h-20h",
+  },
+  updateMainService: (patch) =>
+    set({ mainService: { ...get().mainService, ...patch } }),
   status: "available",
   stage: 0,
   extraMinutes: 0,

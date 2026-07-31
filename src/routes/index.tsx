@@ -1,15 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Calendar, Home, UserRoundCog, MapPin } from 'lucide-react'
+import { Home, UserRoundCog, MapPin } from 'lucide-react'
 import { GradientAvatar } from '@/components/chefe/GradientAvatar'
-import { StatusAvatar } from '@/components/chefe/StatusAvatar'
+import { StatusCard } from '@/components/chefe/StatusCard'
+import { WorkspaceBanner } from '@/components/chefe/WorkspaceBanner'
+import { CopilotoGrid } from '@/components/chefe/CopilotoGrid'
 import { StoriesViewer } from '@/components/chefe/StoriesViewer'
 import { ServiceCard } from '@/components/chefe/ServiceCard'
 import { ProgressTracker } from '@/components/chefe/ProgressTracker'
 import { AIAlertBox } from '@/components/chefe/AIAlertBox'
 import { SalonMap } from '@/components/chefe/SalonMap'
-import { SalonInfo } from '@/components/chefe/SalonInfo'
-import { QueueList } from '@/components/chefe/QueueList'
 import { LeaveNotifier } from '@/components/chefe/LeaveNotifier'
 import { InstallBanner } from '@/components/chefe/InstallBanner'
 import { ChefeHeader } from '@/components/chefe/ChefeHeader'
@@ -50,35 +50,19 @@ function Index() {
         <>
       <ChefeHeader onOpenChat={() => setChatOpen(true)} />
       <div className="relative z-10 mt-4 px-4">
-        <StatusAvatar status="disponivel" />
+        <WorkspaceBanner />
       </div>
-      
+
+      <div className="relative z-10 mt-3 px-4">
+        <StatusCard />
+      </div>
+
       <div className="relative z-10 mt-4 px-4">
         <ServiceCard />
       </div>
 
-      <div className="relative z-10 mt-4 px-4 grid grid-cols-3 gap-2">
-        <SalonInfo />
-        <QueueList compact />
-        <button
-          onClick={() => alert('Selecione o dia e horário desejado no atendimento com a IA!')}
-          className="flex flex-col justify-between rounded-3xl glass-strong p-3 text-left transition-transform active:scale-95 border border-white/10"
-        >
-          <div>
-            <div className="flex items-center gap-1">
-              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600">
-                <Calendar className="h-3 w-3 text-white" />
-              </div>
-              <p className="text-[9px] font-black uppercase tracking-wider text-muted-foreground leading-tight">
-                📅 Agenda
-              </p>
-            </div>
-            <p className="mt-1 text-[10px] font-bold text-white leading-tight">Marcar Horário</p>
-          </div>
-          <span className="mt-2 w-full text-center rounded-xl bg-white/10 py-1 text-[9px] font-bold text-neon">
-            Garantir ➔
-          </span>
-        </button>
+      <div className="relative z-10 mt-4 px-4">
+        <CopilotoGrid />
       </div>
 
       <div className="relative z-10 mt-6 px-4">
