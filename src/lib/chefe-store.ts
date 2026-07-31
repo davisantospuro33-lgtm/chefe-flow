@@ -160,6 +160,7 @@ interface ChefeState {
   // Dados
   profile: Profile;
   queue: QueueClient[];
+  mainService: MainService;
   agenda: AgendaItem[];
   pendentes: Pendente[];
   portfolio: PortfolioItem[];
@@ -197,6 +198,7 @@ interface ChefeState {
   markAgendaNotified: (id: string) => Promise<void>;
 
   updateProfile: (patch: Partial<Profile>) => Promise<void>;
+  updateMainService: (patch: Partial<MainService>) => void;
 
   saveReview: (r: Omit<Review, "id"> & { id?: string }) => Promise<void>;
   deleteReview: (id: string) => Promise<void>;
