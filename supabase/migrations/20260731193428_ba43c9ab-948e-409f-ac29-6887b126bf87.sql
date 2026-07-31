@@ -1,0 +1,1 @@
+ALTER TABLE public.chefe_profile ADD COLUMN IF NOT EXISTS workspace_photo_url text;

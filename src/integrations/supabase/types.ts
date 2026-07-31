@@ -205,6 +205,7 @@ export type Database = {
           service_price: string
           updated_at: string
           username: string
+          workspace_photo_url: string | null
         }
         Insert: {
           ai_greeting?: string
@@ -223,6 +224,7 @@ export type Database = {
           service_price?: string
           updated_at?: string
           username?: string
+          workspace_photo_url?: string | null
         }
         Update: {
           ai_greeting?: string
@@ -241,6 +243,7 @@ export type Database = {
           service_price?: string
           updated_at?: string
           username?: string
+          workspace_photo_url?: string | null
         }
         Relationships: []
       }
