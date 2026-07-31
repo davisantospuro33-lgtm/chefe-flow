@@ -94,6 +94,13 @@ export interface Profile {
   serviceDurationMin: number;
   aiGreeting: string;
 }
+
+export interface MainService {
+  name: string;
+  price: string;
+  duration: string;
+  hours: string;
+}
 // --- TIPOS DE CHAT E MENSAGENS ---
 export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'story_reply' | 'call_log';
 
