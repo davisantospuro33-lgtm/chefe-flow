@@ -10,7 +10,7 @@ export function WorkspaceBanner() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-muted/20"
+      className="relative h-64 max-h-[320px] w-full overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-sm"
     >
       {url ? (
         <img
@@ -18,7 +18,7 @@ export function WorkspaceBanner() {
           alt="Bancada e ambiente da barbearia CHEFE"
           loading="lazy"
           decoding="async"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover object-center"
         />
       ) : (
         <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
