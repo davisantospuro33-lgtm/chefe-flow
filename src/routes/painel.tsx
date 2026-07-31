@@ -435,6 +435,7 @@ function EditorPerfil() {
   const [form, setForm] = useState(profile);
   useEffect(() => setForm(profile), [profile]);
   const avatarInput = useRef<HTMLInputElement>(null);
+  const workspaceInput = useRef<HTMLInputElement>(null);
 
   const onSaveProfile = async () => {
     await updateProfile(form);
@@ -458,6 +459,28 @@ function EditorPerfil() {
       toast.success("Foto atualizada");
     } catch (err) {
       toast.error("Erro ao enviar foto");
+      console.error(err);
+    }
+    e.target.value = "";
+  };
+
+  const onWorkspaceChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const path = `bancada/${crypto.randomUUID()}.${file.name.split(".").pop() || "jpg"}`;
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.storage
+        .from("chefe-media")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (error) throw error;
+      const { data: signed } = await supabase.storage
+        .from("chefe-media")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+      await updateProfile({ workspacePhotoUrl: signed?.signedUrl ?? null });
+      toast.success("Foto da bancada atualizada");
+    } catch (err) {
+      toast.error("Erro ao enviar foto da bancada");
       console.error(err);
     }
     e.target.value = "";
