@@ -304,6 +304,14 @@ function profilePatchToRow(p: Partial<Profile>): Record<string, unknown> {
 }
 
 export const useChefeStore = create<ChefeState>((set, get) => ({
+  mainService: {
+    name: "Corte CHEFE",
+    price: "25,00",
+    duration: "40 min",
+    hours: "9h-20h",
+  },
+  updateMainService: (patch) =>
+    set({ mainService: { ...get().mainService, ...patch } }),
   status: "available",
   stage: 0,
   extraMinutes: 0,
