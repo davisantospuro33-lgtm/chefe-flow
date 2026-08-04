@@ -39,9 +39,9 @@ type Tab = "operacao" | "radar" | "perfil" | "portfolio" | "stories" | "ia";
 
 const statusMeta: Record<ChefeStatus, { label: string; emoji: string }> = {
   available: { label: "Disponível", emoji: "🟢" },
-  busy: { label: "Ocupado", emoji: "🔴" },
+  busy: { label: "Atendendo", emoji: "⚫" },
   break: { label: "Pausa", emoji: "🟡" },
-  closed: { label: "Fechado", emoji: "⚫" },
+  closed: { label: "Encerrado", emoji: "🔴" },
 };
 
 function Painel() {
