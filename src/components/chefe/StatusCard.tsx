@@ -1,6 +1,5 @@
 import { useChefeStore } from "@/lib/chefe-store";
 import { Users } from "lucide-react";
-import { motion } from "framer-motion";
 
 export const STATUS_CONFIG = {
   available: {
@@ -40,7 +39,6 @@ export const STATUS_CONFIG = {
 export function StatusCard() {
   const status = useChefeStore((s) => s.status);
   const queue = useChefeStore((s) => s.queue);
-  const pessoas = useChefeStore((s) => s.pessoasNoSalao);
   const durationMin = useChefeStore((s) => s.profile.serviceDurationMin);
   const extra = useChefeStore((s) => s.extraMinutes);
   const current = STATUS_CONFIG[status] ?? STATUS_CONFIG.available;
@@ -49,56 +47,31 @@ export function StatusCard() {
 
   return (
     <section className="rounded-2xl glass-strong border border-border p-4">
-      <div className="flex flex-row items-start justify-between gap-6">
-        {/* Left column: status content */}
-        <div className="flex-1 min-w-0">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Status em tempo real
-          </p>
-          <span className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 ${current.badge}`}>
-            <span className="relative flex h-2 w-2">
-              <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${current.dot}`} />
-              <span className={`relative inline-flex h-2 w-2 rounded-full ${current.dot}`} />
-            </span>
-            <span className={`text-[10px] font-black uppercase tracking-widest ${current.text}`}>
-              {current.label}
-            </span>
-          </span>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Status em tempo real
+      </p>
+      <span className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 ${current.badge}`}>
+        <span className="relative flex h-2 w-2">
+          <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${current.dot}`} />
+          <span className={`relative inline-flex h-2 w-2 rounded-full ${current.dot}`} />
+        </span>
+        <span className={`text-[10px] font-black uppercase tracking-widest ${current.text}`}>
+          {current.label}
+        </span>
+      </span>
 
-          <h2 className="mt-2 text-lg font-black leading-tight tracking-tight text-foreground">
-            {current.title}
-          </h2>
-          <p className="mt-1 text-xs font-semibold leading-snug text-muted-foreground">
-            {current.sub}
-          </p>
+      <h2 className="mt-2 text-lg font-black leading-tight tracking-tight text-foreground">
+        {current.title}
+      </h2>
+      <p className="mt-1 text-xs font-semibold leading-snug text-muted-foreground">
+        {current.sub}
+      </p>
 
-          {status === "busy" && queue.length > 0 && (
-            <p className="mt-2 rounded-xl bg-foreground/5 px-3 py-2 text-[11px] font-bold text-foreground/80">
-              {queue.length} {queue.length === 1 ? "pessoa" : "pessoas"} na fila • Tempo estimado: {eta} min
-            </p>
-          )}
-        </div>
-
-        {/* Right column: Fila presencial - Clean floating layout */}
-        <motion.div 
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="shrink-0 text-right pt-1"
-        >
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
-            Fila presencial
-          </p>
-          <div className="flex items-baseline gap-2 justify-end">
-            <Users className="h-5 w-5 text-foreground/60" />
-            <p className="text-3xl font-black leading-none tabular-nums text-foreground">
-              {pessoas}
-            </p>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1.5">
-            {pessoas === 0 ? "Tranquilo" : pessoas === 1 ? "1 esperando" : `${pessoas} esperando`}
-          </p>
-        </motion.div>
-      </div>
+      {status === "busy" && queue.length > 0 && (
+        <p className="mt-2 rounded-xl bg-foreground/5 px-3 py-2 text-[11px] font-bold text-foreground/80">
+          {queue.length} {queue.length === 1 ? "pessoa" : "pessoas"} na fila • Tempo estimado: {eta} min
+        </p>
+      )}
     </section>
   );
 }
