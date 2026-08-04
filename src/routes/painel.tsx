@@ -282,14 +282,14 @@ function Painel() {
                 }}
                 className={`relative flex items-center gap-2 rounded-2xl px-4 py-4 text-left transition ${
                   active
-                    ? "bg-white/[0.06] ring-1 ring-neon/60"
-                    : "bg-white/[0.02] ring-1 ring-border"
+                    ? "bg-foreground/10 ring-2 ring-foreground shadow-[0_0_18px_rgba(255,255,255,0.25)]"
+                    : "bg-white/[0.02] ring-1 ring-border opacity-70"
                 }`}
               >
                 <span className="text-2xl">{meta.emoji}</span>
                 <span className="text-sm font-bold">{meta.label}</span>
                 {active && (
-                  <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-neon shadow-neon" />
+                  <span className="absolute right-3 top-3 h-2 w-2 animate-pulse rounded-full bg-foreground" />
                 )}
               </motion.button>
             );
