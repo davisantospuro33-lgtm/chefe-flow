@@ -1,5 +1,6 @@
 import { useChefeStore } from "@/lib/chefe-store";
 import { Users } from "lucide-react";
+import { motion } from "framer-motion";
 
 export const STATUS_CONFIG = {
   available: {
@@ -48,7 +49,7 @@ export function StatusCard() {
 
   return (
     <section className="rounded-2xl glass-strong border border-border p-4">
-      <div className="flex flex-row items-start justify-between gap-4">
+      <div className="flex flex-row items-start justify-between gap-6">
         {/* Left column: status content */}
         <div className="flex-1 min-w-0">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -78,17 +79,25 @@ export function StatusCard() {
           )}
         </div>
 
-        {/* Right column: No salão agora mini-card */}
-        <div className="shrink-0 text-center min-w-[110px] rounded-xl bg-secondary/40 border border-border/50 p-3">
-          <Users className="mx-auto h-4 w-4 text-foreground/80 mb-1" />
-          <p className="text-[8px] font-black uppercase tracking-wider text-muted-foreground">
-            No Salão Agora
+        {/* Right column: Fila presencial - Clean floating layout */}
+        <motion.div 
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="shrink-0 text-right pt-1"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
+            Fila presencial
           </p>
-          <p className="text-2xl font-black leading-none tabular-nums text-foreground">
-            {pessoas}
+          <div className="flex items-baseline gap-2 justify-end">
+            <Users className="h-5 w-5 text-foreground/60" />
+            <p className="text-3xl font-black leading-none tabular-nums text-foreground">
+              {pessoas}
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1.5">
+            {pessoas === 0 ? "Tranquilo" : pessoas === 1 ? "1 esperando" : `${pessoas} esperando`}
           </p>
-          <p className="text-xs text-muted-foreground">Fila presencial</p>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
