@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, Zap, Calendar } from "lucide-react";
+import { Zap, Calendar } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -9,9 +9,8 @@ import {
 import { useChefeStore } from "@/lib/chefe-store";
 import { QueueList } from "./QueueList";
 import { AgendaBooking } from "./AgendaBooking";
-import { SalonInfo } from "./SalonInfo";
 
-type Sheet = "salao" | "encaixe" | "agenda" | null;
+type Sheet = "encaixe" | "agenda" | null;
 
 export function CopilotoGrid() {
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -60,7 +59,7 @@ export function CopilotoGrid() {
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {cards.map((c) => {
           const Icon = c.icon;
           return (
@@ -93,13 +92,11 @@ export function CopilotoGrid() {
         <DrawerContent className="max-h-[88vh] overflow-y-auto">
           <DrawerHeader>
             <DrawerTitle className="text-sm font-black uppercase tracking-widest">
-              {sheet === "salao" && "No salão agora"}
               {sheet === "encaixe" && "Encaixe virtual"}
               {sheet === "agenda" && "Agenda"}
             </DrawerTitle>
           </DrawerHeader>
           <div className="px-4 pb-8">
-            {sheet === "salao" && <SalonInfo />}
             {sheet === "encaixe" && <QueueList />}
             {sheet === "agenda" && <AgendaBooking />}
           </div>
