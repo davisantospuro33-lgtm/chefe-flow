@@ -1,20 +1,14 @@
 import { useState } from "react";
 import { Zap, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 import { useChefeStore } from "@/lib/chefe-store";
 import { QueueList } from "./QueueList";
 import { AgendaBooking } from "./AgendaBooking";
 
-type Sheet = "encaixe" | "agenda" | null;
+type TabType = "encaixe" | "agenda";
 
 export function CopilotoGrid() {
-  const [sheet, setSheet] = useState<Sheet>(null);
+  const [activeTab, setActiveTab] = useState<TabType>("encaixe");
   
   const queue = useChefeStore((s) => s.queue);
   const status = useChefeStore((s) => s.status);
@@ -22,11 +16,11 @@ export function CopilotoGrid() {
   const eta = queue.length * (durationMin || 30);
   const closed = status === "closed";
 
-  const cards = [
+  const tabs = [
     {
       key: "encaixe" as const,
       icon: Zap,
-      title: "ENCAIXE VIRTUAL",
+      label: "ENCAIXE VIRTUAL",
       value: String(queue.length),
       hint: closed
         ? "Indisponível hoje"
@@ -36,85 +30,92 @@ export function CopilotoGrid() {
             : "Zero espera"
           : `Na fila • ~${eta} min`,
       disabled: closed,
-      highlight: !closed && (status === "available" || status === "busy" || status === "break"),
+      content: <QueueList />,
     },
     {
       key: "agenda" as const,
       icon: Calendar,
-      title: "AGENDA",
+      label: "AGENDA",
       value: "•",
       hint: closed ? "Marcar para amanhã" : "Marcar horário",
       disabled: false,
-      highlight: closed,
+      content: <AgendaBooking />,
     },
   ];
 
+  const activeTabData = tabs.find((t) => t.key === activeTab)!;
+
   return (
-    <>
-      <div className="grid grid-cols-2 gap-4">
-        {cards.map((c, idx) => {
-          const Icon = c.icon;
+    <div className="flex flex-col gap-4">
+      {/* Tab Navigation Header */}
+      <div className="flex items-center gap-0 rounded-2xl glass-strong border border-border overflow-hidden">
+        {tabs.map((tab, idx) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.key;
           return (
             <motion.button
-              key={c.key}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.08 * idx }}
-              whileHover={!c.disabled ? { scale: 1.02 } : {}}
-              whileTap={!c.disabled ? { scale: 0.96 } : {}}
-              disabled={c.disabled}
-              onClick={() => !c.disabled && setSheet(c.key)}
-              className={`flex flex-col rounded-2xl glass-strong border transition-all overflow-hidden ${
-                c.disabled
-                  ? "border-border opacity-40 cursor-not-allowed"
-                  : c.highlight
-                    ? "border-foreground/40 ring-2 ring-foreground/20 hover:ring-foreground/30"
-                    : "border-border hover:border-border/80"
+              key={tab.key}
+              onClick={() => !tab.disabled && setActiveTab(tab.key)}
+              disabled={tab.disabled}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 text-sm font-bold uppercase tracking-wider transition-colors relative ${
+                tab.disabled
+                  ? "opacity-40 cursor-not-allowed text-foreground/40"
+                  : isActive
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground/70"
               }`}
             >
-              {/* Top Icon Tab Header */}
-              <div className={`flex items-center justify-center w-full py-2 px-3 ${
-                c.disabled ? "bg-foreground/5" : "bg-foreground/5 hover:bg-foreground/8"
-              } transition-colors`}>
-                <Icon className={`h-5 w-5 ${c.disabled ? "text-foreground/30" : "text-foreground/60"}`} />
-              </div>
+              <Icon className="h-4 w-4" />
+              <span className="truncate">{tab.label}</span>
 
-              {/* Card Content */}
-              <div className="flex flex-col flex-1 p-3 gap-1.5">
-                {/* Title Label */}
-                <span className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  {c.title}
-                </span>
-
-                {/* Metric Counter */}
-                <span className="text-2xl font-black leading-none tabular-nums text-foreground">
-                  {c.value}
-                </span>
-
-                {/* Subtext Call-To-Action */}
-                <span className="text-xs text-muted-foreground mt-0.5">
-                  {c.hint}
-                </span>
-              </div>
+              {/* Active State Indicator Line */}
+              {isActive && (
+                <motion.div
+                  layoutId="underline"
+                  className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-foreground/40 to-foreground"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
             </motion.button>
           );
         })}
       </div>
 
-      <Drawer open={sheet !== null} onOpenChange={(o) => !o && setSheet(null)}>
-        <DrawerContent className="max-h-[88vh] overflow-y-auto">
-          <DrawerHeader>
-            <DrawerTitle className="text-sm font-black uppercase tracking-widest">
-              {sheet === "encaixe" && "Encaixe Virtual"}
-              {sheet === "agenda" && "Agenda"}
-            </DrawerTitle>
-          </DrawerHeader>
-          <div className="px-4 pb-8">
-            {sheet === "encaixe" && <QueueList />}
-            {sheet === "agenda" && <AgendaBooking />}
+      {/* Tab Content Panel */}
+      <motion.div
+        key={activeTab}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.2 }}
+        className="rounded-2xl glass-strong border border-border p-4"
+      >
+        {/* Dynamic Content Display */}
+        <div className="space-y-3">
+          {/* Title Label */}
+          <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+            {activeTabData.label}
+          </span>
+
+          {/* Metric Display */}
+          <div>
+            <span className="text-3xl font-black leading-none tabular-nums text-foreground">
+              {activeTabData.value}
+            </span>
           </div>
-        </DrawerContent>
-      </Drawer>
-    </>
+
+          {/* Subtext */}
+          <span className="text-xs text-muted-foreground block">
+            {activeTabData.hint}
+          </span>
+
+          {/* Drawer Content */}
+          <div className="mt-4 pt-3 border-t border-border/50">
+            {activeTabData.content}
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 }
