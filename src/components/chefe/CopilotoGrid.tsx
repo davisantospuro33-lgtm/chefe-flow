@@ -14,7 +14,7 @@ type Sheet = "encaixe" | "agenda" | null;
 
 export function CopilotoGrid() {
   const [sheet, setSheet] = useState<Sheet>(null);
-  const pessoas = useChefeStore((s) => s.pessoasNoSalao);
+  
   const queue = useChefeStore((s) => s.queue);
   const status = useChefeStore((s) => s.status);
   const durationMin = useChefeStore((s) => s.profile.serviceDurationMin);
@@ -22,15 +22,6 @@ export function CopilotoGrid() {
   const closed = status === "closed";
 
   const cards = [
-    {
-      key: "salao" as const,
-      icon: Users,
-      label: "No Salão Agora",
-      value: String(pessoas),
-      hint: pessoas === 0 ? "Tranquilo" : "No sofá",
-      disabled: false,
-      highlight: false,
-    },
     {
       key: "encaixe" as const,
       icon: Zap,
