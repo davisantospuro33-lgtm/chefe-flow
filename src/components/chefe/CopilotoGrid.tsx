@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Zap, Calendar } from "lucide-react";
+import { motion } from "framer-motion";
 import {
   Drawer,
   DrawerContent,
@@ -25,7 +26,6 @@ export function CopilotoGrid() {
     {
       key: "encaixe" as const,
       icon: Zap,
-      label: "Encaixe Virtual",
       value: String(queue.length),
       hint: closed
         ? "Indisponível hoje"
@@ -36,45 +36,56 @@ export function CopilotoGrid() {
           : `Na fila • ~${eta} min`,
       disabled: closed,
       highlight: !closed && (status === "available" || status === "busy" || status === "break"),
+      aria: "Encaixe Virtual",
     },
     {
       key: "agenda" as const,
       icon: Calendar,
-      label: "Agenda",
       value: "•",
       hint: closed ? "Marcar para amanhã" : "Marcar horário",
       disabled: false,
       highlight: closed,
+      aria: "Agenda",
     },
   ];
 
   return (
     <>
       <div className="grid grid-cols-2 gap-2">
-        {cards.map((c) => {
+        {cards.map((c, idx) => {
           const Icon = c.icon;
           return (
-            <button
+            <motion.button
               key={c.key}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 * idx }}
+              whileHover={!c.disabled ? { scale: 1.02 } : {}}
+              whileTap={!c.disabled ? { scale: 0.96 } : {}}
               disabled={c.disabled}
               onClick={() => !c.disabled && setSheet(c.key)}
-              className={`flex flex-col items-start gap-1 rounded-2xl glass-strong border p-3 text-left transition-transform active:scale-95 ${
+              className={`flex flex-col items-center justify-center gap-2 rounded-2xl glass-strong border p-4 transition-all ${
                 c.disabled
-                  ? "border-border opacity-40 cursor-not-allowed active:scale-100"
+                  ? "border-border opacity-40 cursor-not-allowed"
                   : c.highlight
-                    ? "border-foreground/40 ring-1 ring-foreground/30"
-                    : "border-border"
+                    ? "border-foreground/40 ring-2 ring-foreground/20 hover:ring-foreground/30"
+                    : "border-border hover:border-border/80"
               }`}
+              aria-label={c.aria}
             >
-              <Icon className="h-4 w-4 text-foreground/80" />
-              <span className="text-[9px] font-black uppercase leading-tight tracking-wider text-muted-foreground">
-                {c.label}
-              </span>
-              <span className="text-lg font-black leading-none tabular-nums text-foreground">
+              {/* Icon - Prominently Styled */}
+              <Icon className={`h-6 w-6 transition-transform ${c.disabled ? "text-foreground/40" : "text-foreground/70 group-hover:scale-110"}`} />
+              
+              {/* Metric - Big Number */}
+              <span className="text-2xl font-black leading-none tabular-nums text-foreground">
                 {c.value}
               </span>
-              <span className="text-[9px] font-semibold text-muted-foreground">{c.hint}</span>
-            </button>
+              
+              {/* Subtext - Action Label */}
+              <span className="text-[11px] font-semibold text-muted-foreground text-center">
+                {c.hint}
+              </span>
+            </motion.button>
           );
         })}
       </div>
@@ -83,7 +94,7 @@ export function CopilotoGrid() {
         <DrawerContent className="max-h-[88vh] overflow-y-auto">
           <DrawerHeader>
             <DrawerTitle className="text-sm font-black uppercase tracking-widest">
-              {sheet === "encaixe" && "Encaixe virtual"}
+              {sheet === "encaixe" && "Encaixe Virtual"}
               {sheet === "agenda" && "Agenda"}
             </DrawerTitle>
           </DrawerHeader>
