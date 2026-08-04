@@ -2,7 +2,7 @@ import { useChefeStore } from "@/lib/chefe-store";
 
 export const STATUS_CONFIG = {
   available: {
-    label: "🟢 DISPONÍVEL AGORA",
+    label: "DISPONÍVEL AGORA",
     title: "Chefe livre! Chegue e corte.",
     sub: "Atendimento imediato no salão. Sem espera.",
     dot: "bg-emerald-500",
@@ -10,15 +10,15 @@ export const STATUS_CONFIG = {
     badge: "bg-gradient-to-r from-emerald-500/20 to-emerald-400/5 ring-1 ring-emerald-500/30",
   },
   busy: {
-    label: "🔴 ATENDENDO AGORA",
+    label: "ATENDENDO AGORA",
     title: "Chefe ocupado no atendimento.",
     sub: "Atendendo cliente no momento. Acompanhe a fila virtual abaixo ou peça seu encaixe.",
-    dot: "bg-rose-500",
-    text: "text-rose-400",
-    badge: "bg-gradient-to-r from-rose-500/20 to-rose-400/5 ring-1 ring-rose-500/30",
+    dot: "bg-foreground",
+    text: "text-foreground",
+    badge: "bg-foreground/10 ring-1 ring-foreground/30",
   },
   break: {
-    label: "🟡 EM PAUSA RÁPIDA",
+    label: "EM PAUSA RÁPIDA",
     title: "Chefe deu uma pausa rápida.",
     sub: "Volto em breve (10 a 20 min). Você já pode entrar na fila ou agendar seu horário.",
     dot: "bg-amber-400",
@@ -26,12 +26,12 @@ export const STATUS_CONFIG = {
     badge: "bg-gradient-to-r from-amber-500/20 to-amber-400/5 ring-1 ring-amber-500/30",
   },
   closed: {
-    label: "⚪ EXPEDIENTE ENCERRADO",
+    label: "EXPEDIENTE ENCERRADO",
     title: "Atendimento encerrado por hoje.",
     sub: "Retornamos amanhã às 9h. Garanta o primeiro horário ou agende para amanhã.",
-    dot: "bg-muted-foreground",
-    text: "text-muted-foreground",
-    badge: "bg-foreground/5 ring-1 ring-border",
+    dot: "bg-rose-500",
+    text: "text-rose-400",
+    badge: "bg-gradient-to-r from-rose-500/20 to-rose-400/5 ring-1 ring-rose-500/30",
   },
 } as const;
 
@@ -46,6 +46,9 @@ export function StatusCard() {
 
   return (
     <section className="rounded-2xl glass-strong border border-border p-4">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Status em tempo real
+      </p>
       <span className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 ${current.badge}`}>
         <span className="relative flex h-2 w-2">
           <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${current.dot}`} />
