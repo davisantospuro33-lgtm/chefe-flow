@@ -223,8 +223,9 @@ function Painel() {
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={() => {
+                      const senha = (queue.at(-1)?.position ?? 0) + 1;
                       aceitarPendente(p.id);
-                      toast.success(`${p.name} adicionado à fila`);
+                      toast.success(`${p.name} na fila · senha nº ${senha}`);
                     }}
                     className="flex items-center justify-center gap-1 rounded-xl bg-emerald-500/15 px-2 py-2 text-[11px] font-bold text-emerald-300 ring-1 ring-emerald-400/30"
                   >
