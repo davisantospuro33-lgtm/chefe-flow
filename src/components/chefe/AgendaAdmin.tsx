@@ -1,10 +1,11 @@
-import { CalendarDays, Trash2 } from "lucide-react";
+import { CalendarDays, Trash2, Check, MessageCircle } from "lucide-react";
 import { useChefeStore } from "@/lib/chefe-store";
 import { toast } from "sonner";
 
 export function AgendaAdmin() {
   const agenda = useChefeStore((s) => s.agenda);
   const cancelAgenda = useChefeStore((s) => s.cancelAgenda);
+  const confirmAgenda = useChefeStore((s) => s.confirmAgenda);
 
   const upcoming = agenda
     .filter((a) => a.scheduledAt > Date.now() - 30 * 60_000)
@@ -43,7 +44,45 @@ export function AgendaAdmin() {
                     })}
                     {a.phone ? ` · ${a.phone}` : ""}
                   </p>
+                  <span
+                    className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      a.status === "confirmado"
+                        ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30"
+                        : "bg-amber-500/15 text-amber-300 ring-1 ring-amber-400/30"
+                    }`}
+                  >
+                    {a.status === "confirmado" ? "Confirmado" : "Pendente"}
+                  </span>
                 </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                {a.status !== "confirmado" && (
+                  <button
+                    onClick={async () => {
+                      await confirmAgenda(a.id);
+                      toast.success(`Horário de ${a.name} confirmado`);
+                    }}
+                    className="rounded-xl bg-emerald-500/15 px-2 py-1.5 text-emerald-300 ring-1 ring-emerald-400/30"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {a.phone && (
+                  <button
+                    onClick={() => {
+                      const msg = encodeURIComponent(
+                        `Fala ${a.name.split(" ")[0]}! Aqui é o CHEFE. Podemos remarcar seu horário?`,
+                      );
+                      window.open(
+                        `https://api.whatsapp.com/send?phone=${a.phone!.replace(/\D/g, "")}&text=${msg}`,
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                    }}
+                    className="rounded-xl bg-amber-500/15 px-2 py-1.5 text-amber-300 ring-1 ring-amber-400/30"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                  </button>
+                )}
                 <button
                   onClick={async () => {
                     if (!confirm(`Cancelar reserva de ${a.name}?`)) return;
@@ -54,6 +93,7 @@ export function AgendaAdmin() {
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
+                </div>
               </li>
             );
           })}
