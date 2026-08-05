@@ -151,8 +151,9 @@ export function AgendaBooking() {
           <p className="mt-2 text-xs text-muted-foreground">Marcado para</p>
           <p className="text-lg font-black text-gradient-ig">{fmtDateTime(saved.scheduledAt)}</p>
           <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
-            🤖 A IA vai avisar aqui e no seu celular o momento exato de sair pra chegar com 10 min de antecedência,
-            usando seu GPS.
+            {confirmed
+              ? "🤖 A IA vai avisar aqui e no seu celular o momento exato de sair pra chegar com 10 min de antecedência, usando seu GPS."
+              : "⏳ Sua solicitação foi enviada ao painel do CHEFE. Assim que for confirmada, o horário fica reservado automaticamente."}
           </p>
           <button
             onClick={cancel}
