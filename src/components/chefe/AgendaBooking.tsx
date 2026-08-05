@@ -125,7 +125,9 @@ export function AgendaBooking() {
   };
 
   // Se o cliente já tem reserva ativa, mostra o card de confirmação em vez do calendário
-  if (saved && agenda.some((a) => a.id === saved.id)) {
+  const mine = saved ? agenda.find((a) => a.id === saved.id) : undefined;
+  if (saved && mine) {
+    const confirmed = mine.status === "confirmado";
     return (
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -135,9 +137,13 @@ export function AgendaBooking() {
       >
         <div className="rounded-[calc(1.5rem-1.5px)] glass-strong p-5">
           <div className="mb-3 flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-emerald-300" />
-            <p className="text-[11px] font-black uppercase tracking-widest text-emerald-300">
-              Seu horário está confirmado
+            <CalendarDays className={`h-4 w-4 ${confirmed ? "text-emerald-300" : "text-amber-300"}`} />
+            <p
+              className={`text-[11px] font-black uppercase tracking-widest ${
+                confirmed ? "text-emerald-300" : "text-amber-300"
+              }`}
+            >
+              {confirmed ? "Seu horário está confirmado" : "Aguardando confirmação do CHEFE"}
             </p>
           </div>
           <p className="text-xs text-muted-foreground">Cliente</p>
@@ -145,8 +151,9 @@ export function AgendaBooking() {
           <p className="mt-2 text-xs text-muted-foreground">Marcado para</p>
           <p className="text-lg font-black text-gradient-ig">{fmtDateTime(saved.scheduledAt)}</p>
           <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
-            🤖 A IA vai avisar aqui e no seu celular o momento exato de sair pra chegar com 10 min de antecedência,
-            usando seu GPS.
+            {confirmed
+              ? "🤖 A IA vai avisar aqui e no seu celular o momento exato de sair pra chegar com 10 min de antecedência, usando seu GPS."
+              : "⏳ Sua solicitação foi enviada ao painel do CHEFE. Assim que for confirmada, o horário fica reservado automaticamente."}
           </p>
           <button
             onClick={cancel}

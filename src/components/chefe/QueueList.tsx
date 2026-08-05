@@ -1,14 +1,67 @@
-      import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useChefeStore } from "@/lib/chefe-store";
+import { toast } from "sonner";
 
 interface Props {
   compact?: boolean;
 }
 
+const ENCAIXE_KEY = "chefe.myEncaixe";
+
+type SavedEncaixe = { id: string; name: string };
+
 export function QueueList({ compact = false }: Props) {
   const queue = useChefeStore((s) => s.queue);
   const presencial = useChefeStore((s) => s.presencialCount);
+  const pendentes = useChefeStore((s) => s.pendentes);
+  const pedirEncaixe = useChefeStore((s) => s.pedirEncaixe);
   const visible = compact ? queue.slice(0, 2) : queue;
+
+  const [saved, setSaved] = useState<SavedEncaixe | null>(null);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [referencia, setReferencia] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(ENCAIXE_KEY);
+      setSaved(raw ? (JSON.parse(raw) as SavedEncaixe) : null);
+    } catch {
+      setSaved(null);
+    }
+  }, []);
+
+  const myPendente = saved ? pendentes.find((p) => p.id === saved.id) : undefined;
+  const myQueue = saved
+    ? queue.find((c) => c.name.toLowerCase() === saved.name.toLowerCase())
+    : undefined;
+  const myIndex = myQueue ? queue.findIndex((c) => c.id === myQueue.id) : -1;
+
+  const submit = async () => {
+    if (!name.trim() || !referencia.trim()) {
+      toast.error("Preencha nome e referência");
+      return;
+    }
+    setBusy(true);
+    try {
+      const created = await pedirEncaixe({ name: name.trim(), referencia: referencia.trim() });
+      if (!created) {
+        toast.error("Não foi possível enviar. Tente novamente.");
+        return;
+      }
+      const rec: SavedEncaixe = { id: created.id, name: created.name };
+      localStorage.setItem(ENCAIXE_KEY, JSON.stringify(rec));
+      setSaved(rec);
+      setOpen(false);
+      setName("");
+      setReferencia("");
+      toast.success("Pedido de encaixe enviado ao CHEFE!");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (compact) {
     return (
@@ -114,6 +167,60 @@ export function QueueList({ compact = false }: Props) {
         >
           ⚠️ +{presencial} {presencial === 1 ? "cliente presencial" : "clientes presenciais"} no balcão.
         </div>
+      )}
+
+      {/* Meu encaixe / Pedir encaixe */}
+      {myQueue ? (
+        <div className="mt-3 rounded-2xl bg-white/[0.04] p-3 ring-1 ring-white/10">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            Seu encaixe foi aceito
+          </p>
+          <p className="mt-1 text-lg font-black">Senha nº {myQueue.position}</p>
+          <p className="text-[11px] text-muted-foreground">
+            {myIndex === 0 ? "Você é o próximo!" : `${myIndex} pessoa(s) na sua frente`}
+          </p>
+        </div>
+      ) : myPendente ? (
+        <div className="mt-3 rounded-2xl bg-white/[0.04] p-3 text-center text-[11px] font-semibold text-muted-foreground ring-1 ring-white/10">
+          ⏳ Pedido enviado. Aguardando confirmação do CHEFE...
+        </div>
+      ) : open ? (
+        <div className="mt-3 space-y-2">
+          <input
+            placeholder="Seu nome"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-xl bg-white/[0.04] px-3 py-2.5 text-sm ring-1 ring-white/10 outline-none placeholder:text-muted-foreground"
+          />
+          <input
+            placeholder="Referência (ex: bairro / ponto)"
+            value={referencia}
+            onChange={(e) => setReferencia(e.target.value)}
+            className="w-full rounded-xl bg-white/[0.04] px-3 py-2.5 text-sm ring-1 ring-white/10 outline-none placeholder:text-muted-foreground"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={submit}
+              disabled={busy}
+              className="flex-1 rounded-xl bg-foreground py-2.5 text-xs font-black uppercase tracking-wider text-background disabled:opacity-50"
+            >
+              {busy ? "Enviando..." : "Enviar pedido"}
+            </button>
+            <button
+              onClick={() => setOpen(false)}
+              className="rounded-xl bg-white/[0.05] px-4 py-2.5 text-xs font-bold text-muted-foreground ring-1 ring-white/10"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="mt-3 w-full rounded-xl bg-foreground py-2.5 text-xs font-black uppercase tracking-wider text-background active:scale-95 transition-transform"
+        >
+          Pedir Encaixe ➔
+        </button>
       )}
     </div>
   );

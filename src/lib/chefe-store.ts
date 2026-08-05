@@ -190,6 +190,7 @@ interface ChefeState {
 
   aceitarPendente: (id: string) => Promise<void>;
   recusarPendente: (id: string) => Promise<void>;
+  pedirEncaixe: (input: { name: string; referencia: string }) => Promise<Pendente | null>;
 
   bookAgenda: (input: {
     name: string;
@@ -197,6 +198,7 @@ interface ChefeState {
     scheduledAt: Date;
   }) => Promise<AgendaItem | null>;
   cancelAgenda: (id: string) => Promise<void>;
+  confirmAgenda: (id: string) => Promise<void>;
   markAgendaNotified: (id: string) => Promise<void>;
 
   updateProfile: (patch: Partial<Profile>) => Promise<void>;
@@ -446,11 +448,21 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
     await supabase.from("chefe_pendentes").delete().eq("id", id);
   },
 
+  pedirEncaixe: async ({ name, referencia }) => {
+    const { data, error } = await supabase
+      .from("chefe_pendentes")
+      .insert({ name, phone: "", referencia, perfil: "encaixe", qtd: 1 })
+      .select("id,name,phone,referencia,perfil,qtd")
+      .maybeSingle();
+    if (error || !data) return null;
+    return data as Pendente;
+  },
+
   bookAgenda: async ({ name, phone, scheduledAt }) => {
     const iso = scheduledAt.toISOString();
     const { data, error } = await supabase
       .from("chefe_agenda")
-      .insert({ name, phone, scheduled_at: iso, status: "confirmado" })
+      .insert({ name, phone, scheduled_at: iso, status: "pendente" })
       .select("id,name,phone,scheduled_at,status,notified_leave")
       .maybeSingle();
     if (error || !data) return null;
@@ -458,6 +470,9 @@ export const useChefeStore = create<ChefeState>((set, get) => ({
   },
   cancelAgenda: async (id) => {
     await supabase.from("chefe_agenda").delete().eq("id", id);
+  },
+  confirmAgenda: async (id) => {
+    await supabase.from("chefe_agenda").update({ status: "confirmado" }).eq("id", id);
   },
   markAgendaNotified: async (id) => {
     await supabase.from("chefe_agenda").update({ notified_leave: true }).eq("id", id);
