@@ -18,8 +18,9 @@ import { Reviews } from '@/components/chefe/Reviews'
 import { useChefeStore } from '@/lib/chefe-store'
 import { PostsReelsCarousel } from '@/components/chefe/PostsReelsCarousel'
 import { TelaPerfilFeed } from '@/components/chefe/TelaPerfilFeed';
+import { ClientAuthGate } from '@/components/chefe/ClientAuthGate'
 export const Route = createFileRoute('/')({
-  component: Index,
+  component: IndexGated,
   head: () => ({
     meta: [
       { title: 'CHEFE · Barbearia inteligente em tempo real' },
@@ -31,6 +32,14 @@ export const Route = createFileRoute('/')({
     ],
   }),
 })
+
+function IndexGated() {
+  return (
+    <ClientAuthGate>
+      <Index />
+    </ClientAuthGate>
+  )
+}
 
 function Index() {
   const stories = useChefeStore((s) => s.stories)
