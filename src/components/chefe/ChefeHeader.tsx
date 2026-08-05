@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Send, List, Scissors, Clock, DollarSign, X } from 'lucide-react';
+import { Send, List, Scissors, Clock, DollarSign, X, LogOut } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { ShareButton } from './ShareButton';
 import { useChefeStore } from '@/lib/chefe-store';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChefeHeaderProps {
   onOpenChat: () => void;
@@ -39,6 +40,14 @@ export const ChefeHeader: React.FC<ChefeHeaderProps> = ({ onOpenChat }) => {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <ShareButton />
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="rounded-full bg-muted p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            title="Sair da conta"
+            aria-label="Sair da conta"
+          >
+            <LogOut size={18} />
+          </button>
           <button
             onClick={onOpenChat}
             className="relative rounded-full bg-muted p-2 hover:bg-accent text-foreground transition-colors"
