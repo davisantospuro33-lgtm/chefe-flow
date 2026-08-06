@@ -61,15 +61,14 @@ function AuthScreen() {
           },
         });
         if (error) throw error;
-        if (!data.session) {
-          // Conta criada mas ainda sem sessão: volta para o login.
-          setMode("login");
-          setName("");
-          setPassword("");
-          setInfo("Conta criada com sucesso! Entre com seu e-mail e senha.");
-        } else {
-          setInfo("Conta criada com sucesso!");
+        // Mesmo com confirmação automática, forçamos o fluxo explícito de login.
+        if (data.session) {
+          await supabase.auth.signOut();
         }
+        setMode("login");
+        setName("");
+        setPassword("");
+        setInfo("Cadastro realizado com sucesso. Agora faça login.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
