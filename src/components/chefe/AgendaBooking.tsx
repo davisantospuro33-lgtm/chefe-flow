@@ -38,6 +38,9 @@ function fmtDateTime(ts: number) {
 export function AgendaBooking() {
   const agenda = useChefeStore((s) => s.agenda);
   const durationMin = useChefeStore((s) => s.profile.serviceDurationMin ?? 30);
+  const queue = useChefeStore((s) => s.queue);
+  const presencial = useChefeStore((s) => s.presencialCount);
+  const extraMinutes = useChefeStore((s) => s.extraMinutes);
   const bookAgenda = useChefeStore((s) => s.bookAgenda);
   const cancelAgenda = useChefeStore((s) => s.cancelAgenda);
 
@@ -64,24 +67,38 @@ export function AgendaBooking() {
 
   const activeDay = days[dayOffset];
 
+  // Primeiro horário livre: agora + fila de encaixes (cada um consome a duração
+  // do serviço) + atrasos acumulados no painel. Recalcula em tempo real.
+  const earliestStart = useMemo(() => {
+    const load = (queue.length + presencial) * durationMin + extraMinutes;
+    return Date.now() + (load + 15) * 60 * 1000;
+  }, [queue.length, presencial, durationMin, extraMinutes]);
+
   const slots = useMemo(() => {
     const arr: Date[] = [];
-    const now = new Date();
-    for (let h = OPEN_HOUR; h < CLOSE_HOUR; h++) {
-      for (const m of [0, 30]) {
-        const slot = new Date(activeDay);
-        slot.setHours(h, m, 0, 0);
-        if (slot.getTime() < now.getTime() + 15 * 60 * 1000) continue;
-        arr.push(slot);
-      }
+    const start = new Date(activeDay);
+    start.setHours(OPEN_HOUR, 0, 0, 0);
+    const end = new Date(activeDay);
+    end.setHours(CLOSE_HOUR, 0, 0, 0);
+    // Passo = duração cadastrada no serviço (fonte única de tempo)
+    for (
+      let t = start.getTime();
+      t + durationMin * 60_000 <= end.getTime();
+      t += durationMin * 60_000
+    ) {
+      if (t < earliestStart) continue;
+      arr.push(new Date(t));
     }
     return arr;
-  }, [activeDay]);
+  }, [activeDay, durationMin, earliestStart]);
 
-  const takenSet = useMemo(
-    () => new Set(agenda.map((a) => Math.floor(a.scheduledAt / 60000))),
-    [agenda],
-  );
+  // Um horário está ocupado se colidir com qualquer reserva existente,
+  // considerando a duração do serviço.
+  const isTaken = useMemo(() => {
+    const dur = durationMin * 60_000;
+    return (start: number) =>
+      agenda.some((a) => start < a.scheduledAt + dur && a.scheduledAt < start + dur);
+  }, [agenda, durationMin]);
 
   const submit = async () => {
     if (!name.trim() || !phone.trim() || !selectedSlot) {
@@ -211,7 +228,7 @@ export function AgendaBooking() {
         <div className="grid grid-cols-4 gap-2">
           {slots.map((s) => {
             const key = Math.floor(s.getTime() / 60000);
-            const taken = takenSet.has(key);
+            const taken = isTaken(s.getTime());
             const active = selectedSlot?.getTime() === s.getTime();
             return (
               <button
