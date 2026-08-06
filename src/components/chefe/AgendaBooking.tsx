@@ -101,6 +101,7 @@ export function AgendaBooking() {
   }, [agenda, durationMin]);
 
   const submit = async () => {
+    // limpa seleção inválida
     if (!name.trim() || !phone.trim() || !selectedSlot) {
       toast.error("Preencha nome, telefone e horário");
       return;
