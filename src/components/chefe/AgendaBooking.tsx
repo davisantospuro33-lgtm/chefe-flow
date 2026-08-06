@@ -105,6 +105,11 @@ export function AgendaBooking() {
       toast.error("Preencha nome, telefone e horário");
       return;
     }
+    if (isTaken(selectedSlot.getTime()) || selectedSlot.getTime() < earliestStart) {
+      toast.error("Esse horário acabou de ser ocupado. Escolha outro.");
+      setSelectedSlot(null);
+      return;
+    }
     setBusy(true);
     try {
       const created = await bookAgenda({
