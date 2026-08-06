@@ -61,7 +61,15 @@ function AuthScreen() {
           },
         });
         if (error) throw error;
-        if (!data.session) setInfo("Confirme seu e-mail para entrar.");
+        if (!data.session) {
+          // Conta criada mas ainda sem sessão: volta para o login.
+          setMode("login");
+          setName("");
+          setPassword("");
+          setInfo("Conta criada com sucesso! Entre com seu e-mail e senha.");
+        } else {
+          setInfo("Conta criada com sucesso!");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -70,7 +78,13 @@ function AuthScreen() {
         if (error) throw error;
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível continuar.");
+      const raw = err instanceof Error ? err.message : "";
+      const msg = /already registered|User already/i.test(raw)
+        ? "Este e-mail já tem conta. Faça login."
+        : /Invalid login credentials/i.test(raw)
+          ? "E-mail ou senha incorretos."
+          : raw || "Não foi possível continuar.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
