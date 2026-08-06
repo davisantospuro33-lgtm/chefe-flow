@@ -138,6 +138,7 @@ export function AgendaBooking() {
   };
 
   const cancel = async () => {
+    void 0;
     if (!saved) return;
     if (!confirm("Cancelar sua reserva?")) return;
     await cancelAgenda(saved.id);
