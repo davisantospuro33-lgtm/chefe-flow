@@ -233,6 +233,20 @@ export function AgendaBooking() {
         </p>
       </div>
 
+      {/* Sincronização em tempo real com o Encaixe Virtual / Painel */}
+      <div className="mb-3 rounded-2xl bg-white/[0.04] px-3 py-2 ring-1 ring-white/10">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          Próximo horário livre
+        </p>
+        <p className="text-sm font-black tabular-nums">
+          {nextFree ? fmtDateTime(nextFree) : "Sem horários nos próximos 7 dias"}
+        </p>
+        <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
+          Fila: {queue.length} · Pendentes: {pendentes.length} · Presenciais: {presencial}
+          {extraMinutes > 0 ? ` · Atraso +${extraMinutes}min` : ""}
+        </p>
+      </div>
+
       {/* Day selector */}
       <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
         {days.map((d, i) => {
