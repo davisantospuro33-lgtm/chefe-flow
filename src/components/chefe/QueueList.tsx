@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChefeStore } from "@/lib/chefe-store";
 import { toast } from "sonner";
+import { useSchedule } from "@/lib/use-schedule";
 
 interface Props {
   compact?: boolean;
@@ -12,11 +13,8 @@ const ENCAIXE_KEY = "chefe.myEncaixe";
 type SavedEncaixe = { id: string; name: string };
 
 export function QueueList({ compact = false }: Props) {
-  const queue = useChefeStore((s) => s.queue);
-  const presencial = useChefeStore((s) => s.presencialCount);
-  const pendentes = useChefeStore((s) => s.pendentes);
-  const durationMin = useChefeStore((s) => s.profile.serviceDurationMin ?? 30);
-  const extraMinutes = useChefeStore((s) => s.extraMinutes);
+  const { queue, presencial, pendentes, durationMin, extraMinutes, waitMinutes } =
+    useSchedule();
   const pedirEncaixe = useChefeStore((s) => s.pedirEncaixe);
   const visible = compact ? queue.slice(0, 2) : queue;
 
@@ -118,8 +116,7 @@ export function QueueList({ compact = false }: Props) {
       </div>
 
       <p className="mb-2 text-[10px] font-semibold text-muted-foreground">
-        {durationMin}min por corte · espera estimada ~
-        {(queue.length + presencial) * durationMin + (extraMinutes || 0)} min
+        {durationMin}min por corte · espera estimada ~{waitMinutes} min
         {extraMinutes > 0 ? ` (inclui +${extraMinutes}min de atraso)` : ""}
       </p>
 

@@ -1,4 +1,5 @@
 import { useChefeStore } from "@/lib/chefe-store";
+import { useSchedule } from "@/lib/use-schedule";
 import { Users } from "lucide-react";
 
 export const STATUS_CONFIG = {
@@ -40,11 +41,8 @@ export function StatusCard() {
   const status = useChefeStore((s) => s.status);
   const queue = useChefeStore((s) => s.queue);
   const pessoas = useChefeStore((s) => s.pessoasNoSalao);
-  const durationMin = useChefeStore((s) => s.profile.serviceDurationMin);
-  const extra = useChefeStore((s) => s.extraMinutes);
   const current = STATUS_CONFIG[status] ?? STATUS_CONFIG.available;
-
-  const eta = queue.length * (durationMin || 30) + (extra || 0);
+  const { waitMinutes: eta } = useSchedule();
 
   return (
     <section className="rounded-2xl glass-strong border border-border p-4">
