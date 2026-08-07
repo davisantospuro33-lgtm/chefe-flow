@@ -1,4 +1,5 @@
 import { useChefeStore } from "@/lib/chefe-store";
+import { useSchedule } from "@/lib/use-schedule";
 import { Users } from "lucide-react";
 
 export const STATUS_CONFIG = {
