@@ -39,6 +39,7 @@ export function AgendaBooking() {
   const agenda = useChefeStore((s) => s.agenda);
   const durationMin = useChefeStore((s) => s.profile.serviceDurationMin ?? 30);
   const queue = useChefeStore((s) => s.queue);
+  const pendentes = useChefeStore((s) => s.pendentes);
   const presencial = useChefeStore((s) => s.presencialCount);
   const extraMinutes = useChefeStore((s) => s.extraMinutes);
   const bookAgenda = useChefeStore((s) => s.bookAgenda);
@@ -52,6 +53,14 @@ export function AgendaBooking() {
   const [phone, setPhone] = useState("");
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Relógio interno: revalida os horários a cada 30s para que a grade
+  // reflita o tempo real mesmo sem eventos do painel.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, []);
 
   const days = useMemo(() => {
     const arr: Date[] = [];
@@ -70,9 +79,10 @@ export function AgendaBooking() {
   // Primeiro horário livre: agora + fila de encaixes (cada um consome a duração
   // do serviço) + atrasos acumulados no painel. Recalcula em tempo real.
   const earliestStart = useMemo(() => {
-    const load = (queue.length + presencial) * durationMin + extraMinutes;
-    return Date.now() + (load + 15) * 60 * 1000;
-  }, [queue.length, presencial, durationMin, extraMinutes]);
+    const load =
+      (queue.length + presencial + pendentes.length) * durationMin + extraMinutes;
+    return now + (load + 15) * 60 * 1000;
+  }, [queue.length, pendentes.length, presencial, durationMin, extraMinutes, now]);
 
   const slots = useMemo(() => {
     const arr: Date[] = [];
@@ -99,6 +109,27 @@ export function AgendaBooking() {
     return (start: number) =>
       agenda.some((a) => start < a.scheduledAt + dur && a.scheduledAt < start + dur);
   }, [agenda, durationMin]);
+
+  const nextFree = useMemo(() => {
+    const base = new Date(earliestStart);
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(base);
+      day.setDate(base.getDate() + d);
+      const start = new Date(day);
+      start.setHours(OPEN_HOUR, 0, 0, 0);
+      const end = new Date(day);
+      end.setHours(CLOSE_HOUR, 0, 0, 0);
+      for (
+        let t = start.getTime();
+        t + durationMin * 60_000 <= end.getTime();
+        t += durationMin * 60_000
+      ) {
+        if (t < earliestStart) continue;
+        if (!isTaken(t)) return t;
+      }
+    }
+    return null;
+  }, [earliestStart, durationMin, isTaken]);
 
   const submit = async () => {
     // limpa seleção inválida
