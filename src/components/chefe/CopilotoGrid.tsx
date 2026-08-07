@@ -13,7 +13,9 @@ export function CopilotoGrid() {
   const queue = useChefeStore((s) => s.queue);
   const status = useChefeStore((s) => s.status);
   const durationMin = useChefeStore((s) => s.profile.serviceDurationMin);
-  const eta = queue.length * (durationMin || 30);
+  const presencial = useChefeStore((s) => s.presencialCount);
+  const extra = useChefeStore((s) => s.extraMinutes);
+  const eta = (queue.length + presencial) * (durationMin || 30) + (extra || 0);
   const closed = status === "closed";
 
   const tabs = [
