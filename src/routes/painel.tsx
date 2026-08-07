@@ -681,7 +681,11 @@ function EditorPerfil() {
               type="number"
               value={form.serviceDurationMin}
               onChange={(e) =>
-                setForm({ ...form, serviceDurationMin: Number(e.target.value) || 30 })
+                setForm({
+                  ...form,
+                  serviceDurationMin:
+                    Number(e.target.value) || form.serviceDurationMin,
+                })
               }
               className={inputCls}
             />
