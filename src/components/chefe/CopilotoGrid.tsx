@@ -4,18 +4,15 @@ import { motion } from "framer-motion";
 import { useChefeStore } from "@/lib/chefe-store";
 import { QueueList } from "./QueueList";
 import { AgendaBooking } from "./AgendaBooking";
+import { useSchedule } from "@/lib/use-schedule";
 
 type TabType = "encaixe" | "agenda";
 
 export function CopilotoGrid() {
   const [activeTab, setActiveTab] = useState<TabType>("encaixe");
   
-  const queue = useChefeStore((s) => s.queue);
   const status = useChefeStore((s) => s.status);
-  const durationMin = useChefeStore((s) => s.profile.serviceDurationMin);
-  const presencial = useChefeStore((s) => s.presencialCount);
-  const extra = useChefeStore((s) => s.extraMinutes);
-  const eta = (queue.length + presencial) * (durationMin || 30) + (extra || 0);
+  const { queue, waitMinutes: eta } = useSchedule();
   const closed = status === "closed";
 
   const tabs = [
