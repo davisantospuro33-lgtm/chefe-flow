@@ -4,7 +4,7 @@ import { CalendarDays, Clock, Check, Loader2, X } from "lucide-react";
 import { useChefeStore } from "@/lib/chefe-store";
 import { toast } from "sonner";
 import { subscribeToPush } from "@/lib/push-client";
-import { useSchedule, OPEN_HOUR, CLOSE_HOUR } from "@/lib/use-schedule";
+import { useSchedule } from "@/lib/use-schedule";
 
 const STORAGE_KEY = "chefe.myBooking";
 
@@ -40,6 +40,10 @@ export function AgendaBooking() {
   const cancelAgenda = useChefeStore((s) => s.cancelAgenda);
   const {
     durationMin,
+    openHour,
+    closeHour,
+    isWorkingDay,
+    slotsForDay,
     queue,
     pendentes,
     presencial,
@@ -62,33 +66,21 @@ export function AgendaBooking() {
     const arr: Date[] = [];
     const base = new Date();
     base.setHours(0, 0, 0, 0);
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 14 && arr.length < 7; i++) {
       const d = new Date(base);
       d.setDate(base.getDate() + i);
-      arr.push(d);
+      if (isWorkingDay(d)) arr.push(d);
     }
     return arr;
-  }, []);
+  }, [isWorkingDay]);
 
-  const activeDay = days[dayOffset];
+  const activeDay = days[dayOffset] ?? days[0];
 
-  const slots = useMemo(() => {
-    const arr: Date[] = [];
-    const start = new Date(activeDay);
-    start.setHours(OPEN_HOUR, 0, 0, 0);
-    const end = new Date(activeDay);
-    end.setHours(CLOSE_HOUR, 0, 0, 0);
-    // Passo = duração cadastrada no serviço (fonte única de tempo)
-    for (
-      let t = start.getTime();
-      t + durationMin * 60_000 <= end.getTime();
-      t += durationMin * 60_000
-    ) {
-      if (t < earliestStart) continue;
-      arr.push(new Date(t));
-    }
-    return arr;
-  }, [activeDay, durationMin, earliestStart]);
+  // Passo e expediente vêm exclusivamente do Serviço Principal (engrenagem única)
+  const slots = useMemo(
+    () => (activeDay ? slotsForDay(activeDay) : []),
+    [activeDay, slotsForDay],
+  );
 
   const submit = async () => {
     // limpa seleção inválida
@@ -188,7 +180,7 @@ export function AgendaBooking() {
       <div className="mb-3 flex items-center gap-2">
         <CalendarDays className="h-4 w-4 text-sky-300" />
         <p className="text-[11px] font-black uppercase tracking-widest text-sky-300">
-          Agendar horário · {durationMin}min por corte
+          Agendar horário · {durationMin}min por corte · {openHour}h às {closeHour}h
         </p>
       </div>
 
@@ -201,7 +193,7 @@ export function AgendaBooking() {
           {nextFree ? fmtDateTime(nextFree) : "Sem horários nos próximos 7 dias"}
         </p>
         <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
-          Fila: {queue.length} · Pendentes: {pendentes.length} · Presenciais: {presencial}
+          Encaixe virtual: {queue.length} · Pedidos aguardando: {pendentes.length} · Fila presencial: {presencial}
           {extraMinutes > 0 ? ` · Atraso +${extraMinutes}min` : ""}
         </p>
       </div>

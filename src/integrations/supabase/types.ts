@@ -201,7 +201,11 @@ export type Database = {
           phone_official: string | null
           posts_count: string
           rating: string
+          service_buffer_min: number
+          service_close_hour: number
+          service_days: number[]
           service_duration_min: number
+          service_open_hour: number
           service_price: string
           updated_at: string
           username: string
@@ -220,7 +224,11 @@ export type Database = {
           phone_official?: string | null
           posts_count?: string
           rating?: string
+          service_buffer_min?: number
+          service_close_hour?: number
+          service_days?: number[]
           service_duration_min?: number
+          service_open_hour?: number
           service_price?: string
           updated_at?: string
           username?: string
@@ -239,7 +247,11 @@ export type Database = {
           phone_official?: string | null
           posts_count?: string
           rating?: string
+          service_buffer_min?: number
+          service_close_hour?: number
+          service_days?: number[]
           service_duration_min?: number
+          service_open_hour?: number
           service_price?: string
           updated_at?: string
           username?: string

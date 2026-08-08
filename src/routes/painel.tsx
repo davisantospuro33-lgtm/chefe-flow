@@ -691,6 +691,75 @@ function EditorPerfil() {
             />
           </Field>
         </div>
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <Field label="Abre (h)">
+            <input
+              type="number"
+              min={0}
+              max={23}
+              value={form.serviceOpenHour}
+              onChange={(e) =>
+                setForm({ ...form, serviceOpenHour: Number(e.target.value) })
+              }
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Fecha (h)">
+            <input
+              type="number"
+              min={1}
+              max={24}
+              value={form.serviceCloseHour}
+              onChange={(e) =>
+                setForm({ ...form, serviceCloseHour: Number(e.target.value) })
+              }
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Margem entre cortes (min)">
+            <input
+              type="number"
+              min={0}
+              value={form.serviceBufferMin}
+              onChange={(e) =>
+                setForm({ ...form, serviceBufferMin: Number(e.target.value) || 0 })
+              }
+              className={inputCls}
+            />
+          </Field>
+        </div>
+        <div className="mt-3">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            Dias de funcionamento
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((label, idx) => {
+              const on = (form.serviceDays ?? []).includes(idx);
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    const cur = new Set(form.serviceDays ?? []);
+                    if (cur.has(idx)) cur.delete(idx);
+                    else cur.add(idx);
+                    setForm({
+                      ...form,
+                      serviceDays: [...cur].sort((a, b) => a - b),
+                    });
+                  }}
+                  className={`rounded-xl px-3 py-2 text-[11px] font-black uppercase tracking-wider ring-1 transition ${
+                    on
+                      ? "bg-foreground text-background ring-foreground"
+                      : "bg-transparent text-muted-foreground ring-border"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={onSaveProfile}

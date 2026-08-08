@@ -39,10 +39,16 @@ export const STATUS_CONFIG = {
 
 export function StatusCard() {
   const status = useChefeStore((s) => s.status);
-  const queue = useChefeStore((s) => s.queue);
   const pessoas = useChefeStore((s) => s.pessoasNoSalao);
   const current = STATUS_CONFIG[status] ?? STATUS_CONFIG.available;
-  const { waitMinutes: eta } = useSchedule();
+  const {
+    waitMinutes: eta,
+    queue,
+    pendentes,
+    presencial,
+    inProgress,
+    nextFree,
+  } = useSchedule();
 
   return (
     <section className="rounded-2xl glass-strong border border-border p-4">
@@ -69,9 +75,13 @@ export function StatusCard() {
             {current.sub}
           </p>
 
-          {status === "busy" && queue.length > 0 && (
+          {(queue.length > 0 || presencial > 0 || pendentes.length > 0 || inProgress) && (
             <p className="mt-2 rounded-xl bg-foreground/5 px-3 py-2 text-[11px] font-bold text-foreground/80">
-              {queue.length} {queue.length === 1 ? "pessoa" : "pessoas"} na fila • Tempo estimado: {eta} min
+              Encaixe virtual: {queue.length} • Fila presencial: {presencial}
+              {pendentes.length > 0 ? ` • Aguardando liberação: ${pendentes.length}` : ""} • Espera: ~{eta} min
+              {nextFree
+                ? ` • Próximo livre: ${new Date(nextFree).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+                : ""}
             </p>
           )}
         </div>
@@ -91,7 +101,11 @@ export function StatusCard() {
             {pessoas}
           </p>
           <p className="text-xs text-muted-foreground">
-            Tranquilo
+            {presencial + queue.length === 0
+              ? "Tranquilo"
+              : presencial + queue.length <= 2
+                ? "Movimento normal"
+                : "Movimentado"}
           </p>
         </div>
       </div>
