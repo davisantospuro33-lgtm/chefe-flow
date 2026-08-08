@@ -1,0 +1,1 @@
+update public.chefe_profile set service_duration_min = 40 where service_duration_min = 30;
