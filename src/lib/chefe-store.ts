@@ -93,6 +93,12 @@ export interface Profile {
   longitude: number | null;
   servicePrice: string;
   serviceDurationMin: number;
+  serviceOpenHour: number;
+  serviceCloseHour: number;
+  /** 0=domingo ... 6=sábado */
+  serviceDays: number[];
+  /** margem operacional entre atendimentos (min) */
+  serviceBufferMin: number;
   aiGreeting: string;
 }
 
@@ -140,6 +146,10 @@ const DEFAULT_PROFILE: Profile = {
   longitude: -46.50292,
   servicePrice: "R$ 25,00",
   serviceDurationMin: 40,
+  serviceOpenHour: 9,
+  serviceCloseHour: 20,
+  serviceDays: [0, 2, 3, 4, 5, 6],
+  serviceBufferMin: 0,
   aiGreeting:
     "Salve! Aqui é a Atendente do CHEFE. Como posso te ajudar hoje?",
 };
@@ -285,6 +295,14 @@ function mapProfile(row: Record<string, unknown> | null): Profile {
     servicePrice: (row.service_price as string) ?? DEFAULT_PROFILE.servicePrice,
     serviceDurationMin:
       (row.service_duration_min as number) ?? DEFAULT_PROFILE.serviceDurationMin,
+    serviceOpenHour:
+      (row.service_open_hour as number) ?? DEFAULT_PROFILE.serviceOpenHour,
+    serviceCloseHour:
+      (row.service_close_hour as number) ?? DEFAULT_PROFILE.serviceCloseHour,
+    serviceDays:
+      (row.service_days as number[] | null) ?? DEFAULT_PROFILE.serviceDays,
+    serviceBufferMin:
+      (row.service_buffer_min as number) ?? DEFAULT_PROFILE.serviceBufferMin,
     aiGreeting: (row.ai_greeting as string) ?? DEFAULT_PROFILE.aiGreeting,
   };
 }
@@ -306,6 +324,12 @@ function profilePatchToRow(p: Partial<Profile>): Record<string, unknown> {
   if (p.servicePrice !== undefined) out.service_price = p.servicePrice;
   if (p.serviceDurationMin !== undefined)
     out.service_duration_min = p.serviceDurationMin;
+  if (p.serviceOpenHour !== undefined) out.service_open_hour = p.serviceOpenHour;
+  if (p.serviceCloseHour !== undefined)
+    out.service_close_hour = p.serviceCloseHour;
+  if (p.serviceDays !== undefined) out.service_days = p.serviceDays;
+  if (p.serviceBufferMin !== undefined)
+    out.service_buffer_min = p.serviceBufferMin;
   if (p.aiGreeting !== undefined) out.ai_greeting = p.aiGreeting;
   return out;
 }

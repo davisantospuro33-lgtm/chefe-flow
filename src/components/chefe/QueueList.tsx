@@ -13,8 +13,17 @@ const ENCAIXE_KEY = "chefe.myEncaixe";
 type SavedEncaixe = { id: string; name: string };
 
 export function QueueList({ compact = false }: Props) {
-  const { queue, presencial, pendentes, durationMin, extraMinutes, waitMinutes } =
-    useSchedule();
+  const {
+    queue,
+    presencial,
+    pendentes,
+    durationMin,
+    extraMinutes,
+    waitMinutes,
+    etaForIndex,
+    inProgress,
+    nextFree,
+  } = useSchedule();
   const pedirEncaixe = useChefeStore((s) => s.pedirEncaixe);
   const visible = compact ? queue.slice(0, 2) : queue;
 
@@ -118,7 +127,21 @@ export function QueueList({ compact = false }: Props) {
       <p className="mb-2 text-[10px] font-semibold text-muted-foreground">
         {durationMin}min por corte · espera estimada ~{waitMinutes} min
         {extraMinutes > 0 ? ` (inclui +${extraMinutes}min de atraso)` : ""}
+        {inProgress ? " · atendimento em andamento" : ""}
       </p>
+      {nextFree && (
+        <p className="mb-2 text-[10px] font-semibold text-muted-foreground">
+          Próximo horário livre:{" "}
+          <span className="font-black text-foreground tabular-nums">
+            {new Date(nextFree).toLocaleString("pt-BR", {
+              day: "2-digit",
+              month: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+        </p>
+      )}
 
       {queue.length === 0 ? (
         <p className="rounded-2xl bg-white/[0.03] px-3 py-3 text-center text-xs text-muted-foreground">
@@ -152,9 +175,9 @@ export function QueueList({ compact = false }: Props) {
                     {c.name}
                   </span>
                 </div>
-                {i === 0 && (
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-neon">Próximo</span>
-                )}
+                <span className="text-[10px] font-bold uppercase tracking-widest text-neon">
+                  {i === 0 ? "Próximo" : `~${etaForIndex(i)} min`}
+                </span>
               </motion.li>
             ))}
           </AnimatePresence>
@@ -182,7 +205,9 @@ export function QueueList({ compact = false }: Props) {
           </p>
           <p className="mt-1 text-lg font-black">Senha nº {myQueue.position}</p>
           <p className="text-[11px] text-muted-foreground">
-            {myIndex === 0 ? "Você é o próximo!" : `${myIndex} pessoa(s) na sua frente`}
+            {myIndex === 0
+              ? "Você é o próximo!"
+              : `${myIndex} pessoa(s) na sua frente · previsão ~${etaForIndex(myIndex)} min`}
           </p>
         </div>
       ) : myPendente ? (
@@ -198,7 +223,7 @@ export function QueueList({ compact = false }: Props) {
             className="w-full rounded-xl bg-white/[0.04] px-3 py-2.5 text-sm ring-1 ring-white/10 outline-none placeholder:text-muted-foreground"
           />
           <input
-            placeholder="Referência (ex: bairro / ponto)"
+            placeholder="Apelido e referência"
             value={referencia}
             onChange={(e) => setReferencia(e.target.value)}
             className="w-full rounded-xl bg-white/[0.04] px-3 py-2.5 text-sm ring-1 ring-white/10 outline-none placeholder:text-muted-foreground"
