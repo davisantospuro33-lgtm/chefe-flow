@@ -2,7 +2,46 @@
 @source "../src";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+
+/* Premium Elite interface */
+.elite-shell { background: #080a09; background-image: radial-gradient(circle at 90% 0%, rgba(198,255,74,.08), transparent 28rem); }
+.elite-kicker { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.42); }
+.elite-logo { font-size: 21px; font-weight: 950; letter-spacing: -.08em; }
+.elite-logo span { color: #c6ff4a; }
+.elite-icon { position: relative; display: grid; height: 42px; width: 42px; place-items: center; border: 1px solid rgba(255,255,255,.1); border-radius: 15px; background: rgba(255,255,255,.06); }
+.elite-icon span { position: absolute; right: 8px; top: 8px; height: 5px; width: 5px; border-radius: 999px; background: #c6ff4a; }
+.role-card { display: flex; width: 100%; align-items: center; gap: 14px; border: 1px solid rgba(255,255,255,.1); border-radius: 22px; padding: 13px; background: rgba(255,255,255,.055); transition: transform .2s, background .2s; }
+.role-card:active { transform: scale(.98); background: rgba(255,255,255,.1); }
+.role-card b, .role-card small { display: block; }
+.role-card b { font-size: 14px; }
+.role-card small { margin-top: 3px; color: rgba(255,255,255,.42); font-size: 11px; }
+.role-icon { display: grid; height: 46px; width: 46px; place-items: center; border-radius: 16px; }
+.elite-search { display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 17px; padding: 8px 9px 8px 15px; color: rgba(255,255,255,.35); font-size: 12px; }
+.story-ring { padding: 2px; width: 60px; height: 60px; border-radius: 20px; background: #c6ff4a; }
+.story-ring img { height: 100%; width: 100%; border: 2px solid #080a09; border-radius: 18px; object-fit: cover; }
+.pro-card { width: 245px; min-width: 245px; }
+.queue-card, .status-panel, .agenda-card { border: 1px solid rgba(255,255,255,.1); border-radius: 24px; background: linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.035)); padding: 18px; box-shadow: 0 18px 50px rgba(0,0,0,.2); }
+.live-dot { height: 7px; width: 7px; border-radius: 50%; background: #c6ff4a; box-shadow: 0 0 0 5px rgba(198,255,74,.12); }
+.elite-nav { position: fixed; bottom: 12px; left: 50%; z-index: 10; display: flex; width: calc(100% - 24px); max-width: 387px; transform: translateX(-50%); justify-content: space-around; border: 1px solid rgba(255,255,255,.1); border-radius: 22px; background: rgba(17,20,18,.88); padding: 9px 8px; backdrop-filter: blur(20px); }
+.elite-nav button { display: flex; min-width: 62px; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,.35); font-size: 9px; font-weight: 700; }
+.elite-nav button.active { color: #c6ff4a; }
+.status-toggle { display: flex; align-items: center; gap: 7px; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 9px 11px; color: rgba(255,255,255,.55); font-size: 10px; font-weight: 700; }
+.status-toggle.on { border-color: rgba(198,255,74,.35); color: #c6ff4a; }
+.status-panel > .grid > div { border-top: 1px solid rgba(255,255,255,.1); padding-top: 12px; }
+.status-panel strong, .status-panel span { display: block; }
+.status-panel strong { font-size: 19px; }
+.status-panel span { margin-top: 3px; color: rgba(255,255,255,.4); font-size: 10px; }
+.client-row { display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,.08); border-radius: 18px; padding: 10px; background: rgba(255,255,255,.045); }
+.client-row p { font-size: 12px; }
+.queue-badge { border-radius: 8px; background: rgba(255,255,255,.08); padding: 6px 8px; font-size: 10px; font-weight: 800; color: rgba(255,255,255,.55); }
+.queue-badge.current { background: rgba(198,255,74,.14); color: #c6ff4a; }
+.section-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 12px; }
+.time-pill { border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 8px 10px; color: rgba(255,255,255,.5); font-size: 10px; }
+.mini-action { display: flex; flex-direction: column; gap: 7px; border: 1px solid rgba(255,255,255,.1); border-radius: 20px; padding: 15px; background: rgba(255,255,255,.05); }
+.mini-action b { font-size: 12px; }
+.mini-action span { color: rgba(255,255,255,.38); font-size: 10px; }
+
+
 
 /*
  * Design system definition.
