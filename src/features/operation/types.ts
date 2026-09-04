@@ -52,7 +52,8 @@ export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {
 export function canTransitionStatus(from: OperationalStatus, to: OperationalStatus): boolean {
   if (from === to) return true
   if (from === 'closed') return to === 'available'
-  return true
+  if (to === 'closed') return true
+  return from !== 'serving' || to === 'paused'
 }
 
 export function canTransitionTicket(from: TicketStatus, to: TicketStatus): boolean {
